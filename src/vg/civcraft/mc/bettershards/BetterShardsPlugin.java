@@ -12,12 +12,19 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
+import vg.civcraft.mc.bettershards.listeners.BetterShardsListener;
 import vg.civcraft.mc.namelayer.NameAPI;
+import vg.civcraft.mc.namelayer.config.NameConfigListener;
+import vg.civcraft.mc.namelayer.config.NameConfigManager;
+import vg.civcraft.mc.namelayer.config.annotations.NameConfig;
+import vg.civcraft.mc.namelayer.config.annotations.NameConfigType;
 
-public class BetterShardsPlugin extends JavaPlugin{
+public class BetterShardsPlugin extends JavaPlugin implements NameConfigListener{
 
 	private static BetterShardsPlugin plugin;
+	private PortalsManager pm;
 	private DatabaseManager db;
+	private static NameConfigManager config;
 	
 	private List<UUID> transit = new ArrayList<UUID>();
 	
@@ -25,7 +32,9 @@ public class BetterShardsPlugin extends JavaPlugin{
 	public void onEnable(){
 		plugin = this;
 		db = new DatabaseManager();
+		pm = new PortalsManager();
 		registerListeners();
+		config = NameAPI.getNameConfigManager();
 	}
 	
 	@Override
@@ -85,5 +94,11 @@ public class BetterShardsPlugin extends JavaPlugin{
 		// Register with NameLayer to utilize config annotations.
 		NameAPI.getNameConfigManager().registerListener(this, db);
 		NameAPI.getNameConfigManager().registerListener(this, l);
+		NameAPI.getNameConfigManager().registerListener(this, this);
+	}
+	
+	@NameConfig(name = "current_server", def = "", type = NameConfigType.String)
+	public static String getCurrentServerName(){
+		return config.get(plugin, "current_server").getString();
 	}
 }

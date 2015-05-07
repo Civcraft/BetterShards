@@ -4,11 +4,13 @@ import org.bukkit.entity.Player;
 
 public class BetterShardsAPI {
 
+	private static BetterShardsPlugin plugin;
+	
 	public BetterShardsAPI(){
-		
+		plugin = BetterShardsPlugin.getInstance();
 	}
 	
-	public void teleportPlayer(Player p){
+	public static void connectPlayer(Player p){
 		
 	}
 }

@@ -9,6 +9,7 @@ import java.io.LineNumberReader;
 import java.sql.PreparedStatement;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
+import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.namelayer.NameAPI;
 import vg.civcraft.mc.namelayer.config.NameConfigListener;
 import vg.civcraft.mc.namelayer.config.NameConfigManager;
@@ -23,17 +24,20 @@ public class DatabaseManager implements NameConfigListener{
 	private Database db;
 	
 	private String[] databases = {
-		"createPlayerData.sql", 	
+		"tables/createPlayerDataTable.sql",
+		"tables/createPortalDataTable.sql",
+		"tables/createPortalLocData.sql"
 	};
 	
-	private PreparedStatement addPlayerData, removePlayerData, getPlayerData;
+	private String addPlayerData, getPlayerData, removePlayerData;
+	private String addPortalData, getPortalData, removePortalData, getAllPortalData;
 	
 	public DatabaseManager(){
 		config = NameAPI.getNameConfigManager();
 		if (!isValidConnection())
 			return;
-		for (String querry: databases)
-			db.execute(querry);
+		executeDatabaseStatements();
+		loadPreparedStatements();
 	}
 	
 	@NameConfigs({
@@ -43,7 +47,7 @@ public class DatabaseManager implements NameConfigListener{
 		@NameConfig(name = "mysql.password", type = NameConfigType.String),
 		@NameConfig(name = "mysql.dbname", def = "BetterShardsDB", type = NameConfigType.String)
 	})
-	public boolean isValidConnection(){
+	private boolean isValidConnection(){
 		String username = config.get(plugin, "mysql.host").getString();
 		String host = config.get(plugin, "mysql.host").getString();
 		int port = config.get(plugin, "mysql.port").getInt();
@@ -51,6 +55,13 @@ public class DatabaseManager implements NameConfigListener{
 		String dbname = config.get(plugin, "mysql.dbname").getString();
 		db = new Database(host, port, dbname, username, password, plugin.getLogger());
 		return db.connect();
+	}
+	
+	private void executeDatabaseStatements(){
+		for (String mysql: databases){
+			String querry = getQuerry(mysql);
+			db.execute(querry);
+		}
 	}
 	
 	private String getQuerry(String path){
@@ -67,5 +78,17 @@ public class DatabaseManager implements NameConfigListener{
 			e.printStackTrace();
 		}
 		return builder.toString();
+	}
+	
+	private void loadPreparedStatements(){
+		
+	}
+	
+	/**
+	 * Adds a portal instance to the database.  Should be called only when
+	 * initially creating a Portal Object.
+	 */
+	public void addPortal(Portal portal){
+		PreparedStatement addPortalData = db.prepareStatement(this.addPortalData);
 	}
 }
