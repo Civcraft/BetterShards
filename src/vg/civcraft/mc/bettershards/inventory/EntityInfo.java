@@ -10,9 +10,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.util.Vector;
 
-import com.gmail.rourke7501.serializers.SerializeInventoryContents;
-import com.gmail.rourke7501.serializers.SerializeVector;
-import com.gmail.rourke7501.serializers.SerializedPotionEffects;
+import vg.civcraft.mc.bettershards.serializers.SerializeInventoryContents;
+import vg.civcraft.mc.bettershards.serializers.SerializeVector;
+import vg.civcraft.mc.bettershards.serializers.SerializedPotionEffects;
 
 /** 
 * The redistribution and use this software or source for any hosting services without written permission from the author (Rourke750) is prohibited.

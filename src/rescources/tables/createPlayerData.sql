@@ -1,6 +1,6 @@
-create table if not exists (
+create table if not exists createPlayerData(
 uuid varchar(36) not null,
 object blob not null,
-entity bloc,
+entity blob,
 portal_id varchar(36),
 primary key (uuid));

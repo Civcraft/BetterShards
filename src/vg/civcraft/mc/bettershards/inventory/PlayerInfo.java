@@ -10,8 +10,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.potion.PotionEffect;
 
-import com.gmail.rourke7501.serializers.SerializeInventoryContents;
-import com.gmail.rourke7501.serializers.SerializedPotionEffects;
+import vg.civcraft.mc.bettershards.serializers.SerializeInventoryContents;
+import vg.civcraft.mc.bettershards.serializers.SerializedPotionEffects;
 
 /** 
 * The redistribution and use this software or source for any hosting services without written permission from the author (Rourke750) is prohibited.

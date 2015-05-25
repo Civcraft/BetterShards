@@ -10,8 +10,8 @@ import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class NetherPortal extends Portal{
 
-	public NetherPortal(List<Location> locs, Portal connection) {
-		super(locs, connection);
+	public NetherPortal(String name, List<Location> locs, Portal connection) {
+		super(name, locs, connection);
 	}
 
 	/**

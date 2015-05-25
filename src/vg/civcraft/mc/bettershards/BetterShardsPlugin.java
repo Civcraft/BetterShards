@@ -101,4 +101,8 @@ public class BetterShardsPlugin extends JavaPlugin implements NameConfigListener
 	public static String getCurrentServerName(){
 		return config.get(plugin, "current_server").getString();
 	}
+	
+	public PortalsManager getPortalManager(){
+		return pm;
+	}
 }

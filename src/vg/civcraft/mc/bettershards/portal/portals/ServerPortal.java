@@ -8,8 +8,8 @@ import vg.civcraft.mc.bettershards.portal.Portal;
 public class ServerPortal extends Portal{
 
 	private String serverName;
-	public ServerPortal(String serverName, Portal portal) {
-		super(null, portal);
+	public ServerPortal(String name, String serverName, Portal portal) {
+		super(name, null, portal);
 		this.serverName = serverName;
 	}
 
