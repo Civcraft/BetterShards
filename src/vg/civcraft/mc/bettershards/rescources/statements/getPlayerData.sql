@@ -1,0 +1,1 @@
+select * from createPlayerData where uuid = ?;

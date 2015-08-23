@@ -1,0 +1,1 @@
+delete from createPortalDataTable where id = ?;

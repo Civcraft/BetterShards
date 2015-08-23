@@ -22,7 +22,7 @@ import vg.civcraft.mc.bettershards.serializers.SerializedPotionEffects;
 /*
  * This class handles all the info about the entity that the player was possibly travelling on.
  */
-public class EntityInfo implements Serializable{
+public class EntityInfo implements Serializable, Info{
 
 	private static final long serialVersionUID = -6747360548691930151L;
 	

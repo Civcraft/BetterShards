@@ -18,7 +18,7 @@ import vg.civcraft.mc.bettershards.serializers.SerializedPotionEffects;
 * All other rights are reserved.
 */
 
-public class PlayerInfo implements Serializable{
+public class PlayerInfo implements Serializable, Info{
 
 	private static final long serialVersionUID = 5833993531522573373L;
 	private SerializeInventoryContents inv;

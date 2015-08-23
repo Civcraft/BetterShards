@@ -1,0 +1,1 @@
+select * from createPortalDataTable where id = ?;

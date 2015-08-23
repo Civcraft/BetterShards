@@ -1,0 +1,1 @@
+delete from createPlayerData where uuid = ?;

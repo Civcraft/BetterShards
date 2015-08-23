@@ -1,0 +1,17 @@
+name: ${project.name}
+main: vg.civcraft.mc.bettershards.BetterShardsPlugin
+version: ${project.version}
+author: Rourke750
+depend: [Mercury]
+commands:
+ bsc:
+  permission: bettershards.*
+ bsd:
+  permission: bettershards.*
+ bsj:
+  permission: bettershards.*
+ bsr:
+  permission: bettershards.*
+permissions:
+  bettershards.*:
+   default: op
