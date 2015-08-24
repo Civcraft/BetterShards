@@ -6,7 +6,7 @@ import java.util.Random;
 import com.imaginarycode.minecraft.redisbungee.RedisBungee;
 import com.imaginarycode.minecraft.redisbungee.RedisBungeeAPI;
 
-import net.md_5.bungee.BungeeCord;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ServerConnectEvent;
@@ -26,7 +26,7 @@ public class BungeeListener implements Listener {
 		Random rand = new Random();
 		int random = rand.nextInt(servers.size()-1);
 		String server = servers.get(random);
-		ServerInfo sInfo = BungeeCord.getInstance().getServerInfo(server);
+		ServerInfo sInfo = ProxyServer.getInstance().getServerInfo(server);
 		p.connect(sInfo);
 	}
 }
