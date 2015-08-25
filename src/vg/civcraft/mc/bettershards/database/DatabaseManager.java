@@ -60,7 +60,7 @@ public class DatabaseManager{
 		@CivConfig(name = "mysql.password", type = CivConfigType.String),
 		@CivConfig(name = "mysql.dbname", def = "BetterShardsDB", type = CivConfigType.String)
 	})
-	private boolean isValidConnection(){
+	public boolean isValidConnection(){
 		String username = config.get("mysql.host").getString();
 		String host = config.get("mysql.host").getString();
 		int port = config.get("mysql.port").getInt();
