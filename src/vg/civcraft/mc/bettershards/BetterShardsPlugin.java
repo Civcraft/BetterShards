@@ -37,6 +37,7 @@ public class BetterShardsPlugin extends ACivMod{
 	
 	@Override
 	public void onEnable(){
+		super.onEnable();
 		plugin = this;
 		config = GetConfig();
 		servName = MercuryConfigManager.getServerName();
