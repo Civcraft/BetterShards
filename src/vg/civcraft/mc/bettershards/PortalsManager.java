@@ -23,9 +23,12 @@ public class PortalsManager extends SparseQuadTree{
 	private Map<String, Portal> portals;
 	private List<Player> arrivedPlayers = new ArrayList<Player>();
 	
-	public PortalsManager(){
+	public PortalsManager() {
 		super();
 		portals = new HashMap<String, Portal>();
+	}
+	
+	public void loadPortalsManager() {
 		loadPortalsFromServer();
 		removeTeleportedPlayers();
 	}

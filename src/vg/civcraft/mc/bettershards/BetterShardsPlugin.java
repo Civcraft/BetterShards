@@ -42,6 +42,7 @@ public class BetterShardsPlugin extends ACivMod{
 		servName = MercuryConfigManager.getServerName();
 		db = new DatabaseManager();
 		pm = new PortalsManager();
+		pm.loadPortalsManager();
 		registerListeners();
 		registerMercuryChannels();
 	}
