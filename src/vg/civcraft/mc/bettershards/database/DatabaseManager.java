@@ -82,7 +82,7 @@ public class DatabaseManager{
 	
 	private String getQuerry(String path){
 		ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-		InputStream is = classloader.getResourceAsStream("rescources/");
+		InputStream is = classloader.getResourceAsStream("rescources/" + path);
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 		String line = "";
 		StringBuilder builder = new StringBuilder();
