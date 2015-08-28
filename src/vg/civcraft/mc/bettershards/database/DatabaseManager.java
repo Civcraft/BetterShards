@@ -34,12 +34,6 @@ public class DatabaseManager{
 	private Config config;
 	private Database db;
 	
-	private String[] databases = {
-		"tables/createPlayerDataTable.sql",
-		"tables/createPortalDataTable.sql",
-		"tables/createPortalLocData.sql"
-	};
-	
 	private String addPlayerData, getPlayerData, removePlayerData;
 	private String addPortalLoc, getPortalLocByWorld, getPortalLoc, removePortalLoc;
 	private String addPortalData, getPortalData, removePortalData, updatePortalData;
@@ -69,46 +63,49 @@ public class DatabaseManager{
 		return db.connect();
 	}
 	
+	private void executeDatabaseStatements() {
+		db.execute("create table if not exists createPlayerData("
+				+ "uuid varchar(36) not null,"
+				+ "entity blob,"
+				+ "primary key (uuid));");
+		db.execute("create table if not exists createPortalDataTable("
+				+ "id varchar(255) not null,"
+				+ "server_name varchar(255) not null,"
+				+ "portal_type int not null,"
+				+ "partner_id varchar(255),"
+				+ "primary key(id));");
+		db.execute("create table if not exists createPortalLocData("
+				+ "rangex int not null,"
+				+ "rangey int not null,"
+				+ "rangez int not null,"
+				+ "x int not null,"
+				+ "y int not null,"
+				+ "z int not null,"
+				+ "world varchar(255) not null,"
+				+ "id varchar(255) not null,"
+				+ "primary key loc_id (x, y, z, world, id));");
+	}
+	
 	public boolean isConnected() {
 		return db.isConnected();
 	}
 	
-	private void executeDatabaseStatements(){
-		for (String mysql: databases){
-			String querry = getQuerry(mysql);
-			db.execute(querry);
-		}
-	}
-	
-	private String getQuerry(String path){
-		InputStream is = BetterShardsPlugin.class.getResourceAsStream("/vg/civcraft/mc/bettershards/database/resources/" + path);
-		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-		String line = "";
-		StringBuilder builder = new StringBuilder();
-		try {
-			while ((line = reader.readLine()) != null)
-				builder.append(line + "\n");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return builder.toString();
-	}
-	
 	private void loadPreparedStatements(){
-		addPlayerData = getQuerry("statements/insertPlayerData.sql");
-		getPlayerData = getQuerry("statements/getPlayerData.sql");
-		removePlayerData = getQuerry("statements/removePlayerData.sql");
+		addPlayerData = "insert into createPlayerData(uuid, entity) values(?,?);";
+		getPlayerData = "select * from createPlayerData where uuid = ?;";
+		removePlayerData = "delete from createPlayerData where uuid = ?;";
 		
-		addPortalLoc = getQuerry("statements/insertPortalLoc.sql");
-		getPortalLocByWorld = getQuerry("statements/getPortalLocbyWorld.sql");
-		getPortalLoc = getQuerry("statements/getPortalLoc.sql");
-		removePortalLoc = getQuerry("statements/removePortalLoc.sql");
+		addPortalLoc = "insert into createPortalLocData(rangex, rangy, rangez, x, y, z, world, id)"
+				+ "values (?,?,?,?,?,?,?,?);";
+		getPortalLocByWorld = "select * from createPortalLocData where world = ?;";
+		getPortalLoc = "select * from createPortalLocData where name = ?;";
+		removePortalLoc = "delete from createPortalDataTable where id = ?;";
 		
-		addPortalData = getQuerry("statements/insertPortalData.sql");
-		getPortalData = getQuerry("statements/getPortalData.sql");
-		removePortalData = getQuerry("statements/removePortalData.sql");
-		updatePortalData = getQuerry("statements/updatePortalData.sql");
+		addPortalData = "insert into createPortalDataTable(id, server_name, portal_type, partner_id)"
+				+ "values(?,?,?,?);";
+		getPortalData = "select * from createPortalDataTable where id = ?;";
+		removePortalData = "delete from createPortalLocData where id = ?;";
+		updatePortalData = "update createPortalDataTable set partner_id = ? where id = ?;";
 	}
 	
 	/**
