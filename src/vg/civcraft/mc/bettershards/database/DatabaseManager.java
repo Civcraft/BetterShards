@@ -81,7 +81,7 @@ public class DatabaseManager{
 	}
 	
 	private String getQuerry(String path){
-		InputStream is = BetterShardsPlugin.class.getResourceAsStream("resources/" + path);
+		InputStream is = BetterShardsPlugin.class.getResourceAsStream("/vg/civcraft/mc/bettershards/database/resources/" + path);
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 		String line = "";
 		StringBuilder builder = new StringBuilder();
