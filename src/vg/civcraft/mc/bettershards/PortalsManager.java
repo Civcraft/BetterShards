@@ -79,7 +79,7 @@ public class PortalsManager extends SparseQuadTree{
 	 */
 	public void loadPortalsFromServer(){
 		List<World> worlds = Bukkit.getWorlds();
-		List<Portal> portals = db.getAllPortalsByWorld((World[]) worlds.toArray());
+		List<Portal> portals = db.getAllPortalsByWorld(worlds.toArray(new World[worlds.size()]));
 		for (Portal p: portals) {
 			this.portals.put(p.getName(), p);
 			add(p);
