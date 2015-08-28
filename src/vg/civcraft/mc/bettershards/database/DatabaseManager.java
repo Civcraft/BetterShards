@@ -182,7 +182,7 @@ public class DatabaseManager{
 	 * This is to prevent possible NullPointExceptions from trying to 
 	 * get portals from Worlds that are not present on this server.
 	 */
-	public List<Portal> getAllPortalsByWorld(World... worlds){
+	public List<Portal> getAllPortalsByWorld(World[] worlds){
 		List<Portal> portals = new ArrayList<Portal>();
 		for (World w: worlds){
 			String world = w.getName();
