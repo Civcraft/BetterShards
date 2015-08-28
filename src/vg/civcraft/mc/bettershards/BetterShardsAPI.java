@@ -4,7 +4,6 @@ import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
-import vg.civcraft.mc.bettershards.inventory.PlayerInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class BetterShardsAPI {
@@ -18,21 +17,14 @@ public class BetterShardsAPI {
 	}
 	
 	public static void connectPlayer(Player p, String serverName, PlayerChangeServerReason reason) {
-		savePlayerInfo(p, null);
 		plugin.addPlayerToTransit(p.getUniqueId());
 		plugin.teleportPlayerToServer(p, serverName, reason);
 	}
 	
 	public static void connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason) {
-		savePlayerInfo(p, portal.getName());
+		plugin.teleportPlayer(p.getUniqueId(), portal);
 		plugin.addPlayerToTransit(p.getUniqueId());
 		plugin.teleportPlayerToServer(p, portal.getServerName(), reason);
-	}
-	
-	private static void savePlayerInfo(Player p, String portal) {
-		PlayerInfo pInfo = new PlayerInfo(p);
-		// Also when we aren't pressured add entities to the things that can cross.
-		db.addPlayerData(p, pInfo, null, portal);
 	}
 
 	public static String getServerName() {

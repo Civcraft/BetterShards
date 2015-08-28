@@ -1,6 +1,9 @@
 package vg.civcraft.mc.bettershards.database;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -17,10 +20,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
-import vg.civcraft.mc.bettershards.inventory.EntityInfo;
-import vg.civcraft.mc.bettershards.inventory.Info;
-import vg.civcraft.mc.bettershards.inventory.PlayerInfo;
-import vg.civcraft.mc.bettershards.inventory.PortalInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.PortalType;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
@@ -68,6 +67,10 @@ public class DatabaseManager{
 		String dbname = config.get("mysql.dbname").getString();
 		db = new Database(host, port, dbname, username, password, plugin.getLogger());
 		return db.connect();
+	}
+	
+	public boolean isConnected() {
+		return db.isConnected();
 	}
 	
 	private void executeDatabaseStatements(){
@@ -151,13 +154,11 @@ public class DatabaseManager{
 		}
 	}
 	
-	public void addPlayerData(Player p, PlayerInfo pInfo, EntityInfo eInfo, String portal){
+	public void savePlayerData(UUID uuid, ByteArrayOutputStream output) {
 		PreparedStatement addPlayerData = db.prepareStatement(this.addPlayerData);
 		try {
-			addPlayerData.setString(1, p.getUniqueId().toString());
-			addPlayerData.setObject(2, pInfo);
-			addPlayerData.setObject(3, eInfo);
-			addPlayerData.setString(4, portal);
+			addPlayerData.setString(1, uuid.toString());
+			addPlayerData.setBytes(2, output.toByteArray());
 			addPlayerData.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -165,31 +166,19 @@ public class DatabaseManager{
 		}
 	}
 	
-	public List<Info> getPlayerData(UUID uuid){
+	public ByteArrayInputStream loadPlayerData(UUID uuid){
 		PreparedStatement getPlayerData = db.prepareStatement(this.getPlayerData);
-		List<Info> infos = new ArrayList<Info>();
 		try {
 			getPlayerData.setString(1, uuid.toString());
 			ResultSet set = getPlayerData.executeQuery();
 			if (!set.next())
-				return null;
-			
-			Object obj = set.getObject("object");
-			Object ent = set.getObject("entity");
-			String portal_id = set.getString("portal_id");
-			
-			PlayerInfo pInfo = (PlayerInfo) obj;
-			EntityInfo eInfo = (EntityInfo) ent;
-			PortalInfo portalInfo = new PortalInfo(portal_id);
-			
-			infos.add(pInfo);
-			infos.add(eInfo);
-			infos.add(portalInfo);
+				return new ByteArrayInputStream(null);
+			return new ByteArrayInputStream(set.getBytes("entity"));			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return infos;
+		return new ByteArrayInputStream(null);
 	}
 	
 	/**

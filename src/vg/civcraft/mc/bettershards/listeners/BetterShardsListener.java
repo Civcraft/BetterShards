@@ -1,13 +1,10 @@
 package vg.civcraft.mc.bettershards.listeners;
 
-import java.util.List;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -21,10 +18,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.PortalsManager;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
-import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
-import vg.civcraft.mc.bettershards.inventory.Info;
-import vg.civcraft.mc.bettershards.inventory.PlayerInfo;
-import vg.civcraft.mc.bettershards.inventory.PortalInfo;
 import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.Config;
@@ -50,39 +43,11 @@ public class BetterShardsListener implements Listener{
 	public void playerJoinEvent(PlayerJoinEvent event){
 		if (config.get("lobby").getBool())
 			return;
-		Player p = event.getPlayer();
-		List<Info> info = db.getPlayerData(p.getUniqueId());
-		db.removePlayerData(p.getUniqueId());
-		for (Info i: info) {
-			if (i instanceof PlayerInfo) {
-				PlayerInfo pInfo = (PlayerInfo) i;
-				pInfo.unpackInventory(p);
-			}
-			/*
-			 * Entity stuff will be needed to be more invested later.
-			else if (i instanceof EntityInfo) {
-				EntityInfo eInfo = (EntityInfo) i;
-				
-			}
-			*/
-			else if (i instanceof PortalInfo){
-				PortalInfo pInfo = (PortalInfo) i;
-				Portal portal = pm.getPortal(pInfo.getName());
-				
-				PlayerArrivedChangeServerEvent e = new PlayerArrivedChangeServerEvent(p, portal);
-				Bukkit.getPluginManager().callEvent(e);
-				portal = e.getPortal();
-				if (portal == null)
-					continue;
-				
-				Location loc = portal.findRandomSafeLocation();
-				pm.addArrivedPlayer(p);
-				p.teleport(loc);
-			}
-		}
-		/* If info variable Object contains no values then the other spawning
-		* plugin should handle its spawn.
-		*/ 
+		Location loc = MercuryListener.getTeleportLocation(event.getPlayer().getUniqueId());
+		if (loc == null)
+			return;
+		pm.addArrivedPlayer(event.getPlayer());
+		event.getPlayer().teleport(loc);
 	}
 	
 	@EventHandler(priority = EventPriority.LOWEST)

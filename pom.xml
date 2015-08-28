@@ -6,7 +6,7 @@
 	<groupId>vg.civcraft.mc.bettershards</groupId>
 	<artifactId>BetterShards</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.4</version>
+	<version>1.1.0</version>
 	<name>BetterShards</name>
 	<url>https://github.com/Civcraft/BetterShards</url>
 
@@ -48,8 +48,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.spigotmc</groupId>
-			<artifactId>spigot-api</artifactId>
-			<version>1.8.3-R0.1-SNAPSHOT</version>
+			<artifactId>Spigot1.8.7</artifactId>
+			<version>1.8.7</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

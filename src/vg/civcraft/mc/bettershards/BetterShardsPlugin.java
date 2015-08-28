@@ -1,12 +1,29 @@
 package vg.civcraft.mc.bettershards;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
 
+import net.minecraft.server.v1_8_R3.EntityHuman;
+import net.minecraft.server.v1_8_R3.IDataManager;
+import net.minecraft.server.v1_8_R3.IPlayerFileData;
+import net.minecraft.server.v1_8_R3.NBTCompressedStreamTools;
+import net.minecraft.server.v1_8_R3.NBTTagCompound;
+import net.minecraft.server.v1_8_R3.WorldServer;
+
+import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.entity.Player;
 
 import com.google.common.io.ByteArrayDataOutput;
@@ -16,7 +33,9 @@ import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.listeners.BetterShardsListener;
+import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
+import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.ACivMod;
 import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.mercury.MercuryAPI;
@@ -42,10 +61,14 @@ public class BetterShardsPlugin extends ACivMod{
 		config = GetConfig();
 		servName = MercuryConfigManager.getServerName();
 		db = new DatabaseManager();
+		if (!db.isConnected())
+			Bukkit.getPluginManager().disablePlugin(this);
 		pm = new PortalsManager();
 		pm.loadPortalsManager();
 		registerListeners();
 		registerMercuryChannels();
+		setWorldNBTStorage();
+		uploadExistingPlayers();
 	}
 	
 	@Override
@@ -136,7 +159,86 @@ public class BetterShardsPlugin extends ACivMod{
 		MercuryAPI.instance.sendMessage("all", "delete " + name, "BetterShards");
 	}
 	
+	public void teleportPlayer(UUID uuid, String location) {
+		MercuryAPI.instance.sendMessage("all", "teleport " + uuid.toString() + " " + location, "BetterShards");
+	}
+	
+	public void teleportPlayer(UUID uuid, Portal p) {
+		MercuryAPI.instance.sendMessage("all", "teleport " + uuid.toString() + " " + p.getName(), "BetterShards");
+	}
+	
 	private void registerMercuryChannels() {
 		MercuryAPI.instance.registerPluginMessageChannel("BetterShardsPlugin");
+	}
+	
+	private void setWorldNBTStorage() {
+		for (World w: Bukkit.getWorlds()) {
+			WorldServer nmsWorld = ((CraftWorld) w).getHandle();
+			Field fieldName;
+			try {
+				fieldName = WorldServer.class.getDeclaredField("dataManager");
+				fieldName.setAccessible(true);
+				
+				IDataManager manager = nmsWorld.getDataManager();
+				CustomWorldNBTStorage newStorage = new CustomWorldNBTStorage(manager.getDirectory(), "", true);
+				setFinalStatic(fieldName, newStorage, manager);
+			} catch (NoSuchFieldException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void setFinalStatic(Field field, Object newValue, Object obj) {
+		try {
+			field.setAccessible(true);
+
+			// remove final modifier from field
+			Field modifiersField;
+			modifiersField = Field.class.getDeclaredField("modifiers");
+			modifiersField.setAccessible(true);
+			modifiersField
+					.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+
+			field.set(obj, newValue);
+		} catch (NoSuchFieldException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private void uploadExistingPlayers() {
+		for (World w: Bukkit.getWorlds()) {
+			WorldServer nmsWorld = ((CraftWorld) w).getHandle();
+			IDataManager data = nmsWorld.getDataManager();
+			String[] names = data.getPlayerFileData().getSeenPlayers();
+			for (String name: names) {
+				Bukkit.getLogger().log(Level.INFO, "Updating player " + name + " to mysql.");
+				try {
+					File file = new File(name + ".dat");
+					InputStream stream = new FileInputStream(file);
+					
+					ByteArrayOutputStream output = new ByteArrayOutputStream();
+					output.write(IOUtils.toByteArray(stream));
+					// Now to run our custom mysql code
+					db.savePlayerData(UUID.fromString(name), output);
+					file.delete();
+				} catch (Exception localException) {
+					localException.printStackTrace();
+				}
+			}
+		}
 	}
 }
