@@ -73,7 +73,8 @@ public class BetterShardsListener implements Listener{
         Player player = event.getPlayer();
         
         Portal p = pm.getPortal(to);
-        if (p != null);
+        if (p == null)
+        	return;
         // We need this check incase the player just teleported inside the field.
         // We know he does not need to teleport back.
         if (pm.canTransferPlayer(player))

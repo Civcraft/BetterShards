@@ -227,7 +227,7 @@ public class BetterShardsPlugin extends ACivMod{
 			for (String name: names) {
 				Bukkit.getLogger().log(Level.INFO, "Updating player " + name + " to mysql.");
 				try {
-					File file = new File(name + ".dat");
+					File file = new File(data.getDirectory() + File.separator + "playerdata", name + ".dat");
 					InputStream stream = new FileInputStream(file);
 					
 					ByteArrayOutputStream output = new ByteArrayOutputStream();
