@@ -176,7 +176,7 @@ public class BetterShardsPlugin extends ACivMod{
 			WorldServer nmsWorld = ((CraftWorld) w).getHandle();
 			Field fieldName;
 			try {
-				fieldName = WorldServer.class.getDeclaredField("dataManager");
+				fieldName = net.minecraft.server.v1_8_R3.World.class.getDeclaredField("dataManager");
 				fieldName.setAccessible(true);
 				
 				IDataManager manager = nmsWorld.getDataManager();
