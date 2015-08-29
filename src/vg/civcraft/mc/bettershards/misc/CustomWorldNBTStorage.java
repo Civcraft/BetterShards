@@ -3,12 +3,9 @@ package vg.civcraft.mc.bettershards.misc;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.UUID;
 import java.util.logging.Level;
 
-import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
@@ -17,9 +14,9 @@ import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.NBTCompressedStreamTools;
 import net.minecraft.server.v1_8_R3.NBTTagCompound;
-import net.minecraft.server.v1_8_R3.WorldNBTStorage;
+import net.minecraft.server.v1_8_R3.ServerNBTManager;
 
-public class CustomWorldNBTStorage extends WorldNBTStorage {
+public class CustomWorldNBTStorage extends ServerNBTManager {
 
 	private DatabaseManager db = BetterShardsPlugin.getInstance()
 			.getDatabaseManager();
