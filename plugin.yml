@@ -12,6 +12,8 @@ commands:
   permission: bettershards.*
  bsr:
   permission: bettershards.*
+ bse:
+  permission: bettershards.*
 permissions:
   bettershards.*:
    default: op

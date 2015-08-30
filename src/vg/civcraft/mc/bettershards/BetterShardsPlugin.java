@@ -70,6 +70,15 @@ public class BetterShardsPlugin extends ACivMod{
 		registerMercuryChannels();
 		setWorldNBTStorage();
 		uploadExistingPlayers();
+		
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+
+			@Override
+			public void run() {
+				sendBungeeUpdateMessage();
+			}
+			
+		}, 100, 1000);
 	}
 	
 	@Override
@@ -243,5 +252,9 @@ public class BetterShardsPlugin extends ACivMod{
 				}
 			}
 		}
+	}
+	
+	public void sendBungeeUpdateMessage() {
+		MercuryAPI.instance.sendMessage("all", db.getAllExclude(), "removeServer");
 	}
 }

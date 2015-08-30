@@ -35,6 +35,7 @@ public class DatabaseManager{
 	private String addPlayerData, getPlayerData, removePlayerData;
 	private String addPortalLoc, getPortalLocByWorld, getPortalLoc, removePortalLoc;
 	private String addPortalData, getPortalData, removePortalData, updatePortalData;
+	private String addExclude, getAllExclude, removeExclude;
 	
 	public DatabaseManager(){
 		config = plugin.GetConfig();
@@ -82,6 +83,9 @@ public class DatabaseManager{
 				+ "world varchar(255) not null,"
 				+ "id varchar(255) not null,"
 				+ "primary key loc_id (x, y, z, world, id));");
+		db.execute("create table if not exists excludedServers("
+				+ "name varchar(20) not null,"
+				+ "primary key name_id(name));");
 	}
 	
 	public boolean isConnected() {
@@ -104,6 +108,10 @@ public class DatabaseManager{
 		getPortalData = "select * from createPortalDataTable where id = ?;";
 		removePortalData = "delete from createPortalLocData where id = ?;";
 		updatePortalData = "update createPortalDataTable set partner_id = ? where id = ?;";
+		
+		addExclude = "insert ignore into excludedServers(name) values(?);";
+		removeExclude = "delete from excludedServers where name = ?;";
+		getAllExclude = "select * from excludedServers;";
 	}
 	
 	/**
@@ -312,6 +320,42 @@ public class DatabaseManager{
 			updatePortalData.setString(1, p.getPartnerPortal().getName());
 			updatePortalData.setString(2, p.getName());
 			updatePortalData.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void addExclude(String server) {
+		PreparedStatement addExclude = db.prepareStatement(this.addExclude);
+		try {
+			addExclude.setString(1, server);
+			addExclude.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public String getAllExclude() {
+		PreparedStatement getAllExclude = db.prepareStatement(this.getAllExclude);
+		StringBuilder builder = new StringBuilder();
+		try {
+			ResultSet set = getAllExclude.executeQuery();
+			while (set.next())
+				builder.append(set.getString("name") + " ");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return builder.toString();
+	}
+	
+	public void removeExclude(String server) {
+		PreparedStatement removeExclude = db.prepareStatement(this.removeExclude);
+		try {
+			removeExclude.setString(1, server);
+			removeExclude.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
