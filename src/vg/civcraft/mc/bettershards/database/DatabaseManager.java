@@ -1,23 +1,19 @@
 package vg.civcraft.mc.bettershards.database;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.portal.Portal;
@@ -33,6 +29,8 @@ public class DatabaseManager{
 	private BetterShardsPlugin plugin = BetterShardsPlugin.getInstance();
 	private Config config;
 	private Database db;
+	
+	private Map<UUID, ByteArrayInputStream> invCache = new ConcurrentHashMap<UUID, ByteArrayInputStream>();
 	
 	private String addPlayerData, getPlayerData, removePlayerData;
 	private String addPortalLoc, getPortalLocByWorld, getPortalLoc, removePortalLoc;
@@ -132,6 +130,10 @@ public class DatabaseManager{
 		}
 	}
 	
+	public void playerQuitServer(UUID uuid) {
+		invCache.remove(uuid);
+	}
+	
 	private String serverName = plugin.getName();
 	public void addPortalData(Portal portal, Portal connection){
 		PreparedStatement addPortalData = db.prepareStatement(this.addPortalData);
@@ -151,7 +153,9 @@ public class DatabaseManager{
 	}
 	
 	public void savePlayerData(UUID uuid, ByteArrayOutputStream output) {
+		invCache.remove(uuid); // So if it is loaded again it is recaught.
 		PreparedStatement addPlayerData = db.prepareStatement(this.addPlayerData);
+		removePlayerData(uuid); // So player data won't throw mysql error.
 		try {
 			addPlayerData.setString(1, uuid.toString());
 			addPlayerData.setBytes(2, output.toByteArray());
@@ -163,6 +167,9 @@ public class DatabaseManager{
 	}
 	
 	public ByteArrayInputStream loadPlayerData(UUID uuid){
+		// Here we had it caches before hand so no need to load it again.
+		if (invCache.containsKey(uuid))
+			return invCache.get(uuid);
 		PreparedStatement getPlayerData = db.prepareStatement(this.getPlayerData);
 		try {
 			getPlayerData.setString(1, uuid.toString());

@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.IDataManager;
 import net.minecraft.server.v1_8_R3.IPlayerFileData;
+import net.minecraft.server.v1_8_R3.MinecraftServer;
 import net.minecraft.server.v1_8_R3.NBTCompressedStreamTools;
 import net.minecraft.server.v1_8_R3.NBTTagCompound;
 import net.minecraft.server.v1_8_R3.WorldServer;
@@ -181,7 +182,9 @@ public class BetterShardsPlugin extends ACivMod{
 				
 				IDataManager manager = nmsWorld.getDataManager();
 				CustomWorldNBTStorage newStorage = new CustomWorldNBTStorage(manager.getDirectory(), "", true);
-				setFinalStatic(fieldName, newStorage, manager);
+				setFinalStatic(fieldName, newStorage, nmsWorld);
+				
+				MinecraftServer.getServer().getPlayerList().playerFileData = newStorage;
 			} catch (NoSuchFieldException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -201,8 +204,8 @@ public class BetterShardsPlugin extends ACivMod{
 			modifiersField = Field.class.getDeclaredField("modifiers");
 			modifiersField.setAccessible(true);
 			modifiersField
-					.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
+					.setInt(field, field.getModifiers() & ~Modifier.PROTECTED);
+			
 			field.set(obj, newValue);
 		} catch (NoSuchFieldException e) {
 			// TODO Auto-generated catch block

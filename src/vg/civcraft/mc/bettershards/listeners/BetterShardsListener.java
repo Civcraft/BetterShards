@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -37,6 +38,14 @@ public class BetterShardsListener implements Listener{
 		pm = plugin.getPortalManager();
 		config = plugin.GetConfig();
 	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void playerPreLoginCacheInv(AsyncPlayerPreLoginEvent event) {
+		UUID uuid = event.getUniqueId();
+		db.loadPlayerData(uuid); 
+		// We do this so it fetches the cache, then when called for real
+		// by our CustomWorldNBTStorage class it doesn't have to wait and server won't lock.
+	}
 
 	@CivConfig(name = "lobby", def = "false", type = CivConfigType.Bool)
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -54,6 +63,7 @@ public class BetterShardsListener implements Listener{
 	public void playerQuitEvent(PlayerQuitEvent event) {
 		Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
+		db.playerQuitServer(uuid);
 		if (plugin.isPlayerInTransit(uuid))
 			return;
 	}
