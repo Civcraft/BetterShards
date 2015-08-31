@@ -61,13 +61,13 @@ public class BetterShardsPlugin extends ACivMod{
 		plugin = this;
 		config = GetConfig();
 		servName = MercuryConfigManager.getServerName();
+		registerMercuryChannels();
 		db = new DatabaseManager();
 		if (!db.isConnected())
 			Bukkit.getPluginManager().disablePlugin(this);
 		pm = new PortalsManager();
 		pm.loadPortalsManager();
 		registerListeners();
-		registerMercuryChannels();
 		setWorldNBTStorage();
 		uploadExistingPlayers();
 		
@@ -178,7 +178,7 @@ public class BetterShardsPlugin extends ACivMod{
 	}
 	
 	private void registerMercuryChannels() {
-		MercuryAPI.instance.registerPluginMessageChannel("BetterShardsPlugin");
+		MercuryAPI.instance.registerPluginMessageChannel("BetterShards");
 	}
 	
 	private void setWorldNBTStorage() {
@@ -255,6 +255,6 @@ public class BetterShardsPlugin extends ACivMod{
 	}
 	
 	public void sendBungeeUpdateMessage() {
-		MercuryAPI.instance.sendMessage("all", db.getAllExclude(), "removeServer");
+		MercuryAPI.instance.sendMessage("all", "removeServer " + db.getAllExclude(), "BetterShards");
 	}
 }
