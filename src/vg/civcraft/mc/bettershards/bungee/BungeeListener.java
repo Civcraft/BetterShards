@@ -25,8 +25,15 @@ public class BungeeListener implements Listener, EventListener{
 	
 	public BungeeListener() {
 		servers = redisAPI.getAllServers();
-		MercuryConfigManager.initialize();
-		ServiceManager.getService(); // Initialize everything.
+		plugin.getProxy().getScheduler().runAsync(plugin, new Runnable() {
+
+			@Override
+			public void run() {
+				MercuryConfigManager.initialize();
+				ServiceManager.getService(); // Initialize everything.
+			}
+			
+		});
 		EventManager.registerListener(this);
 	}
 	
@@ -36,10 +43,12 @@ public class BungeeListener implements Listener, EventListener{
 		if (redisAPI.getLastOnline(p.getUniqueId()) != -1)
 			return;
 		Random rand = new Random();
-		int random = rand.nextInt(servers.size()-1);
-		String server = servers.get(random);
-		ServerInfo sInfo = ProxyServer.getInstance().getServerInfo(server);
-		p.connect(sInfo);
+		synchronized(servers) {
+			int random = rand.nextInt(servers.size()-1);
+			String server = servers.get(random);
+			ServerInfo sInfo = ProxyServer.getInstance().getServerInfo(server);
+			p.connect(sInfo);
+		}
 	}
 
 	@Override
@@ -49,7 +58,9 @@ public class BungeeListener implements Listener, EventListener{
 		String[] content = message.split(" ");
 		if (!content[0].equals("removeServer"))
 			return;
-		for (int x = 1; x < content.length; x++)
-			servers.remove(content[x]);
+		synchronized (servers) {
+			for (int x = 1; x < content.length; x++)
+				servers.remove(content[x]);
+		}
 	}
 }
