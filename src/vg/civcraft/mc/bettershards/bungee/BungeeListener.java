@@ -59,6 +59,7 @@ public class BungeeListener implements Listener, EventListener{
 		if (!content[0].equals("removeServer"))
 			return;
 		synchronized (servers) {
+			servers = redisAPI.getAllServers();
 			for (int x = 1; x < content.length; x++)
 				servers.remove(content[x]);
 		}
