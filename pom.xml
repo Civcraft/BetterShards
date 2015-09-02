@@ -6,7 +6,7 @@
 	<groupId>vg.civcraft.mc.bettershards</groupId>
 	<artifactId>BetterShards</artifactId>
 	<packaging>jar</packaging>
-	<version>1.2.2</version>
+	<version>1.2.3</version>
 	<name>BetterShards</name>
 	<url>https://github.com/Civcraft/BetterShards</url>
 
@@ -84,27 +84,27 @@
 			<version>5.1.35</version>
 			<scope>provided</scope>
 		</dependency>
-        <dependency>
-            <groupId>net.md-5</groupId>
-            <artifactId>bungeecord-api</artifactId>
-            <version>1.8-SNAPSHOT</version>
-            <scope>provided</scope>
-			<type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>net.md-5</groupId>
-            <artifactId>bungeecord-protocol</artifactId>
-            <version>1.8-SNAPSHOT</version>
-            <scope>provided</scope>
-			<type>jar</type>
-        </dependency>
 		<dependency>
-            <groupId>com.imaginarycode.minecraft</groupId>
-            <artifactId>RedisBungee</artifactId>
-            <version>0.3.7-SNAPSHOT</version>
-            <type>jar</type>
-            <scope>provided</scope>
-        </dependency>
+			<groupId>net.md-5</groupId>
+			<artifactId>bungeecord-api</artifactId>
+			<version>1.8-SNAPSHOT</version>
+			<scope>provided</scope>
+			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>net.md-5</groupId>
+			<artifactId>bungeecord-protocol</artifactId>
+			<version>1.8-SNAPSHOT</version>
+			<scope>provided</scope>
+			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>com.imaginarycode.minecraft</groupId>
+			<artifactId>RedisBungee</artifactId>
+			<version>0.3.7-SNAPSHOT</version>
+			<type>jar</type>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 	<repositories>
 		<repository>
@@ -115,13 +115,13 @@
 			<id>spigot-repo</id>
 			<url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
 		</repository>
-        <repository>
-            <id>md_5-repo</id>
-            <url>http://repo.md-5.net/content/repositories/public/</url>
-        </repository>
-        <repository>
-            <id>sonatype</id>
-            <url>https://oss.sonatype.org/content/groups/public/</url>
-        </repository>
+		<repository>
+			<id>md_5-repo</id>
+			<url>http://repo.md-5.net/content/repositories/public/</url>
+		</repository>
+		<repository>
+			<id>sonatype</id>
+			<url>https://oss.sonatype.org/content/groups/public/</url>
+		</repository>
 	</repositories>
 </project>

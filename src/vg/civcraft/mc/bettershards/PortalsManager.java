@@ -42,7 +42,7 @@ public class PortalsManager extends SparseQuadTree{
 	
 	public void deletePortal(Portal portal){
 		remove(portal);
-		portals.remove(portal);
+		portals.remove(portal.getName());
 		db.removePortalData(portal);
 		db.removePortalLoc(portal);
 		BetterShardsPlugin.getInstance().sendPortalDelete(portal.getName());
@@ -56,12 +56,15 @@ public class PortalsManager extends SparseQuadTree{
 	 */
 	public Portal getPortal(Location loc){
 		Set<QTBox> portals = find(loc.getBlockX(), loc.getBlockZ());
+		for (String name: this.portals.keySet()) {
+			Portal p = this.portals.get(name);
 		for (QTBox box: portals){
 			if (!(box instanceof Portal))
 				continue;
 			CuboidPortal portal = (CuboidPortal) box;
 			if (portal.isValidY(loc.getBlockY()))
 				return portal;
+			}
 		}
 		return null; // Like the evil that is nothingness.
 	}
@@ -70,6 +73,8 @@ public class PortalsManager extends SparseQuadTree{
 		Portal p = portals.get(name);
 		if (p == null)
 			p = db.getPortal(name);
+		if (p == null)
+			return null;
 		portals.put(name, p);
 		return p;
 	}

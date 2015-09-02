@@ -47,7 +47,7 @@ public class BungeeListener implements Listener, EventListener{
 			int random = rand.nextInt(servers.size()-1);
 			String server = servers.get(random);
 			ServerInfo sInfo = ProxyServer.getInstance().getServerInfo(server);
-			p.connect(sInfo);
+			event.setTarget(sInfo);
 		}
 	}
 

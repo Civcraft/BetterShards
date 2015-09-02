@@ -54,19 +54,19 @@ public class Grid {
 	public int getXRadius() {
 		if (right == null || left == null)
 			return 0;
-		return left.getBlockX() - right.getBlockX();
+		return right.getBlockX() - left.getBlockX();
 	}
 	
 	public int getYRadius() {
 		if (right == null || left == null)
 			return 0;
-		return left.getBlockY() - right.getBlockY();
+		return right.getBlockY() - left.getBlockY();
 	}
 	
 	public int getZRadius() {
 		if (right == null || left == null)
 			return 0;
-		return left.getBlockZ() - right.getBlockZ();
+		return right.getBlockZ() - left.getBlockZ();
 	}
 	
 	public enum GridLocation {

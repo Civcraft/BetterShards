@@ -97,10 +97,10 @@ public class DatabaseManager{
 		getPlayerData = "select * from createPlayerData where uuid = ?;";
 		removePlayerData = "delete from createPlayerData where uuid = ?;";
 		
-		addPortalLoc = "insert into createPortalLocData(rangex, rangy, rangez, x, y, z, world, id)"
+		addPortalLoc = "insert into createPortalLocData(rangex, rangey, rangez, x, y, z, world, id)"
 				+ "values (?,?,?,?,?,?,?,?);";
 		getPortalLocByWorld = "select * from createPortalLocData where world = ?;";
-		getPortalLoc = "select * from createPortalLocData where name = ?;";
+		getPortalLoc = "select * from createPortalLocData where id = ?;";
 		removePortalLoc = "delete from createPortalDataTable where id = ?;";
 		
 		addPortalData = "insert into createPortalDataTable(id, server_name, portal_type, partner_id)"
@@ -124,12 +124,12 @@ public class DatabaseManager{
 			if (portal instanceof CuboidPortal){
 				CuboidPortal p = (CuboidPortal) portal;
 				addPortalLoc.setInt(1, p.getXRange());
-				addPortalLoc.setInt(2,p.getYRange());
+				addPortalLoc.setInt(2, p.getYRange());
 				addPortalLoc.setInt(3, p.getZRange());
 				addPortalLoc.setInt(4, p.getCornerBlockLocation().getBlockX());
 				addPortalLoc.setInt(5, p.getCornerBlockLocation().getBlockY());
 				addPortalLoc.setInt(6, p.getCornerBlockLocation().getBlockZ());
-				addPortalLoc.setString(7, p.getCornerBlockLocation().getWorld().toString());
+				addPortalLoc.setString(7, p.getCornerBlockLocation().getWorld().getName());
 				addPortalLoc.setString(8, p.getName());
 				addPortalLoc.execute();
 			}
@@ -142,7 +142,7 @@ public class DatabaseManager{
 		invCache.remove(uuid);
 	}
 	
-	private String serverName = plugin.getName();
+	private String serverName = plugin.getCurrentServerName();
 	public void addPortalData(Portal portal, Portal connection){
 		PreparedStatement addPortalData = db.prepareStatement(this.addPortalData);
 		try {
@@ -262,7 +262,7 @@ public class DatabaseManager{
 			ResultSet set = getPortalData.executeQuery();
 			if (!set.next())
 				return null;
-			PortalType type = PortalType.valueOf(set.getString("portal_type"));
+			PortalType type = PortalType.fromOrdeal(set.getInt("portal_type"));
 			String serverName = set.getString("server_name");
 			String partner = set.getString("partner_id");
 			boolean currentServer = corner != null;
@@ -317,7 +317,10 @@ public class DatabaseManager{
 	public void updatePortalData(Portal p) {
 		PreparedStatement updatePortalData = db.prepareStatement(this.updatePortalData);
 		try {
-			updatePortalData.setString(1, p.getPartnerPortal().getName());
+			String partner = null;
+			if (p.getPartnerPortal() != null)
+				partner = p.getPartnerPortal().getName();
+			updatePortalData.setString(1, partner);
 			updatePortalData.setString(2, p.getName());
 			updatePortalData.execute();
 		} catch (SQLException e) {

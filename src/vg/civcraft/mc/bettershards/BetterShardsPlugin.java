@@ -13,34 +13,32 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
-import net.minecraft.server.v1_8_R3.EntityHuman;
 import net.minecraft.server.v1_8_R3.IDataManager;
-import net.minecraft.server.v1_8_R3.IPlayerFileData;
 import net.minecraft.server.v1_8_R3.MinecraftServer;
-import net.minecraft.server.v1_8_R3.NBTCompressedStreamTools;
-import net.minecraft.server.v1_8_R3.NBTTagCompound;
 import net.minecraft.server.v1_8_R3.WorldServer;
 
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 
+import vg.civcraft.mc.bettershards.command.BetterCommandHandler;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.listeners.BetterShardsListener;
+import vg.civcraft.mc.bettershards.listeners.MercuryListener;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.ACivMod;
 import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.mercury.MercuryAPI;
-import vg.civcraft.mc.mercury.MercuryPlugin;
 import vg.civcraft.mc.mercury.config.MercuryConfigManager;
 
 public class BetterShardsPlugin extends ACivMod{
@@ -71,6 +69,11 @@ public class BetterShardsPlugin extends ACivMod{
 		setWorldNBTStorage();
 		uploadExistingPlayers();
 		
+		new BetterShardsAPI();
+		
+		handle = new BetterCommandHandler();
+		handle.registerCommands();
+		
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
 
 			@Override
@@ -83,8 +86,10 @@ public class BetterShardsPlugin extends ACivMod{
 	
 	@Override
 	public void onDisable(){
-		
+		for (Player p: Bukkit.getOnlinePlayers())
+			p.kickPlayer("Kicking in order to make sure your data is saved!");
 	}
+	
 	/**
 	 * @return Returns the instance of the JavaPlugin.
 	 */
@@ -117,10 +122,13 @@ public class BetterShardsPlugin extends ACivMod{
 	 * @param server- The server to teleport the player to.
 	 */
 	public boolean teleportPlayerToServer(Player p, String server, PlayerChangeServerReason reason){
+		if (isPlayerInTransit(p.getUniqueId())) // Somehow this got triggered twice for one reason or another
+				return false; // We dont wan't to continue twice because it could cause issues with the db.
 		PlayerChangeServerEvent event = new PlayerChangeServerEvent(reason, p.getUniqueId(), server);
 		Bukkit.getPluginManager().callEvent(event);
 		if (event.isCancelled())
 			return false;
+		CustomWorldNBTStorage.getWorldNBTStorage().save(((CraftPlayer) p).getHandle());
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
 		out.writeUTF("Connect");
 		out.writeUTF(server);
@@ -139,6 +147,7 @@ public class BetterShardsPlugin extends ACivMod{
 		// Register Bukkit Event Listener.
 		BetterShardsListener l = new BetterShardsListener();
 		getServer().getPluginManager().registerEvents(l, this);
+		getServer().getPluginManager().registerEvents(new MercuryListener(), this);
 	}
 	
 	public static String getCurrentServerName(){
@@ -170,11 +179,11 @@ public class BetterShardsPlugin extends ACivMod{
 	}
 	
 	public void teleportPlayer(UUID uuid, String location) {
-		MercuryAPI.instance.sendMessage("all", "teleport " + uuid.toString() + " " + location, "BetterShards");
+		MercuryAPI.instance.sendMessage("all", "teleport teleport " + uuid.toString() + " " + location, "BetterShards");
 	}
 	
 	public void teleportPlayer(UUID uuid, Portal p) {
-		MercuryAPI.instance.sendMessage("all", "teleport " + uuid.toString() + " " + p.getName(), "BetterShards");
+		MercuryAPI.instance.sendMessage("all", "teleport portal " + uuid.toString() + " " + p.getName(), "BetterShards");
 	}
 	
 	private void registerMercuryChannels() {

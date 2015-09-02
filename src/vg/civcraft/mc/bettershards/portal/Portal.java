@@ -11,7 +11,7 @@ import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.civmodcore.locations.QTBox;
 
-public class Portal implements QTBox {
+public class Portal implements QTBox, Comparable<Portal>{
 
 	protected Location corner; // This should be the location of the first block
 								// identified
@@ -82,7 +82,7 @@ public class Portal implements QTBox {
 	@Override
 	public int qtXMin() {
 		if (xrange < 0)
-			return corner.getBlockX() - xrange;
+			return corner.getBlockX() + xrange;
 		return corner.getBlockX();
 	}
 
@@ -101,13 +101,16 @@ public class Portal implements QTBox {
 	@Override
 	public int qtZMin() {
 		if (zrange < 0)
-			return corner.getBlockZ() - zrange;
+			return corner.getBlockZ() + zrange;
 		return corner.getBlockZ();
 	}
 
 	public boolean isValidY(int y) {
-		return corner.getBlockY() + yrange >= y
-				&& corner.getBlockY() - yrange <= y;
+		if (yrange < 0)
+			return corner.getBlockY() + yrange <= y
+			&& corner.getBlockY() >= y;
+		return corner.getBlockY() - yrange <= y
+				&& corner.getBlockY() >= y;
 	}
 
 	// *------------------------------------------------------------------------------------------------------------*
@@ -193,5 +196,33 @@ public class Portal implements QTBox {
 		if (connection.getServerName().equals(BetterShardsAPI.getServerName()))
 			p.teleport(connection.findRandomSafeLocation());
 		BetterShardsAPI.connectPlayer(p, connection, PlayerChangeServerReason.PORTAL);
+	}
+
+	@Override
+	public int compareTo(Portal o) {
+		if (isOnCurrentServer && !o.isOnCurrentServer())
+			return -1;
+		int x = corner.getBlockX(), y = corner.getBlockY(), z = corner.getBlockZ();
+		int ox = o.getCornerBlockLocation().getBlockX(), oy = o.getCornerBlockLocation().getBlockY(),
+				oz = o.getCornerBlockLocation().getBlockZ();
+	    if (x < ox) {
+	        return -1;
+	      }
+	      if (x > ox) {
+	        return 1;
+	      }
+	      if (z < oz) {
+	        return -1;
+	      }
+	      if (z > oz) {
+	        return 1;
+	      }
+	      if (y < oy) {
+	        return -1;
+	      }
+	      if (y > oy) {
+	        return 1;
+	      }
+	      return 0;  // equal
 	}
 }

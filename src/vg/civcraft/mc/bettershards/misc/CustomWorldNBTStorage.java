@@ -20,9 +20,12 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 
 	private DatabaseManager db = BetterShardsPlugin.getInstance()
 			.getDatabaseManager();
+	
+	private static CustomWorldNBTStorage storage;
 
 	public CustomWorldNBTStorage(File file, String s, boolean flag) {
 		super(file, s, flag);
+		storage = this;
 	}
 
 	@Override
@@ -91,5 +94,9 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 							"Failed to load player data for " + s);
 		}
 		return null;
+	}
+
+	public static CustomWorldNBTStorage getWorldNBTStorage() {
+		return storage;
 	}
 }

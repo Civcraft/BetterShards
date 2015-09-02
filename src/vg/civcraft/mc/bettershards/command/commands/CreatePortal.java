@@ -41,7 +41,14 @@ public class CreatePortal extends PlayerCommand{
 			return sendPlayerMessage(p, ChatColor.RED + "Your secondary selection has not been chosen.", true);
 		else if (g.getMissingSelection() == GridLocation.LEFTSELECTION)
 			return sendPlayerMessage(p, ChatColor.RED + "Your primary selection has not been chosen.", true);
-		PortalType type = PortalType.fromOrdeal(Integer.parseInt(args[1]));
+		int selection = -1;
+		try {
+			selection = Integer.parseInt(args[1]);
+		} catch (Exception e) {
+			PortalType.sendPlayerErrorMessage(p);
+			return true;
+		}
+		PortalType type = PortalType.fromOrdeal(selection);
 		if (type == null) {
 			PortalType.sendPlayerErrorMessage(p);
 			return true;

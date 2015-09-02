@@ -83,8 +83,9 @@ public class BetterShardsListener implements Listener{
         Player player = event.getPlayer();
         
         Portal p = pm.getPortal(to);
-        if (p == null)
+        if (p == null) {
         	return;
+        }
         // We need this check incase the player just teleported inside the field.
         // We know he does not need to teleport back.
         if (pm.canTransferPlayer(player))
@@ -100,8 +101,8 @@ public class BetterShardsListener implements Listener{
 		Action a = event.getAction();
 		if ((a != Action.RIGHT_CLICK_BLOCK ||
 				a != Action.LEFT_CLICK_BLOCK) &&
-				(p.getItemInHand().getType() != Material.COMPASS ||
-				!(p.hasPermission("bettershards.build") || p.isOp())))
+				(p.getItemInHand().getType() != Material.COMPASS) || 
+				!(p.hasPermission("bettershards.build") || p.isOp()))
 			return;
 		Grid g = plugin.getPlayerGrid(p);
 		Location loc = event.getClickedBlock().getLocation();
@@ -112,7 +113,6 @@ public class BetterShardsListener implements Listener{
 		}
 		else {
 			g.setRightClickLocation(loc);
-
 			message += "Your secondary block selection has been set.";
 		}
 		p.sendMessage(message);

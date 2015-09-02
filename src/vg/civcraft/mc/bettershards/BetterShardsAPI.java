@@ -22,8 +22,8 @@ public class BetterShardsAPI {
 	}
 	
 	public static void connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason) {
-		plugin.teleportPlayer(p.getUniqueId(), portal);
 		plugin.addPlayerToTransit(p.getUniqueId());
+		plugin.teleportPlayer(p.getUniqueId(), portal);
 		plugin.teleportPlayerToServer(p, portal.getServerName(), reason);
 	}
 
