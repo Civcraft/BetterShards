@@ -17,14 +17,16 @@ public class BetterShardsAPI {
 	}
 	
 	public static void connectPlayer(Player p, String serverName, PlayerChangeServerReason reason) {
-		plugin.addPlayerToTransit(p.getUniqueId());
 		plugin.teleportPlayerToServer(p, serverName, reason);
+		// Do this after we initiate a teleport so that the player wont try get teleported twice.
+		plugin.addPlayerToTransit(p.getUniqueId()); 
 	}
 	
 	public static void connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason) {
-		plugin.addPlayerToTransit(p.getUniqueId());
 		plugin.teleportPlayer(p.getUniqueId(), portal);
 		plugin.teleportPlayerToServer(p, portal.getServerName(), reason);
+		// Do this after we initiate a teleport so that the player wont try get teleported twice.
+		plugin.addPlayerToTransit(p.getUniqueId());
 	}
 
 	public static String getServerName() {

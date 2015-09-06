@@ -26,7 +26,6 @@ public class MercuryListener implements Listener{
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void asyncPluginBroadcastMessageEvent(AsyncPluginBroadcastMessageEvent event) {
 		String channel = event.getChannel();
-		System.out.println("The channel was " + channel);
 		if (!channel.equals(c))
 			return;
 		String message = event.getMessage();
@@ -51,7 +50,6 @@ public class MercuryListener implements Listener{
 						if (!portal.isOnCurrentServer())
 							return;
 						uuids.put(uuid, portal.findRandomSafeLocation());
-						System.out.println(uuid.toString() + " has teleported to " +p);
 					}
 					else if (action.equals("teleport")) {
 						uuid = UUID.fromString(content[2]);
@@ -60,7 +58,6 @@ public class MercuryListener implements Listener{
 					}
 					
 					if (Bukkit.getPlayer(uuid) != null){
-						System.out.println("Testing123");
 						Bukkit.getPlayer(uuid).teleport(getTeleportLocation(uuid));
 					}
 				}

@@ -6,7 +6,7 @@
 	<groupId>vg.civcraft.mc.bettershards</groupId>
 	<artifactId>BetterShards</artifactId>
 	<packaging>jar</packaging>
-	<version>1.2.4</version>
+	<version>1.2.5</version>
 	<name>BetterShards</name>
 	<url>https://github.com/Civcraft/BetterShards</url>
 

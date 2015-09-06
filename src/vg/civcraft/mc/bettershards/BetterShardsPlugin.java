@@ -184,6 +184,11 @@ public class BetterShardsPlugin extends ACivMod{
 		MercuryAPI.instance.sendMessage("all", "teleport teleport " + uuid.toString() + " " + location, "BetterShards");
 	}
 	
+	/**
+	 * Used to tell mercury that a player is teleporting.
+	 * @param uuid
+	 * @param p
+	 */
 	public void teleportPlayer(UUID uuid, Portal p) {
 		MercuryAPI.instance.sendMessage("all", "teleport portal " + uuid.toString() + " " + p.getName(), "BetterShards");
 	}
