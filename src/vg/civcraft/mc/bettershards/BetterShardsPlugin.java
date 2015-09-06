@@ -128,6 +128,8 @@ public class BetterShardsPlugin extends ACivMod{
 		Bukkit.getPluginManager().callEvent(event);
 		if (event.isCancelled())
 			return false;
+		if (p.isInsideVehicle())
+			p.getVehicle().remove();
 		CustomWorldNBTStorage.getWorldNBTStorage().save(((CraftPlayer) p).getHandle());
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
 		out.writeUTF("Connect");
