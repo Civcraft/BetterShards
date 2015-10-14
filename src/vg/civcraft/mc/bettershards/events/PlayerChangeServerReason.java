@@ -5,5 +5,6 @@ public enum PlayerChangeServerReason {
 	PORTAL,
 	TP_COMMAND,
 	PLUGIN,
-	OTHER;
+	OTHER,
+	BED;
 }

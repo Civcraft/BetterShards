@@ -1,7 +1,9 @@
 package vg.civcraft.mc.bettershards.bungee;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 import com.imaginarycode.minecraft.redisbungee.RedisBungee;
 import com.imaginarycode.minecraft.redisbungee.RedisBungeeAPI;
@@ -9,6 +11,7 @@ import com.imaginarycode.minecraft.redisbungee.RedisBungeeAPI;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.event.LoginEvent;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
@@ -22,6 +25,7 @@ public class BungeeListener implements Listener, EventListener{
 	private RedisBungeeAPI redisAPI = RedisBungee.getApi();
 	private BetterShardsBungee plugin = BetterShardsBungee.getInstance();
 	private List<String> servers;
+	private List<UUID> pending = new ArrayList<UUID>();
 	
 	public BungeeListener() {
 		servers = redisAPI.getAllServers();
@@ -38,10 +42,17 @@ public class BungeeListener implements Listener, EventListener{
 	}
 	
 	@EventHandler()
+	public void playerLoginNetwork(LoginEvent event) {
+		if (redisAPI.getLastOnline(event.getConnection().getUniqueId()) != -1)
+			return;
+		pending.add(event.getConnection().getUniqueId());
+	}
+	
+	@EventHandler()
 	public void playerJoinedBungeeNetwork(ServerConnectEvent event) {
 		ProxiedPlayer p = event.getPlayer();
-		if (redisAPI.getLastOnline(p.getUniqueId()) != -1)
-			return;
+		if (!pending.contains(p.getUniqueId()))
+				return;
 		Random rand = new Random();
 		synchronized(servers) {
 			int random = rand.nextInt(servers.size()-1);
@@ -49,6 +60,7 @@ public class BungeeListener implements Listener, EventListener{
 			ServerInfo sInfo = ProxyServer.getInstance().getServerInfo(server);
 			event.setTarget(sInfo);
 		}
+		pending.remove(p.getUniqueId());
 	}
 
 	@Override

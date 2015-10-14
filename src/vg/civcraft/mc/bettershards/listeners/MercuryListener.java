@@ -13,6 +13,7 @@ import org.bukkit.event.Listener;
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.PortalsManager;
+import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.mercury.events.AsyncPluginBroadcastMessageEvent;
 
@@ -20,6 +21,7 @@ public class MercuryListener implements Listener{
 	
 	private String c = "BetterShards";
 	private PortalsManager pm = BetterShardsAPI.getPortalsManager();
+	private BetterShardsPlugin plugin = BetterShardsPlugin.getInstance();
 	
 	private static Map<UUID, Location> uuids = new ConcurrentHashMap<UUID, Location>();
 
@@ -35,8 +37,7 @@ public class MercuryListener implements Listener{
 			if (p != null)
 				pm.deletePortal(p);
 		}
-		
-		if (content[0].equals("teleport")) {
+		else if (content[0].equals("teleport")) {
 			Bukkit.getScheduler().runTask(BetterShardsPlugin.getInstance(), new Runnable() {
 
 				@Override
@@ -51,9 +52,15 @@ public class MercuryListener implements Listener{
 							return;
 						uuids.put(uuid, portal.findRandomSafeLocation());
 					}
-					else if (action.equals("teleport")) {
+					else if (action.equals("command")) {
 						uuid = UUID.fromString(content[2]);
-						Location loc = new Location(Bukkit.getWorld(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
+						Location loc = null;
+						try {
+							loc = new Location(Bukkit.getWorld(UUID.fromString(content[3])), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
+						} catch(IllegalArgumentException e) {
+							// The world uuid is none existent so it must be a world name.
+							loc = new Location(Bukkit.getWorld(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
+						}
 						uuids.put(uuid, loc);
 					}
 					
@@ -64,10 +71,24 @@ public class MercuryListener implements Listener{
 				
 			});
 		}
+		else if (content[0].equals("bed")) { 
+			if (content[1].equals("add")) {
+				StringBuilder builder = new StringBuilder();
+				UUID uuid = UUID.fromString(content[2]);
+				String server = content[3];
+				for (int x = 4; x < content.length; x++)
+					builder.append(content[x] + " ");
+				BedLocation bed = new BedLocation(uuid, builder.toString(), server);
+				plugin.addBedLocation(uuid, bed);
+			}
+			else if (content[1].equals("remove")) {
+				UUID uuid = UUID.fromString(content[2]);
+				plugin.removeBed(uuid);
+			}
+		}
 	}
 	
 	public static Location getTeleportLocation(UUID uuid) {
-		System.out.println("Getting the teleport location + " + uuids.get(uuid));
 		Location loc = uuids.get(uuid);
 		uuids.remove(uuid);
 		return loc;

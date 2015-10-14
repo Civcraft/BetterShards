@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +32,11 @@ import vg.civcraft.mc.bettershards.command.BetterCommandHandler;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
+import vg.civcraft.mc.bettershards.external.CombatTagManager;
+import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.listeners.BetterShardsListener;
 import vg.civcraft.mc.bettershards.listeners.MercuryListener;
+import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.portal.Portal;
@@ -48,8 +52,11 @@ public class BetterShardsPlugin extends ACivMod{
 	private DatabaseManager db;
 	private static Config config;
 	private static String servName;
+	private static CombatTagManager combatManager;
+	private static MercuryManager mercuryManager;
 
 	private Map<Player, Grid> grids = new HashMap<Player, Grid>();
+	private Map<UUID, BedLocation> beds = new HashMap<UUID, BedLocation>();
 	
 	private List<UUID> transit = new ArrayList<UUID>();
 	
@@ -59,7 +66,8 @@ public class BetterShardsPlugin extends ACivMod{
 		plugin = this;
 		config = GetConfig();
 		servName = MercuryConfigManager.getServerName();
-		registerMercuryChannels();
+		mercuryManager = new MercuryManager();
+		combatManager = new CombatTagManager(getServer());
 		db = new DatabaseManager();
 		if (!db.isConnected())
 			Bukkit.getPluginManager().disablePlugin(this);
@@ -82,6 +90,7 @@ public class BetterShardsPlugin extends ACivMod{
 			}
 			
 		}, 100, 1000);
+		loadAllBeds();
 	}
 	
 	@Override
@@ -99,7 +108,7 @@ public class BetterShardsPlugin extends ACivMod{
 	/**
 	 * This adds a player to a list that can be checked to see if a player is in transit.
 	 */
-	public void addPlayerToTransit(final UUID uuid){
+	private void addPlayerToTransit(final UUID uuid){
 		transit.add(uuid);
 		Bukkit.getScheduler().runTaskLater(this, new Runnable(){
 
@@ -128,8 +137,11 @@ public class BetterShardsPlugin extends ACivMod{
 		Bukkit.getPluginManager().callEvent(event);
 		if (event.isCancelled())
 			return false;
+		if (combatManager.isCombatTagPlusNPC(p) || combatManager.isCombatTagPlusNPC(p)) 
+			return false;
 		if (p.isInsideVehicle())
-			p.getVehicle().remove();
+			p.getVehicle().eject();
+		addPlayerToTransit(p.getUniqueId()); // So the player isn't tried to be sent twice.
 		CustomWorldNBTStorage.getWorldNBTStorage().save(((CraftPlayer) p).getHandle());
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
 		out.writeUTF("Connect");
@@ -174,27 +186,6 @@ public class BetterShardsPlugin extends ACivMod{
 			grids.put(p, g);
 		}
 		return g;
-	}
-	
-	public void sendPortalDelete(String name) {
-		MercuryAPI.instance.sendMessage("all", "delete " + name, "BetterShards");
-	}
-	
-	public void teleportPlayer(UUID uuid, String location) {
-		MercuryAPI.instance.sendMessage("all", "teleport teleport " + uuid.toString() + " " + location, "BetterShards");
-	}
-	
-	/**
-	 * Used to tell mercury that a player is teleporting.
-	 * @param uuid
-	 * @param p
-	 */
-	public void teleportPlayer(UUID uuid, Portal p) {
-		MercuryAPI.instance.sendMessage("all", "teleport portal " + uuid.toString() + " " + p.getName(), "BetterShards");
-	}
-	
-	private void registerMercuryChannels() {
-		MercuryAPI.instance.registerPluginMessageChannel("BetterShards");
 	}
 	
 	private void setWorldNBTStorage() {
@@ -272,5 +263,52 @@ public class BetterShardsPlugin extends ACivMod{
 	
 	public void sendBungeeUpdateMessage() {
 		MercuryAPI.instance.sendMessage("all", "removeServer " + db.getAllExclude(), "BetterShards");
+	}
+	
+	public static CombatTagManager getCombatTagManager() {
+		return combatManager;
+	}
+	
+	private void loadAllBeds() {
+		List<BedLocation> db_beds = db.getAllBedLocations();
+		for (BedLocation bed: db_beds) {
+			beds.put(bed.getUUID(), bed);
+		}
+	}
+	
+	/**
+	 * Only loads the BedLocation into cache.  If you are looking 
+	 * to store a BedLocation into db look at BetterShardsListener
+	 * @param uuid The UUID of the player
+	 * @param bed The BedLocation object
+	 */
+	public void addBedLocation(UUID uuid, BedLocation bed) {
+		beds.put(uuid, bed);
+	}
+	
+	/**
+	 * Checks if the player has a bed.
+	 * @param uuid The uuid of the player.
+	 * @return Returns the BedLocation if it exists.
+	 */
+	public BedLocation getBed(UUID uuid) {
+		return beds.get(uuid);
+	}
+	
+	/**
+	 * This only removed the BedLocation object from the cache.
+	 * To clear from the database you must call the db.removeBed(uuid);
+	 * @param uuid The UUID of the player.
+	 */
+	public void removeBed(UUID uuid) {
+		beds.remove(uuid);
+	}
+	
+	public Collection<BedLocation> getAllBeds() {
+		return beds.values();
+	}
+	
+	public static MercuryManager getMercuryManager() { 
+		return mercuryManager;
 	}
 }

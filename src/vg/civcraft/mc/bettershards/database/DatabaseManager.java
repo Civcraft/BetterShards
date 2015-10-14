@@ -16,6 +16,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
+import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.PortalType;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
@@ -36,6 +37,7 @@ public class DatabaseManager{
 	private String addPortalLoc, getPortalLocByWorld, getPortalLoc, removePortalLoc;
 	private String addPortalData, getPortalData, removePortalData, updatePortalData;
 	private String addExclude, getAllExclude, removeExclude;
+	private String addBedLocation, getAllBedLocation, removeBedLocation;
 	
 	public DatabaseManager(){
 		config = plugin.GetConfig();
@@ -86,6 +88,14 @@ public class DatabaseManager{
 		db.execute("create table if not exists excludedServers("
 				+ "name varchar(20) not null,"
 				+ "primary key name_id(name));");
+		db.execute("create table if not exists player_beds("
+				+ "uuid varchar(36) not null,"
+				+ "server varchar(36) not null,"
+				+ "world_uuid varchar(36) not null,"
+				+ "x int not null,"
+				+ "y int not null,"
+				+ "z int not null,"
+				+ "primary key bed_id(uuid));");
 	}
 	
 	public boolean isConnected() {
@@ -112,6 +122,11 @@ public class DatabaseManager{
 		addExclude = "insert ignore into excludedServers(name) values(?);";
 		removeExclude = "delete from excludedServers where name = ?;";
 		getAllExclude = "select * from excludedServers;";
+		
+		addBedLocation = "insert into player_beds (uuid, server, world_uuid "
+				+ "x, y, z) values (?,?,?,?,?,?)";
+		getAllBedLocation = "select * from player_beds;";
+		removeBedLocation = "delete from player_beds where uuid = ?;";
 	}
 	
 	/**
@@ -359,6 +374,57 @@ public class DatabaseManager{
 		try {
 			removeExclude.setString(1, server);
 			removeExclude.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void addBedLocation(BedLocation bed) {
+		PreparedStatement addBedLocation = db.prepareStatement(this.addBedLocation);
+		try {
+			addBedLocation.setString(1, bed.getUUID().toString());
+			addBedLocation.setString(2, bed.getServer());
+			String[] locs = bed.getLocation().split(" ");
+			addBedLocation.setString(3, locs[0]);
+			addBedLocation.setInt(4, Integer.parseInt(locs[1]));
+			addBedLocation.setInt(5, Integer.parseInt(locs[2]));
+			addBedLocation.setInt(6, Integer.parseInt(locs[3]));
+			addBedLocation.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public List<BedLocation> getAllBedLocations() {
+		List<BedLocation> beds = new ArrayList<BedLocation>();
+		PreparedStatement getAllBedLocation = db.prepareStatement(this.getAllBedLocation);
+		try {
+			ResultSet set = getAllBedLocation.executeQuery();
+			while (set.next()) {
+				UUID uuid = UUID.fromString(set.getString("uuid"));
+				String server = set.getString("server");
+				UUID world_uuid = UUID.fromString(set.getString("world_uuid"));
+				int x = set.getInt("x");
+				int y = set.getInt("y");
+				int z = set.getInt("z");
+				String loc = world_uuid.toString() + " " + x + " " + y + " " + z;
+				BedLocation bed = new BedLocation(uuid, loc, server);
+				beds.add(bed);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return beds;
+	}
+	
+	public void removeBed(UUID uuid) {
+		PreparedStatement removeBedLocation = db.prepareStatement(this.removeBedLocation);
+		try {
+			removeBedLocation.setString(1, uuid.toString());
+			removeBedLocation.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

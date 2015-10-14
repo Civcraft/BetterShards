@@ -16,7 +16,7 @@ import vg.civcraft.mc.bettershards.portal.PortalType;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
 import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 
-public class CreatePortal extends PlayerCommand{
+public class CreatePortal extends PlayerCommand {
 
 	private PortalsManager pm = BetterShardsAPI.getPortalsManager();
 	public CreatePortal(String name) {

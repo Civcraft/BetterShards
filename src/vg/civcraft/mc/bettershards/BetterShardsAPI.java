@@ -4,29 +4,28 @@ import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
+import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class BetterShardsAPI {
 
 	private static BetterShardsPlugin plugin;
+	private static MercuryManager mercManager;
 	private static DatabaseManager db;
 	
 	public BetterShardsAPI() {
 		plugin = BetterShardsPlugin.getInstance();
 		db = plugin.getDatabaseManager();
+		mercManager = BetterShardsPlugin.getMercuryManager();
 	}
 	
 	public static void connectPlayer(Player p, String serverName, PlayerChangeServerReason reason) {
 		plugin.teleportPlayerToServer(p, serverName, reason);
-		// Do this after we initiate a teleport so that the player wont try get teleported twice.
-		plugin.addPlayerToTransit(p.getUniqueId()); 
 	}
 	
 	public static void connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason) {
-		plugin.teleportPlayer(p.getUniqueId(), portal);
-		plugin.teleportPlayerToServer(p, portal.getServerName(), reason);
-		// Do this after we initiate a teleport so that the player wont try get teleported twice.
-		plugin.addPlayerToTransit(p.getUniqueId());
+		if (plugin.teleportPlayerToServer(p, portal.getServerName(), reason))
+			mercManager.teleportPlayer(p.getUniqueId(), portal); // We want to do this after because we don't know if a player was teleported yet.
 	}
 
 	public static String getServerName() {

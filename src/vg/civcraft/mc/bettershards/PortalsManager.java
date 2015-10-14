@@ -12,6 +12,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
+import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
 import vg.civcraft.mc.civmodcore.locations.QTBox;
@@ -22,10 +23,12 @@ public class PortalsManager extends SparseQuadTree{
 	private DatabaseManager db = BetterShardsPlugin.getInstance().getDatabaseManager();
 	private Map<String, Portal> portals;
 	private List<Player> arrivedPlayers = new ArrayList<Player>();
+	private MercuryManager mercManager;
 	
 	public PortalsManager() {
 		super();
 		portals = new HashMap<String, Portal>();
+		mercManager = BetterShardsPlugin.getMercuryManager();
 	}
 	
 	public void loadPortalsManager() {
@@ -45,7 +48,7 @@ public class PortalsManager extends SparseQuadTree{
 		portals.remove(portal.getName());
 		db.removePortalData(portal);
 		db.removePortalLoc(portal);
-		BetterShardsPlugin.getInstance().sendPortalDelete(portal.getName());
+		mercManager.sendPortalDelete(portal.getName());
 	}
 	
 	/*
