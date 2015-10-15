@@ -59,6 +59,7 @@ public class BungeeListener implements Listener, EventListener{
 	
 	@EventHandler()
 	public void playerLoginNetwork(LoginEvent event) {
+		System.out.println(redisAPI.getLastOnline(event.getConnection().getUniqueId()) + " " + event.getConnection().getUniqueId().toString());
 		if (redisAPI.getLastOnline(event.getConnection().getUniqueId()) != -1)
 			return;
 		pending.add(event.getConnection().getUniqueId());
