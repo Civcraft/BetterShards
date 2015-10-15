@@ -105,6 +105,12 @@
 			<type>jar</type>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>net.minelink</groupId>
+			<artifactId>CombatTagPlus</artifactId>
+			<version>[1.2.0,)</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 	<repositories>
 		<repository>
@@ -122,6 +128,10 @@
 		<repository>
 			<id>sonatype</id>
 			<url>https://oss.sonatype.org/content/groups/public/</url>
+		</repository>
+		<repository>
+			<id>minelink-releases</id>
+			<url>http://repo.minelink.net/content/repositories/releases/</url>
 		</repository>
 	</repositories>
 </project>
