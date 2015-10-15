@@ -17,6 +17,7 @@ import net.md_5.bungee.api.event.LoginEvent;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
+import vg.civcraft.mc.mercury.MercuryAPI;
 import vg.civcraft.mc.mercury.ServiceManager;
 import vg.civcraft.mc.mercury.config.MercuryConfigManager;
 import vg.civcraft.mc.mercury.events.EventListener;
@@ -46,13 +47,13 @@ public class BungeeListener implements Listener, EventListener{
 			public void run() {
 				synchronized(servers) {
 					servers.clear();
-					for (String x: redisAPI.getServerToPlayers().keySet()) {
+					for (String x: MercuryAPI.instance.getAllConnectedServers()) {
 						servers.add(x);
 					}
 				}
 			}
 			
-		}, 5, 5, TimeUnit.SECONDS);
+		}, 0, 5, TimeUnit.SECONDS);
 		EventManager.registerListener(this);
 	}
 	
