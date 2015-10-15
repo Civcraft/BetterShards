@@ -38,9 +38,15 @@ public class BungeeListener implements Listener, EventListener{
 			public void run() {
 				MercuryConfigManager.initialize();
 				ServiceManager.getService(); // Initialize everything.
+				scheduleServerScheduler();
 			}
 			
 		});
+		
+		EventManager.registerListener(this);
+	}
+	
+	private void scheduleServerScheduler() {
 		plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
 
 			@Override
@@ -54,7 +60,6 @@ public class BungeeListener implements Listener, EventListener{
 			}
 			
 		}, 0, 5, TimeUnit.SECONDS);
-		EventManager.registerListener(this);
 	}
 	
 	@EventHandler()
