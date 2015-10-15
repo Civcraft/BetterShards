@@ -32,16 +32,7 @@ public class BungeeListener implements Listener, EventListener{
 	
 	public BungeeListener() {
 		servers = new ArrayList<String>();
-		plugin.getProxy().getScheduler().runAsync(plugin, new Runnable() {
-
-			@Override
-			public void run() {
-				MercuryConfigManager.initialize();
-				ServiceManager.getService(); // Initialize everything.
-				scheduleServerScheduler();
-			}
-			
-		});
+		scheduleServerScheduler();
 		
 		EventManager.registerListener(this);
 	}
