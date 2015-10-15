@@ -1,9 +1,11 @@
 package vg.civcraft.mc.bettershards.bungee;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import com.imaginarycode.minecraft.redisbungee.RedisBungee;
 import com.imaginarycode.minecraft.redisbungee.RedisBungeeAPI;
@@ -28,7 +30,7 @@ public class BungeeListener implements Listener, EventListener{
 	private List<UUID> pending = new ArrayList<UUID>();
 	
 	public BungeeListener() {
-		servers = redisAPI.getAllServers();
+		servers = new ArrayList<String>();
 		plugin.getProxy().getScheduler().runAsync(plugin, new Runnable() {
 
 			@Override
@@ -38,6 +40,19 @@ public class BungeeListener implements Listener, EventListener{
 			}
 			
 		});
+		plugin.getProxy().getScheduler().schedule(plugin, new Runnable() {
+
+			@Override
+			public void run() {
+				synchronized(servers) {
+					servers.clear();
+					for (String x: redisAPI.getServerToPlayers().keySet()) {
+						servers.add(x);
+					}
+				}
+			}
+			
+		}, 5, 5, TimeUnit.SECONDS);
 		EventManager.registerListener(this);
 	}
 	
