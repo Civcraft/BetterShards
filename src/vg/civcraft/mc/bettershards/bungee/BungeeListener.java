@@ -28,10 +28,12 @@ public class BungeeListener implements Listener, EventListener{
 	private RedisBungeeAPI redisAPI = RedisBungee.getApi();
 	private BetterShardsBungee plugin = BetterShardsBungee.getInstance();
 	private List<String> servers;
+	private List<String> excluded;
 	private List<UUID> pending = new ArrayList<UUID>();
 	
 	public BungeeListener() {
 		servers = new ArrayList<String>();
+		excluded = new ArrayList<String>();
 		scheduleServerScheduler();
 		
 		EventManager.registerListener(this);
@@ -45,6 +47,8 @@ public class BungeeListener implements Listener, EventListener{
 				synchronized(servers) {
 					servers.clear();
 					for (String x: MercuryAPI.instance.getAllConnectedServers()) {
+						if (excluded.contains(x))
+							continue;
 						servers.add(x);
 					}
 				}
@@ -55,7 +59,6 @@ public class BungeeListener implements Listener, EventListener{
 	
 	@EventHandler()
 	public void playerLoginNetwork(LoginEvent event) {
-		System.out.println(redisAPI.getLastOnline(event.getConnection().getUniqueId()) + " " + event.getConnection().getUniqueId().toString());
 		if (redisAPI.getLastOnline(event.getConnection().getUniqueId()) != -1)
 			return;
 		pending.add(event.getConnection().getUniqueId());
@@ -68,11 +71,9 @@ public class BungeeListener implements Listener, EventListener{
 				return;
 		Random rand = new Random();
 		synchronized(servers) {
-			System.out.println("The strings to chhose from " + servers.toString());
-			int random = rand.nextInt(servers.size()-1);
+			int random = rand.nextInt(servers.size());
 			String server = servers.get(random);
 			ServerInfo sInfo = ProxyServer.getInstance().getServerInfo(server);
-			System.out.println("The server chosen was " + sInfo.getName());
 			event.setTarget(sInfo);
 		}
 		pending.remove(p.getUniqueId());
@@ -85,10 +86,9 @@ public class BungeeListener implements Listener, EventListener{
 		String[] content = message.split(" ");
 		if (!content[0].equals("removeServer"))
 			return;
-		synchronized (servers) {
-			servers = redisAPI.getAllServers();
-			for (int x = 1; x < content.length; x++)
-				servers.remove(content[x]);
+		for (int x = 1; x < content.length; x++) {
+			excluded.clear();
+			excluded.add(content[x]);
 		}
 	}
 }
