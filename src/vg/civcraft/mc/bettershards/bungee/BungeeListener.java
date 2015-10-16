@@ -68,6 +68,7 @@ public class BungeeListener implements Listener, EventListener{
 				return;
 		Random rand = new Random();
 		synchronized(servers) {
+			System.out.println("The strings to chhose from " + servers.toString());
 			int random = rand.nextInt(servers.size()-1);
 			String server = servers.get(random);
 			ServerInfo sInfo = ProxyServer.getInstance().getServerInfo(server);
