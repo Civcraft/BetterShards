@@ -117,8 +117,12 @@ public class BetterShardsListener implements Listener{
 				(p.getItemInHand().getType() != Material.COMPASS) || 
 				!(p.hasPermission("bettershards.build") || p.isOp()))
 			return;
+		Block block = event.getClickedBlock();
+		if (block == null)
+			return;
+		
+		Location loc = block.getLocation();
 		Grid g = plugin.getPlayerGrid(p);
-		Location loc = event.getClickedBlock().getLocation();
 		String message = ChatColor.YELLOW + "";
 		if (a == Action.LEFT_CLICK_BLOCK) {
 			g.setLeftClickLocation(loc);
