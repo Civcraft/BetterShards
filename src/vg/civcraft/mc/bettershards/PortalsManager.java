@@ -118,7 +118,11 @@ public class PortalsManager extends SparseQuadTree{
 	}
 	
 	public boolean canTransferPlayer(Player p) {
-		return !arrivedPlayers.contains(p);
+		if (BetterShardsPlugin.getCombatTagManager().isInCombatTag(p)){
+			return false;
+		} else{
+			return !arrivedPlayers.contains(p);
+		}
 	}
 	
 	public void addArrivedPlayer(Player p) {

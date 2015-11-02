@@ -138,13 +138,22 @@ public class Portal implements QTBox, Comparable<Portal>{
 		return location;
 	}
 
+	@SuppressWarnings("deprecation")
 	private double getValidHighestY(World world, double x, double z) {
 
 		world.getChunkAt(new Location(world, x, 0, z)).load();
 
-		double y = 0;
+		double y = corner.getY();
 		int blockid = 0;
-
+		
+		if (world.getBlockTypeIdAt((int)x,(int)y, (int)z) == 0 &&
+				world.getBlockTypeIdAt((int)x, (int)y+1, (int)z) == 0 &&
+				world.getBlockTypeIdAt((int)x, (int)y-1, (int)z) != 0){
+			return y;
+		}
+		
+		y = 0;
+		
 		if (world.getEnvironment().equals(Environment.NETHER)) {
 			int blockYid = world.getBlockTypeIdAt((int) x, (int) y, (int) z);
 			int blockY2id = world.getBlockTypeIdAt((int) x, (int) (y + 1),
@@ -155,16 +164,22 @@ public class Portal implements QTBox, Comparable<Portal>{
 				blockY2id = world.getBlockTypeIdAt((int) x, (int) (y + 1),
 						(int) z);
 			}
-			if (y == 127)
+			if (y == 127){
 				return -1;
+			} else {
+				y += 1;
+			}
 		} else {
 			y = 257;
 			while (y >= 0 && blockid == 0) {
 				y--;
 				blockid = world.getBlockTypeIdAt((int) x, (int) y, (int) z);
 			}
-			if (y == 0)
+			if (y == 0){
 				return -1;
+			} else{
+				y += 1;
+			}
 		}
 
 		return y;
