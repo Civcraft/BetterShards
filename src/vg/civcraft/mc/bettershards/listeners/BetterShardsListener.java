@@ -185,4 +185,12 @@ public class BetterShardsListener implements Listener{
 		db.addBedLocation(bed); // Need to save the bed out to db
 		mercManager.sendBedLocation(bed);
 	}
+	
+	@EventHandler
+	public void playerDropItem(PlayerDropItemEvent event) {
+		Player player = event.getPlayer();
+		if(plugin.isPlayerInTransit(player.getUniqueId())) {
+			event.setCancelled(true);
+		}
+	}
 }
