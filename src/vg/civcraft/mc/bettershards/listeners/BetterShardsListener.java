@@ -157,7 +157,7 @@ public class BetterShardsListener implements Listener{
 			return;
 		Block real = getRealFace(b);
 		for (BedLocation bed: plugin.getAllBeds()) {
-			if (!bed.getServer().equals(MercuryAPI.serverName))
+			if (!bed.getServer().equals(MercuryAPI.serverName()))
 					continue;
 			String loc = real.getWorld().getUID().toString() + " " + real.getX() + " " + real.getY() + " " + real.getZ();
 			if (bed.getLocation().equals(loc)) {
@@ -177,7 +177,7 @@ public class BetterShardsListener implements Listener{
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void playerSleepInBed(PlayerBedEnterEvent event) {
 		UUID uuid = event.getPlayer().getUniqueId();
-		String server = MercuryAPI.serverName;
+		String server = MercuryAPI.serverName();
 		Block b = getRealFace(event.getBed());
 		Location loc = b.getLocation();
 		String bedLoc = loc.getWorld().getUID().toString() + " " + loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ();

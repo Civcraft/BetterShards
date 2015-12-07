@@ -46,7 +46,7 @@ public class BungeeListener implements Listener, EventListener{
 			public void run() {
 				synchronized(servers) {
 					servers.clear();
-					for (String x: MercuryAPI.instance.getAllConnectedServers()) {
+					for (String x: MercuryAPI.getAllConnectedServers()) {
 						if (excluded.contains(x))
 							continue;
 						servers.add(x);

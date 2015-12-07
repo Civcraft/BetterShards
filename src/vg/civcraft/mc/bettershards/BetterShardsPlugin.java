@@ -42,7 +42,6 @@ import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.ACivMod;
 import vg.civcraft.mc.civmodcore.Config;
-import vg.civcraft.mc.mercury.MercuryAPI;
 import vg.civcraft.mc.mercury.config.MercuryConfigManager;
 
 public class BetterShardsPlugin extends ACivMod{
@@ -262,7 +261,7 @@ public class BetterShardsPlugin extends ACivMod{
 	}
 	
 	public void sendBungeeUpdateMessage() {
-		MercuryAPI.instance.sendMessage("all", "removeServer " + db.getAllExclude(), "BetterShards");
+		mercuryManager.sendBungeeUpdateMessage(db.getAllExclude());
 	}
 	
 	public static CombatTagManager getCombatTagManager() {

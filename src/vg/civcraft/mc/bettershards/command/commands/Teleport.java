@@ -121,7 +121,7 @@ public class Teleport extends PlayerCommand {
 			return true;
 		}
 		String server = args[0];
-		if (!MercuryAPI.instance.getAllConnectedServers().contains(server)) {
+		if (!MercuryAPI.getAllConnectedServers().contains(server)) {
 			p.sendMessage(ChatColor.RED + "Sorry that server is not connected to the network.");
 			return true;
 		}

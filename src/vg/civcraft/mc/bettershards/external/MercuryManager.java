@@ -11,11 +11,11 @@ public class MercuryManager {
 	public MercuryManager() {
 		registerMercuryChannels();
 	}
-	
+
 	public void sendPortalDelete(String name) {
-		MercuryAPI.instance.sendMessage("all", "delete " + name, "BetterShards");
+		MercuryAPI.sendGlobalMessage("delete " + name, "BetterShards");
 	}
-	
+
 	/**
 	 * Used to tell mercury that a player is teleporting. 
 	 * This is useful to the player arrives at the right portal.
@@ -23,28 +23,32 @@ public class MercuryManager {
 	 * @param p
 	 */
 	public void teleportPlayer(UUID uuid, Portal p) {
-		MercuryAPI.instance.sendMessage("all", "teleport portal " + uuid.toString() + " " + p.getName(), "BetterShards");
+		MercuryAPI.sendGlobalMessage("teleport portal " + uuid.toString() + " " + p.getName(), "BetterShards");
 	}
-	
+
 	/**
 	 * Sends the info to servers that a player needs to be teleported.
 	 * @param info- Use the format 'uuid server world x y z'
 	 * world can be either the world name or world uuid.
 	 */
 	public void teleportPlayer(String info) {
-		MercuryAPI.instance.sendMessage("all", "teleport command " + info , "BetterShards");
+		MercuryAPI.sendGlobalMessage("teleport command " + info , "BetterShards");
 	}
-	
+
 	private void registerMercuryChannels() {
-		MercuryAPI.instance.registerPluginMessageChannel("BetterShards");
+		MercuryAPI.addChannels("BetterShards");
 	}
-	
+
 	public void sendBedLocation(BedLocation bed) {
 		String info = bed.getUUID().toString() + " " + bed.getServer() + " " + bed.getLocation();
-		MercuryAPI.instance.sendMessage("all", "bed add " + info, "BetterShards");
+		MercuryAPI.sendGlobalMessage("bed add " + info, "BetterShards");
 	}
-	
+
 	public void removeBedLocation(BedLocation bed) {
-		MercuryAPI.instance.sendMessage("all", "bed remove " + bed.getUUID().toString(), "BetterShards");
+		MercuryAPI.sendGlobalMessage("bed remove " + bed.getUUID().toString(), "BetterShards");
+	}
+
+	public void sendBungeeUpdateMessage(String allExclude) {
+		MercuryAPI.sendGlobalMessage("removeServer " + allExclude, "BetterShards");
 	}
 }
