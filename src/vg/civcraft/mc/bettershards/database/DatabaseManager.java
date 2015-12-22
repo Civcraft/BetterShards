@@ -17,6 +17,7 @@ import org.bukkit.World;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
+import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.PortalType;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
@@ -68,7 +69,8 @@ public class DatabaseManager{
 		db.execute("create table if not exists createPlayerData("
 				+ "uuid varchar(36) not null,"
 				+ "entity blob,"
-				+ "primary key (uuid));");
+				+ "server int not null,"
+				+ "primary key (uuid, server));");
 		db.execute("create table if not exists createPortalDataTable("
 				+ "id varchar(255) not null,"
 				+ "server_name varchar(255) not null,"
@@ -103,9 +105,9 @@ public class DatabaseManager{
 	}
 	
 	private void loadPreparedStatements(){
-		addPlayerData = "insert into createPlayerData(uuid, entity) values(?,?);";
-		getPlayerData = "select * from createPlayerData where uuid = ?;";
-		removePlayerData = "delete from createPlayerData where uuid = ?;";
+		addPlayerData = "insert into createPlayerData(uuid, entity, server) values(?,?,?);";
+		getPlayerData = "select * from createPlayerData where uuid = ? and server = ?;";
+		removePlayerData = "delete from createPlayerData where uuid = ? and server = ?;";
 		
 		addPortalLoc = "insert into createPortalLocData(rangex, rangey, rangez, x, y, z, world, id)"
 				+ "values (?,?,?,?,?,?,?,?);";
@@ -153,6 +155,12 @@ public class DatabaseManager{
 		}
 	}
 	
+	/**
+	 * This method is called internally to remove the player from the cache.
+	 * Minecraft executes the code to save the player so nothing needs to be
+	 * done from this plugin's point of view.
+	 * @param uuid The uuid of the player
+	 */
 	public void playerQuitServer(UUID uuid) {
 		invCache.remove(uuid);
 	}
@@ -175,13 +183,14 @@ public class DatabaseManager{
 		}
 	}
 	
-	public void savePlayerData(UUID uuid, ByteArrayOutputStream output) {
+	public void savePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id) {
 		invCache.remove(uuid); // So if it is loaded again it is recaught.
 		PreparedStatement addPlayerData = db.prepareStatement(this.addPlayerData);
-		removePlayerData(uuid); // So player data won't throw mysql error.
+		removePlayerData(uuid, id); // So player data won't throw mysql error.
 		try {
 			addPlayerData.setString(1, uuid.toString());
 			addPlayerData.setBytes(2, output.toByteArray());
+			addPlayerData.setInt(3, id.ordinal());
 			addPlayerData.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -189,13 +198,14 @@ public class DatabaseManager{
 		}
 	}
 	
-	public ByteArrayInputStream loadPlayerData(UUID uuid){
+	public ByteArrayInputStream loadPlayerData(UUID uuid, InventoryIdentifier id){
 		// Here we had it caches before hand so no need to load it again.
 		if (invCache.containsKey(uuid))
 			return invCache.get(uuid);
 		PreparedStatement getPlayerData = db.prepareStatement(this.getPlayerData);
 		try {
 			getPlayerData.setString(1, uuid.toString());
+			getPlayerData.setInt(2, id.ordinal());
 			ResultSet set = getPlayerData.executeQuery();
 			if (!set.next())
 				return new ByteArrayInputStream(null);
@@ -296,10 +306,11 @@ public class DatabaseManager{
 		return null;
 	}
 	
-	public void removePlayerData(UUID uuid) {
+	public void removePlayerData(UUID uuid, InventoryIdentifier id) {
 		PreparedStatement removePlayerData = db.prepareStatement(this.removePlayerData);
 		try {
 			removePlayerData.setString(1, uuid.toString());
+			removePlayerData.setInt(2, id.ordinal());
 			removePlayerData.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

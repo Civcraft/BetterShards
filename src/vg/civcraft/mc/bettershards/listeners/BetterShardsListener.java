@@ -30,6 +30,7 @@ import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
+import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.Config;
@@ -44,6 +45,7 @@ public class BetterShardsListener implements Listener{
 	private Config config;
 	private PortalsManager pm;
 	private MercuryManager mercManager;
+	private CustomWorldNBTStorage st;
 	
 	public BetterShardsListener(){
 		plugin = BetterShardsPlugin.getInstance();
@@ -53,10 +55,10 @@ public class BetterShardsListener implements Listener{
 		mercManager = BetterShardsPlugin.getMercuryManager();
 	}
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void playerPreLoginCacheInv(AsyncPlayerPreLoginEvent event) {
 		UUID uuid = event.getUniqueId();
-		db.loadPlayerData(uuid); 
+		db.loadPlayerData(uuid, st.getInvIdentifier(uuid)); 
 		// We do this so it fetches the cache, then when called for real
 		// by our CustomWorldNBTStorage class it doesn't have to wait and server won't lock.
 	}

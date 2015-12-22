@@ -80,7 +80,7 @@ public class BungeeListener implements Listener, EventListener{
 	}
 
 	@Override
-	public void receiveMessage(String channel, String message) {
+	public void receiveMessage(String origin, String channel, String message) {
 		if (!channel.equals("BetterShards"))
 			return;
 		String[] content = message.split(" ");

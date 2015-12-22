@@ -251,7 +251,8 @@ public class BetterShardsPlugin extends ACivMod{
 					ByteArrayOutputStream output = new ByteArrayOutputStream();
 					output.write(IOUtils.toByteArray(stream));
 					// Now to run our custom mysql code
-					db.savePlayerData(UUID.fromString(name), output);
+					UUID uuid = UUID.fromString(name);
+					db.savePlayerData(uuid, output, CustomWorldNBTStorage.getWorldNBTStorage().getInvIdentifier(uuid));
 					file.delete();
 				} catch (Exception localException) {
 					localException.printStackTrace();
