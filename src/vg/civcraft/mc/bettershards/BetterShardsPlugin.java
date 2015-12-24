@@ -18,6 +18,7 @@ import java.util.logging.Level;
 
 import net.minecraft.server.v1_8_R3.IDataManager;
 import net.minecraft.server.v1_8_R3.MinecraftServer;
+import net.minecraft.server.v1_8_R3.WorldNBTStorage;
 import net.minecraft.server.v1_8_R3.WorldServer;
 
 import org.apache.commons.io.IOUtils;
@@ -200,7 +201,7 @@ public class BetterShardsPlugin extends ACivMod{
 				IDataManager manager = nmsWorld.getDataManager();
 				
 				// Spigot has a file lock we want to try remove before invoking our own stuff.
-				Field f = manager.getClass().getDeclaredField("sessionLock");
+				Field f = ((WorldNBTStorage) manager).getClass().getDeclaredField("sessionLock");
 				f.setAccessible(true);
 				try {
 					FileLock sessionLock = (FileLock) f.get(manager);
