@@ -118,7 +118,7 @@ public class BetterShardsListener implements Listener{
 		Action a = event.getAction();
 		if ((a != Action.RIGHT_CLICK_BLOCK ||
 				a != Action.LEFT_CLICK_BLOCK) &&
-				(p.getItemInHand().getType() != Material.COMPASS) || 
+				(p.getItemInHand().getType() != Material.WATER_LILY) || 
 				!(p.hasPermission("bettershards.build") || p.isOp()))
 			return;
 		Block block = event.getClickedBlock();
