@@ -202,7 +202,7 @@ public class BetterShardsPlugin extends ACivMod{
 				
 				// Spigot has a file lock we want to try remove before invoking our own stuff.
 				WorldNBTStorage nbtManager = ((WorldNBTStorage) manager);
-				Field f = nbtManager.getClass().getDeclaredField("sessionLock");
+				Field f = nbtManager.getClass().getSuperclass().getDeclaredField("sessionLock");
 				f.setAccessible(true);
 				try {
 					FileLock sessionLock = (FileLock) f.get(nbtManager);
