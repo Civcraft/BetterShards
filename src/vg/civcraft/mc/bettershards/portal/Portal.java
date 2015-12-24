@@ -171,7 +171,7 @@ public class Portal implements QTBox, Comparable<Portal>{
 			}
 		} else {
 			y = 257;
-			while (y >= 0 && blockid == 0 && !isValidY(y)) {
+			while (y >= 0 && (blockid == 0 || !isValidY(y))) {
 				y--;
 				blockid = world.getBlockTypeIdAt((int) x, (int) y, (int) z);
 			}
@@ -181,7 +181,6 @@ public class Portal implements QTBox, Comparable<Portal>{
 				y += 1;
 			}
 		}
-
 		return y;
 	}
 

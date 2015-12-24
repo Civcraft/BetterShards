@@ -54,14 +54,14 @@ public class BetterShardsListener implements Listener{
 		pm = plugin.getPortalManager();
 		config = plugin.GetConfig();
 		mercManager = BetterShardsPlugin.getMercuryManager();
-		Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+		Bukkit.getScheduler().runTask(plugin, new Runnable() {
 
 			@Override
 			public void run() {
 				st = CustomWorldNBTStorage.getWorldNBTStorage();
 			}
 			
-		}, 1);
+		});
 	}
 	
 	@EventHandler(priority = EventPriority.MONITOR)
