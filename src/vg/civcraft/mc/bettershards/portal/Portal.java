@@ -106,12 +106,12 @@ public class Portal implements QTBox, Comparable<Portal>{
 	}
 
 	public boolean isValidY(int y) {
-		if (yrange < 0)
-			return corner.getBlockY() + yrange <= y
-			&& corner.getBlockY() >= y;
-		return corner.getBlockY() - yrange <= y
-				&& corner.getBlockY() >= y;
-	}
+        if (yrange < 0)
+            return corner.getBlockY() + yrange <= y
+            && corner.getBlockY() >= y;
+        return corner.getBlockY() + yrange >= y
+                && corner.getBlockY() <= y;
+    }
 
 	// *------------------------------------------------------------------------------------------------------------*
 	// | The following chooseSpawn method contains code made by NuclearW |
@@ -143,7 +143,7 @@ public class Portal implements QTBox, Comparable<Portal>{
 
 		world.getChunkAt(new Location(world, x, 0, z)).load();
 
-		double y = corner.getY();
+		int y = (int) corner.getY();
 		int blockid = 0;
 		
 		if (world.getBlockTypeIdAt((int)x,(int)y, (int)z) == 0 &&
@@ -171,7 +171,7 @@ public class Portal implements QTBox, Comparable<Portal>{
 			}
 		} else {
 			y = 257;
-			while (y >= 0 && blockid == 0) {
+			while (y >= 0 && blockid == 0 && !isValidY(y)) {
 				y--;
 				blockid = world.getBlockTypeIdAt((int) x, (int) y, (int) z);
 			}

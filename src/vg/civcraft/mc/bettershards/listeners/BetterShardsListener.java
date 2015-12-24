@@ -2,6 +2,7 @@ package vg.civcraft.mc.bettershards.listeners;
 
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -53,7 +54,14 @@ public class BetterShardsListener implements Listener{
 		pm = plugin.getPortalManager();
 		config = plugin.GetConfig();
 		mercManager = BetterShardsPlugin.getMercuryManager();
-		st = CustomWorldNBTStorage.getWorldNBTStorage();
+		Bukkit.getScheduler().runTaskLater(plugin, new Runnable() {
+
+			@Override
+			public void run() {
+				st = CustomWorldNBTStorage.getWorldNBTStorage();
+			}
+			
+		}, 1);
 	}
 	
 	@EventHandler(priority = EventPriority.MONITOR)
