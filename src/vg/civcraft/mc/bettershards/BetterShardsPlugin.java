@@ -3,9 +3,11 @@ package vg.civcraft.mc.bettershards;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -196,6 +198,24 @@ public class BetterShardsPlugin extends ACivMod{
 				fieldName.setAccessible(true);
 				
 				IDataManager manager = nmsWorld.getDataManager();
+				
+				// Spigot has a file lock we want to try remove before invoking our own stuff.
+				Field f = manager.getClass().getDeclaredField("sessionLock");
+				f.setAccessible(true);
+				try {
+					FileLock sessionLock = (FileLock) f.get(manager);
+					sessionLock.close();
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 				CustomWorldNBTStorage newStorage = new CustomWorldNBTStorage(manager.getDirectory(), "", true);
 				setFinalStatic(fieldName, newStorage, nmsWorld);
 				
