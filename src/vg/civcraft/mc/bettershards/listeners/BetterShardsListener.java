@@ -53,6 +53,7 @@ public class BetterShardsListener implements Listener{
 		pm = plugin.getPortalManager();
 		config = plugin.GetConfig();
 		mercManager = BetterShardsPlugin.getMercuryManager();
+		st = CustomWorldNBTStorage.getWorldNBTStorage();
 	}
 	
 	@EventHandler(priority = EventPriority.MONITOR)
