@@ -1,5 +1,7 @@
 package vg.civcraft.mc.bettershards;
 
+import java.util.UUID;
+
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
@@ -34,5 +36,14 @@ public class BetterShardsAPI {
 	
 	public static PortalsManager getPortalsManager() {
 		return BetterShardsPlugin.getInstance().getPortalManager();
+	}
+	
+	/**
+	 * Checks if a player has a bed.
+	 * @param uuid
+	 * @return Returns true if player has one, false otherwise.
+	 */
+	public static boolean hasBed(UUID uuid) {
+		return plugin.getBed(uuid) != null;
 	}
 }
