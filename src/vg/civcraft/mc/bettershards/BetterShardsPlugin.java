@@ -268,6 +268,8 @@ public class BetterShardsPlugin extends ACivMod{
 				Bukkit.getLogger().log(Level.INFO, "Updating player " + name + " to mysql.");
 				try {
 					File file = new File(data.getDirectory() + File.separator + "playerdata", name + ".dat");
+					if (!file.exists())
+						continue;
 					InputStream stream = new FileInputStream(file);
 					
 					ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -276,6 +278,7 @@ public class BetterShardsPlugin extends ACivMod{
 					UUID uuid = UUID.fromString(name);
 					db.savePlayerData(uuid, output, CustomWorldNBTStorage.getWorldNBTStorage().getInvIdentifier(uuid));
 					file.delete();
+					stream.close();
 				} catch (Exception localException) {
 					localException.printStackTrace();
 				}

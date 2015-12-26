@@ -1,6 +1,7 @@
 package vg.civcraft.mc.bettershards.listeners;
 
 import java.util.UUID;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -67,6 +68,10 @@ public class BetterShardsListener implements Listener{
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void playerPreLoginCacheInv(AsyncPlayerPreLoginEvent event) {
 		UUID uuid = event.getUniqueId();
+		if (st == null){ // Small race condition if someone logs on as soon as the server starts.
+			plugin.getLogger().log(Level.INFO, "Player logged on before async process was ready, skipping.");
+			return;
+		}
 		db.loadPlayerData(uuid, st.getInvIdentifier(uuid)); 
 		// We do this so it fetches the cache, then when called for real
 		// by our CustomWorldNBTStorage class it doesn't have to wait and server won't lock.
