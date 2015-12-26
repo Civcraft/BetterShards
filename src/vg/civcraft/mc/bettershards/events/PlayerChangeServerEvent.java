@@ -35,7 +35,7 @@ public class PlayerChangeServerEvent extends Event implements Cancellable{
 		return handler;
 	}
 	
-	public static HandlerList getHandler(){
+	public static HandlerList getHandlerList(){
 		return handler;
 	}
 	
