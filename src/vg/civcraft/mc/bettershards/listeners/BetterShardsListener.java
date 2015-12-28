@@ -119,9 +119,11 @@ public class BetterShardsListener implements Listener{
 	 * Forces all player save. Should be tied to low-priority event listeners (so they get called first) surrounding /stop.
 	 **/
 	private void forcePlayerSave() {
-		Collection<Player> online = Bukkit.getOnlinePlayers();
+		plugin.getLogger().log(Level.INFO, "Forcing online Player save to DB.");
+
+		Collection<Player> online = (Collection<Player>) Bukkit.getOnlinePlayers();
 		for (Player p : online) {
-			st.save(p);
+			st.save(p, st.getInvIdentifier(p.getUniqueId()));
 		}
 	}
 	
