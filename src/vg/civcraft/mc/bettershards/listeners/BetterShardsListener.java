@@ -2,6 +2,7 @@ package vg.civcraft.mc.bettershards.listeners;
 
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.Collection;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -23,6 +24,8 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent
+import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.material.Bed;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
@@ -96,6 +99,30 @@ public class BetterShardsListener implements Listener{
 		db.playerQuitServer(uuid);
 		if (plugin.isPlayerInTransit(uuid))
 			return;
+	}
+	
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void consoleStopEvent(ServerCommandEvent event) {
+		if (event.getCommand().equals("stop") || event.getCommand().equals("/stop")) {
+			forcePlayerSave();
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void opStopEvent(PlayerCommandPreprocessEvent event) {
+		if (event.getPlayer() != null && event.getPlayer().isOp() && (event.getMessage().equals("stop") || event.getMessage().equals("/stop") ) ) {
+			forcePlayerSave();
+		}
+	}
+	
+	/**
+	 * Forces all player save. Should be tied to low-priority event listeners (so they get called first) surrounding /stop.
+	 **/
+	private void forcePlayerSave() {
+		Collection<Player> online = Bukkit.getOnlinePlayers();
+		for (Player p : online) {
+			st.save(p);
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.MONITOR)
