@@ -97,8 +97,6 @@ public class BetterShardsPlugin extends ACivMod{
 	
 	@Override
 	public void onDisable(){
-		for (Player p: Bukkit.getOnlinePlayers())
-			p.kickPlayer("Kicking in order to make sure your data is saved!");
 	}
 	
 	/**

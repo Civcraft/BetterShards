@@ -122,6 +122,8 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			e.printStackTrace();
 		}
 		cPlayer.getHandle().f(nbttagcompound);
+		BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Loaded %s (%s) "
+				+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
 	}
 	
 	public void save(Player p, InventoryIdentifier iden) {
@@ -138,6 +140,8 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			e.printStackTrace();
 		}
 		db.savePlayerData(uuid, output, iden);
+		BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s (%s) "
+				+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
 	}
 
 	public static CustomWorldNBTStorage getWorldNBTStorage() {
