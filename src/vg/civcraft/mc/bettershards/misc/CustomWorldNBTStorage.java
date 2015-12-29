@@ -43,6 +43,8 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			NBTCompressedStreamTools.a(nbttagcompound, output);
 			// Now to run our custom mysql code
 			UUID uuid = entityhuman.getUniqueID();
+			BetterShardsPlugin.getInstance().getLogger()
+					.log(Level.INFO, "Save for " + uuid);
 			db.savePlayerData(uuid, output, getInvIdentifier(uuid));
 
 		} catch (Exception localException) {
@@ -60,6 +62,9 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 		NBTTagCompound nbttagcompound = null;
 		try {
 			UUID uuid = entityhuman.getUniqueID();
+			BetterShardsPlugin.getInstance().getLogger()
+					.log(Level.INFO, "Load for " + uuid);
+
 			ByteArrayInputStream input = db.loadPlayerData(uuid, getInvIdentifier(uuid));
 
 			nbttagcompound = NBTCompressedStreamTools.a(input);
@@ -91,6 +96,8 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	public NBTTagCompound getPlayerData(String s) {
 		try {
 			UUID uuid = UUID.fromString(s);
+			BetterShardsPlugin.getInstance().getLogger()
+					.log(Level.INFO, "Get/Load for " + uuid);
 			ByteArrayInputStream input = db.loadPlayerData(uuid, getInvIdentifier(uuid));
 			return NBTCompressedStreamTools.a(input);
 		} catch (Exception localException) {
