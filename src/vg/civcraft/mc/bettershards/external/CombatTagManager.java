@@ -8,6 +8,9 @@ import net.minelink.ctplus.compat.api.NpcPlayerHelper;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
+import vg.civcraft.mc.bettershards.listeners.CombatTagListener;
+
 public class CombatTagManager {
 
 	private NpcPlayerHelper combatTagPlusApi;
@@ -19,6 +22,7 @@ public class CombatTagManager {
 			combatTagPlusApi = ((CombatTagPlus) server.getPluginManager().getPlugin("CombatTagPlus")).getNpcPlayerHelper();
 			tagManager = ((CombatTagPlus) server.getPluginManager().getPlugin("CombatTagPlus")).getTagManager();
 			combatTagPlusEnabled = true;
+			server.getPluginManager().registerEvents(new CombatTagListener(), BetterShardsPlugin.getInstance());
 		}
 	}
 	

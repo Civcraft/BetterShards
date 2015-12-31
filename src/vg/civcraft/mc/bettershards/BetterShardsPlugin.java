@@ -45,6 +45,7 @@ import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.ACivMod;
 import vg.civcraft.mc.civmodcore.Config;
+import vg.civcraft.mc.mercury.MercuryAPI;
 import vg.civcraft.mc.mercury.config.MercuryConfigManager;
 
 public class BetterShardsPlugin extends ACivMod{
@@ -69,14 +70,14 @@ public class BetterShardsPlugin extends ACivMod{
 		config = GetConfig();
 		servName = MercuryConfigManager.getServerName();
 		mercuryManager = new MercuryManager();
-		combatManager = new CombatTagManager(getServer());
 		db = new DatabaseManager();
 		if (!db.isConnected())
 			Bukkit.getPluginManager().disablePlugin(this);
 		pm = new PortalsManager();
 		pm.loadPortalsManager();
-		registerListeners();
 		setWorldNBTStorage();
+		combatManager = new CombatTagManager(getServer());
+		registerListeners();
 		uploadExistingPlayers();
 		
 		new BetterShardsAPI();
@@ -125,6 +126,20 @@ public class BetterShardsPlugin extends ACivMod{
 	public boolean isPlayerInTransit(UUID uuid){
 		return transit.contains(uuid);
 	}
+	
+	/**
+	 * Sends a bungee request to get the player to be sent to current server.
+	 * There must be at least one player on the server for this to work.
+	 * @param name Name of a player.
+	 */
+	public void teleportOtherServerPlayer(String name) {
+		ByteArrayDataOutput out = ByteStreams.newDataOutput();
+		out.writeUTF("ConnectOther");
+		out.writeUTF(name);
+		out.writeUTF(MercuryAPI.serverName());
+		Bukkit.getOnlinePlayers().iterator().next().sendPluginMessage(this, "BungeeCord", out.toByteArray());
+	}
+	
 	/**
 	 * Teleports a player to a specific server.
 	 * @param p- The Player to teleport.
@@ -162,6 +177,7 @@ public class BetterShardsPlugin extends ACivMod{
 		BetterShardsListener l = new BetterShardsListener();
 		getServer().getPluginManager().registerEvents(l, this);
 		getServer().getPluginManager().registerEvents(new MercuryListener(), this);
+		// The register for the listener to CombatTagListener class can be found in CombatTagManager class
 	}
 	
 	public static String getCurrentServerName(){

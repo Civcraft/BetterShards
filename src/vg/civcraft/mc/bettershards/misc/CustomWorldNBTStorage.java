@@ -143,6 +143,19 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 		BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s (%s) "
 				+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
 	}
+	
+	public void save(UUID uuid, NBTTagCompound nbttagcompound, InventoryIdentifier iden) {
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		try {
+			NBTCompressedStreamTools.a(nbttagcompound, output);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		db.savePlayerData(uuid, output, iden);
+		BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s "
+				+ "inventory from non default way.", uuid.toString()));
+	}
 
 	public static CustomWorldNBTStorage getWorldNBTStorage() {
 		return storage;

@@ -25,6 +25,14 @@ public class BetterShardsAPI {
 		plugin.teleportPlayerToServer(p, serverName, reason);
 	}
 	
+	/**
+	 * Teleports the specified player to the current server.
+	 * @param uuid The name of said player.
+	 */
+	public static void requestPlayerTeleport(String name) {
+		plugin.teleportOtherServerPlayer(name);
+	}
+	
 	public static void connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason) {
 		if (plugin.teleportPlayerToServer(p, portal.getServerName(), reason))
 			mercManager.teleportPlayer(p.getUniqueId(), portal); // We want to do this after because we don't know if a player was teleported yet.
