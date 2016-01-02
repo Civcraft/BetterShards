@@ -206,10 +206,7 @@ public class BetterShardsPlugin extends ACivMod{
 		return g;
 	}
 	
-	@CivConfig(name = "import_playerdata", def = "false", type = CivConfigType.Bool)
 	private void setWorldNBTStorage() {
-		if (!config.get("import_playerdata").getBool())
-			return;
 		for (World w: Bukkit.getWorlds()) {
 			WorldServer nmsWorld = ((CraftWorld) w).getHandle();
 			Field fieldName;
@@ -278,8 +275,10 @@ public class BetterShardsPlugin extends ACivMod{
 		}
 	}
 	
+	@CivConfig(name = "import_playerdata", def = "false", type = CivConfigType.Bool)
 	private void uploadExistingPlayers() {
-		
+		if (!config.get("import_playerdata").getBool())
+			return;
 		for (World w: Bukkit.getWorlds()) {
 			WorldServer nmsWorld = ((CraftWorld) w).getHandle();
 			IDataManager data = nmsWorld.getDataManager();
