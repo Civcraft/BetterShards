@@ -45,6 +45,8 @@ import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.ACivMod;
 import vg.civcraft.mc.civmodcore.Config;
+import vg.civcraft.mc.civmodcore.annotations.CivConfig;
+import vg.civcraft.mc.civmodcore.annotations.CivConfigType;
 import vg.civcraft.mc.mercury.MercuryAPI;
 import vg.civcraft.mc.mercury.config.MercuryConfigManager;
 
@@ -204,7 +206,10 @@ public class BetterShardsPlugin extends ACivMod{
 		return g;
 	}
 	
+	@CivConfig(name = "import_playerdata", def = "false", type = CivConfigType.Bool)
 	private void setWorldNBTStorage() {
+		if (!config.get("import_playerdata").getBool())
+			return;
 		for (World w: Bukkit.getWorlds()) {
 			WorldServer nmsWorld = ((CraftWorld) w).getHandle();
 			Field fieldName;
@@ -274,6 +279,7 @@ public class BetterShardsPlugin extends ACivMod{
 	}
 	
 	private void uploadExistingPlayers() {
+		
 		for (World w: Bukkit.getWorlds()) {
 			WorldServer nmsWorld = ((CraftWorld) w).getHandle();
 			IDataManager data = nmsWorld.getDataManager();
