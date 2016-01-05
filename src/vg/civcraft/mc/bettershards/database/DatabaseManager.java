@@ -214,7 +214,7 @@ public class DatabaseManager{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return new ByteArrayInputStream(null);
+		return new ByteArrayInputStream(new byte[0]);
 	}
 	
 	/**
