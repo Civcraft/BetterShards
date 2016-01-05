@@ -208,7 +208,7 @@ public class DatabaseManager{
 			getPlayerData.setInt(2, id.ordinal());
 			ResultSet set = getPlayerData.executeQuery();
 			if (!set.next())
-				return new ByteArrayInputStream(new byte[0];
+				return new ByteArrayInputStream(new byte[0]);
 			return new ByteArrayInputStream(set.getBytes("entity"));			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
