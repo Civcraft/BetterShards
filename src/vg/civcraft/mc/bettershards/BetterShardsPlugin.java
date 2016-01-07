@@ -158,6 +158,8 @@ public class BetterShardsPlugin extends ACivMod{
 			return false;
 		if (p.isInsideVehicle())
 			p.getVehicle().eject();
+		if (p.isDead())
+			p.teleport(p);
 		addPlayerToTransit(p.getUniqueId()); // So the player isn't tried to be sent twice.
 		CustomWorldNBTStorage.getWorldNBTStorage().save(((CraftPlayer) p).getHandle());
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
