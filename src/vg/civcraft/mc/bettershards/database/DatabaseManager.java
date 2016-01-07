@@ -125,7 +125,7 @@ public class DatabaseManager{
 		removeExclude = "delete from excludedServers where name = ?;";
 		getAllExclude = "select * from excludedServers;";
 		
-		addBedLocation = "insert into player_beds (uuid, server, world_uuid "
+		addBedLocation = "insert into player_beds (uuid, server, world_uuid, "
 				+ "x, y, z) values (?,?,?,?,?,?)";
 		getAllBedLocation = "select * from player_beds;";
 		removeBedLocation = "delete from player_beds where uuid = ?;";
@@ -208,13 +208,13 @@ public class DatabaseManager{
 			getPlayerData.setInt(2, id.ordinal());
 			ResultSet set = getPlayerData.executeQuery();
 			if (!set.next())
-				return new ByteArrayInputStream(null);
+				return new ByteArrayInputStream(new byte[0]);
 			return new ByteArrayInputStream(set.getBytes("entity"));			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return new ByteArrayInputStream(null);
+		return new ByteArrayInputStream(new byte[0]);
 	}
 	
 	/**
