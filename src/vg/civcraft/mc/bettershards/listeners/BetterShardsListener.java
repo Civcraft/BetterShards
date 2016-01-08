@@ -97,8 +97,6 @@ public class BetterShardsListener implements Listener{
 		Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
 
-		plugin.getLogger().log(Level.INFO, "Forcing Player " + p.getName() + " (" + uuid + ") save to DB.");
-		st.save(p, st.getInvIdentifier(uuid));
 		db.playerQuitServer(uuid);
 		if (plugin.isPlayerInTransit(uuid))
 			return;

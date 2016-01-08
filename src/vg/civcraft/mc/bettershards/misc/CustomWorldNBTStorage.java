@@ -44,8 +44,8 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			NBTCompressedStreamTools.a(nbttagcompound, output);
 			// Now to run our custom mysql code
 			UUID uuid = entityhuman.getUniqueID();
-			BetterShardsPlugin.getInstance().getLogger()
-					.log(Level.INFO, "Save for " + uuid);
+			//BetterShardsPlugin.getInstance().getLogger()
+			//		.log(Level.INFO, "Save for " + uuid);
 			db.savePlayerData(uuid, output, getInvIdentifier(uuid));
 
 		} catch (Exception localException) {
@@ -101,8 +101,8 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	public NBTTagCompound getPlayerData(String s) {
 		try {
 			UUID uuid = UUID.fromString(s);
-			BetterShardsPlugin.getInstance().getLogger()
-					.log(Level.INFO, "Get/Load for " + uuid);
+			//BetterShardsPlugin.getInstance().getLogger()
+			//		.log(Level.INFO, "Get/Load for " + uuid);
 			ByteArrayInputStream input = db.loadPlayerData(uuid, getInvIdentifier(uuid));
 			NBTTagCompound nbttagcompound = NBTCompressedStreamTools.a(input);
 			logInventory(nbttagcompound);
@@ -128,10 +128,10 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		logInventory(nbttagcompound);
+		//logInventory(nbttagcompound);
 		cPlayer.getHandle().f(nbttagcompound);
-		BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Loaded %s (%s) "
-				+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
+		//BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Loaded %s (%s) "
+		//		+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
 	}
 	
 	public void save(Player p, InventoryIdentifier iden) {
@@ -140,7 +140,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 		NBTTagCompound nbttagcompound = new NBTTagCompound();
 
 		cPlayer.getHandle().e(nbttagcompound);
-		logInventory(nbttagcompound);
+		//logInventory(nbttagcompound);
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		try {
 			NBTCompressedStreamTools.a(nbttagcompound, output);
@@ -149,12 +149,12 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			e.printStackTrace();
 		}
 		db.savePlayerData(uuid, output, iden);
-		BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s (%s) "
-				+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
+		//BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s (%s) "
+		//		+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
 	}
 	
 	public void save(UUID uuid, NBTTagCompound nbttagcompound, InventoryIdentifier iden) {
-		logInventory(nbttagcompound);
+		//logInventory(nbttagcompound);
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		try {
 			NBTCompressedStreamTools.a(nbttagcompound, output);
@@ -163,8 +163,8 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			e.printStackTrace();
 		}
 		db.savePlayerData(uuid, output, iden);
-		BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s "
-				+ "inventory from non default way.", uuid.toString()));
+		//BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s "
+		//		+ "inventory from non default way.", uuid.toString()));
 	}
 
 	public static CustomWorldNBTStorage getWorldNBTStorage() {
