@@ -123,16 +123,25 @@ public class Portal implements QTBox, Comparable<Portal> {
 	public Location findRandomSafeLocation() {
 		double xrand = 0;
 		double zrand = 0;
+		int tries = 0;
 		double y = -1;
 		do {
 
 			xrand = qtXMin() + Math.random() * (qtXMax() - qtXMin());
 			zrand = qtZMin() + Math.random() * (qtZMax() - qtZMin());
-
 			y = getValidHighestY(corner.getWorld(), xrand, zrand);
+			tries++;
 
-		} while (y == -1);
-
+		} while (y == -1 && tries < 100);
+		
+		if (y == -1) {
+			//still not found
+			for(; y<256;y++) {
+				if (validSpawn(corner.getWorld(), xrand, y, zrand)) {
+					break;
+				}
+			}
+		}
 		Location location = new Location(corner.getWorld(), xrand, y, zrand);
 
 		return location;
@@ -144,10 +153,13 @@ public class Portal implements QTBox, Comparable<Portal> {
 		double y = corner.getBlockY()
 				+ ((yrange > 0 ? 1 : -1) * (Math.random() * (yrange)));
 		y = (double) ((int)y);  //round it
+		return validSpawn(world,x,y,z) ? y : -1;
+	}
+	
+	private boolean validSpawn(World world, double x, double y, double z) {
 		return world.getBlockAt(new Location(world, x, y-1, z)).getType().isSolid() 
 				&& world.getBlockAt(new Location(world, x, y, z)).getType() == Material.AIR
-				&& world.getBlockAt(new Location(world, x, y+1, z)).getType() == Material.AIR? 
-						y : -1;
+				&& world.getBlockAt(new Location(world, x, y+1, z)).getType() == Material.AIR;
 	}
 
 	public int getXRange() {
