@@ -31,8 +31,7 @@ public class RandomSpawn {
 	 * server he randomspawns, to get the player to that server and to ensure
 	 * that the player is randomspawned on that server
 	 * 
-	 * @param p
-	 *            Player who just died
+	 * @param p Player who just died
 	 */
 	public void handleDeath(Player p) {
 		List<String> servers = getAllowedServers();
@@ -46,6 +45,14 @@ public class RandomSpawn {
 			BetterShardsPlugin.getMercuryManager().notifyRandomSpawn(
 					servers.get(serverIndex), p.getUniqueId());
 		}
+	}
+	
+	/**
+	 * Called when it is the first time a player joins.
+	 * @param p Player who just joined.
+	 */
+	public void handleFirstJoin(Player p) {
+		p.teleport(getLocation());
 	}
 
 	/**

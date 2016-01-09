@@ -9,8 +9,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
@@ -39,7 +41,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			NBTTagCompound nbttagcompound = new NBTTagCompound();
 
 			entityhuman.e(nbttagcompound);
-			logInventory(nbttagcompound);
+			//logInventory(nbttagcompound);
 			ByteArrayOutputStream output = new ByteArrayOutputStream();
 			NBTCompressedStreamTools.a(nbttagcompound, output);
 			// Now to run our custom mysql code
@@ -79,7 +81,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 									+ entityhuman.getName());
 		}
 		if (nbttagcompound != null) {
-			logInventory(nbttagcompound);
+			//logInventory(nbttagcompound);
 			if ((entityhuman instanceof EntityPlayer)) {
 				CraftPlayer player = (CraftPlayer) entityhuman
 						.getBukkitEntity();
@@ -105,7 +107,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			//		.log(Level.INFO, "Get/Load for " + uuid);
 			ByteArrayInputStream input = db.loadPlayerData(uuid, getInvIdentifier(uuid));
 			NBTTagCompound nbttagcompound = NBTCompressedStreamTools.a(input);
-			logInventory(nbttagcompound);
+			//logInventory(nbttagcompound);
 			return nbttagcompound;
 		} catch (Exception localException) {
 			BetterShardsPlugin
@@ -177,6 +179,18 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 		return invs.get(uuid);
 	}
 	
+	/** 
+	 * Gets a ConfigurationSection that allows other plugins to store data that will be saved in the 
+	 * PlayerNBT Storage.  Keep in mind that this data will automaticly be saved with the player on quit.
+	 * If there is a previous ConfigurationSection this plugin will load it and return it.
+	 * @param uuid The uuid of the player.
+	 * @param plugin The name of the plugin for tracking purposes.
+	 * @return
+	 */
+	//public ConfigurationSection getConfigurationSection(UUID uuid, JavaPlugin plugin) {
+		
+	//}
+	
 	/**
 	 * Sets the InventoryIdentifier of a player while logging in.
 	 * It is very important that you call this method during the 
@@ -191,7 +205,6 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	public void setInventoryIdentifier(UUID uuid, InventoryIdentifier iden) {
 		invs.put(uuid, iden);
 	}
-
 
 	private void logInventory(NBTTagCompound nbt) {
 		BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Data as saved: %s ", nbt.toString()));

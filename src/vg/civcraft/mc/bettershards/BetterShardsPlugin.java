@@ -48,6 +48,7 @@ import vg.civcraft.mc.civmodcore.ACivMod;
 import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.civmodcore.annotations.CivConfig;
 import vg.civcraft.mc.civmodcore.annotations.CivConfigType;
+import vg.civcraft.mc.civmodcore.annotations.CivConfigs;
 import vg.civcraft.mc.mercury.MercuryAPI;
 import vg.civcraft.mc.mercury.config.MercuryConfigManager;
 
@@ -66,7 +67,10 @@ public class BetterShardsPlugin extends ACivMod{
 	private Map<UUID, BedLocation> beds = new HashMap<UUID, BedLocation>();
 	
 	private List<UUID> transit = new ArrayList<UUID>();
-	
+	@CivConfigs({
+		@CivConfig(name = "randomspawn.range", def = "1000", type = CivConfigType.Int),
+		@CivConfig(name = "randomspawn.spawnworld", def = "world", type = CivConfigType.String)
+	})
 	@Override
 	public void onEnable(){
 		super.onEnable();
@@ -98,7 +102,7 @@ public class BetterShardsPlugin extends ACivMod{
 			
 		}, 100, 1000);
 		loadAllBeds();
-		randomSpawn = new RandomSpawn(config.get("randomspawnrange").getInt(), config.get("spawnworld").getString());
+		randomSpawn = new RandomSpawn(config.get("randomspawn.range").getInt(), config.get("randomspawn.spawnworld").getString());
 	}
 	
 	@Override
