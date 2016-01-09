@@ -63,6 +63,12 @@ public class MercuryListener implements Listener{
 						}
 						uuids.put(uuid, loc);
 					}
+					else if (action.equals("randomspawn")) {
+						Location loc = plugin.getRandomSpawn().getLocation();
+						uuid =UUID.fromString(content[2]);		
+						uuids.put(uuid, loc);
+						
+					}
 					
 					if (Bukkit.getPlayer(uuid) != null){
 						Bukkit.getPlayer(uuid).teleport(getTeleportLocation(uuid));

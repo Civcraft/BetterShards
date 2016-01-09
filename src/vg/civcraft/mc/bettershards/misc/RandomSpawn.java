@@ -1,0 +1,93 @@
+package vg.civcraft.mc.bettershards.misc;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+
+import vg.civcraft.mc.bettershards.BetterShardsAPI;
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
+import vg.civcraft.mc.bettershards.database.DatabaseManager;
+import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
+import vg.civcraft.mc.mercury.MercuryAPI;
+
+public class RandomSpawn {
+	private DatabaseManager dbm;
+	private int spawnRange;
+	private World w;
+
+	public RandomSpawn(Integer spawnRange, String worldName) {
+		dbm = BetterShardsPlugin.getInstance().getDatabaseManager();
+		this.spawnRange = spawnRange;
+		this.w = BetterShardsPlugin.getInstance().getServer()
+				.getWorld(worldName);
+	}
+
+	/**
+	 * Called whenever a player dies without having a bed to determine on which
+	 * server he randomspawns, to get the player to that server and to ensure
+	 * that the player is randomspawned on that server
+	 * 
+	 * @param p
+	 *            Player who just died
+	 */
+	public void handleDeath(Player p) {
+		List<String> servers = getAllowedServers();
+		int serverIndex = (int) (Math.random() * servers.size());
+		if (servers.get(serverIndex).equalsIgnoreCase(MercuryAPI.serverName())) {
+			// same server
+			p.teleport(getLocation());
+		} else {
+			BetterShardsAPI.connectPlayer(p, servers.get(serverIndex),
+					PlayerChangeServerReason.RANDOMSPAWN);
+			BetterShardsPlugin.getMercuryManager().notifyRandomSpawn(
+					servers.get(serverIndex), p.getUniqueId());
+		}
+	}
+
+	/**
+	 * @return names of all the servers players are allowed to randomspawn in
+	 */
+	public List<String> getAllowedServers() {
+		List<String> servers = new LinkedList<String>();
+		for (String s : MercuryAPI.getAllConnectedServers()) {
+			servers.add(s);
+		}
+		for (String s : dbm.getAllExclude().split(" ")) {
+			servers.remove(s);
+		}
+		return servers;
+	}
+
+	/**
+	 * Gets a random spawn location on this server in the world which was
+	 * specified as spawn world in the config
+	 * 
+	 * @return random spawn location
+	 */
+	public Location getLocation() {
+		int x = (int) (spawnRange * Math.random());
+		int z = (int) (spawnRange * Math.random());
+
+		if (Math.sqrt((double) ((x * x) + (z * z))) > spawnRange) {
+			// the location is outside the circle, even though x and z are in
+			// range, so we try again
+			return getLocation();
+		}
+		int y = 253;
+
+		while (y >= 0) {
+			if (w.getBlockAt(x, y, z).getType().isSolid()
+					&& w.getBlockAt(x, y + 1, z).getType() == Material.AIR
+					&& w.getBlockAt(x, y + 2, z).getType() == Material.AIR) {
+				return new Location(w, x, y, z);
+			}
+			y--;
+		}
+		return getLocation();
+	}
+
+}

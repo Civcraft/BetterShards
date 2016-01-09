@@ -43,6 +43,10 @@ public class MercuryManager {
 		String info = bed.getUUID().toString() + " " + bed.getServer() + " " + bed.getLocation();
 		MercuryAPI.sendGlobalMessage("bed add " + info, "BetterShards");
 	}
+	
+	public void notifyRandomSpawn(String server, UUID player) {
+		MercuryAPI.sendMessage(server, "teleport randomspawn " + player.toString(), "BetterShards");
+	}
 
 	public void removeBedLocation(BedLocation bed) {
 		MercuryAPI.sendGlobalMessage("bed remove " + bed.getUUID().toString(), "BetterShards");

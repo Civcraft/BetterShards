@@ -37,6 +37,7 @@ import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
+import vg.civcraft.mc.bettershards.misc.RandomSpawn;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.civmodcore.annotations.CivConfig;
@@ -51,6 +52,7 @@ public class BetterShardsListener implements Listener{
 	private PortalsManager pm;
 	private MercuryManager mercManager;
 	private CustomWorldNBTStorage st;
+	private RandomSpawn rs;
 	
 	public BetterShardsListener(){
 		plugin = BetterShardsPlugin.getInstance();
@@ -190,7 +192,7 @@ public class BetterShardsListener implements Listener{
 		UUID uuid = p.getUniqueId();
 		BedLocation bed = plugin.getBed(uuid);
 		if (bed == null)
-			return;
+			rs.handleDeath(p);
 		String info = bed.getUUID().toString() + " " + bed.getLocation(); 
 		mercManager.teleportPlayer(info);
 		BetterShardsAPI.connectPlayer(p, bed.getServer(), PlayerChangeServerReason.BED);

@@ -6,5 +6,6 @@ public enum PlayerChangeServerReason {
 	TP_COMMAND,
 	PLUGIN,
 	OTHER,
-	BED;
+	BED,
+	RANDOMSPAWN;
 }

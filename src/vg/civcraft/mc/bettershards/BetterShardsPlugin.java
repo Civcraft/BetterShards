@@ -42,6 +42,7 @@ import vg.civcraft.mc.bettershards.listeners.MercuryListener;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
+import vg.civcraft.mc.bettershards.misc.RandomSpawn;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.ACivMod;
 import vg.civcraft.mc.civmodcore.Config;
@@ -59,6 +60,7 @@ public class BetterShardsPlugin extends ACivMod{
 	private static String servName;
 	private static CombatTagManager combatManager;
 	private static MercuryManager mercuryManager;
+	private static RandomSpawn randomSpawn;
 
 	private Map<Player, Grid> grids = new HashMap<Player, Grid>();
 	private Map<UUID, BedLocation> beds = new HashMap<UUID, BedLocation>();
@@ -96,6 +98,7 @@ public class BetterShardsPlugin extends ACivMod{
 			
 		}, 100, 1000);
 		loadAllBeds();
+		randomSpawn = new RandomSpawn(config.get("randomspawnrange").getInt(), config.get("spawnworld").getString());
 	}
 	
 	@Override
@@ -171,6 +174,10 @@ public class BetterShardsPlugin extends ACivMod{
 	
 	public DatabaseManager getDatabaseManager(){
 		return db;
+	}
+	
+	public static RandomSpawn getRandomSpawn() {
+		return randomSpawn;
 	}
 	
 	private void registerListeners(){
