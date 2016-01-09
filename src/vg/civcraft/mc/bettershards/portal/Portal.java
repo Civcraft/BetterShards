@@ -143,9 +143,10 @@ public class Portal implements QTBox, Comparable<Portal> {
 		world.getChunkAt(new Location(world, x, 0, z)).load();
 		double y = corner.getBlockY()
 				+ ((yrange > 0 ? 1 : -1) * (Math.random() * (yrange)));
-		return world.getBlockAt(new Location(world, x, y, z)).getType().isSolid() 
-				&& world.getBlockAt(new Location(world, x, y+1, z)).getType() == Material.AIR
-				&& world.getBlockAt(new Location(world, x, y+2, z)).getType() == Material.AIR? 
+		y = (double) ((int)y);  //round it
+		return world.getBlockAt(new Location(world, x, y-1, z)).getType().isSolid() 
+				&& world.getBlockAt(new Location(world, x, y, z)).getType() == Material.AIR
+				&& world.getBlockAt(new Location(world, x, y+1, z)).getType() == Material.AIR? 
 						y : -1;
 	}
 
