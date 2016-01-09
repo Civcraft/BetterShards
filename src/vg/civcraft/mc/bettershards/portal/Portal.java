@@ -1,6 +1,7 @@
 package vg.civcraft.mc.bettershards.portal;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.entity.Player;
@@ -11,7 +12,7 @@ import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.civmodcore.locations.QTBox;
 
-public class Portal implements QTBox, Comparable<Portal>{
+public class Portal implements QTBox, Comparable<Portal> {
 
 	protected Location corner; // This should be the location of the first block
 								// identified
@@ -24,7 +25,8 @@ public class Portal implements QTBox, Comparable<Portal>{
 	protected DatabaseManager db;
 
 	public Portal(String name, Location corner, int xrange, int yrange,
-			int zrange, Portal connection, PortalType type, boolean isOnCurrentServer) {
+			int zrange, Portal connection, PortalType type,
+			boolean isOnCurrentServer) {
 		this.corner = corner;
 		this.xrange = xrange;
 		this.yrange = yrange;
@@ -43,7 +45,7 @@ public class Portal implements QTBox, Comparable<Portal>{
 	public String getName() {
 		return name;
 	}
-	
+
 	public void setName(String name) {
 		this.name = name;
 		db.updatePortalData(this);
@@ -61,7 +63,7 @@ public class Portal implements QTBox, Comparable<Portal>{
 	public String getServerName() {
 		return serverName;
 	}
-	
+
 	public void setServerName(String serverName) {
 		this.serverName = serverName;
 		db.updatePortalData(this);
@@ -106,12 +108,10 @@ public class Portal implements QTBox, Comparable<Portal>{
 	}
 
 	public boolean isValidY(int y) {
-        if (yrange < 0)
-            return corner.getBlockY() + yrange <= y
-            && corner.getBlockY() >= y;
-        return corner.getBlockY() + yrange >= y
-                && corner.getBlockY() <= y;
-    }
+		if (yrange < 0)
+			return corner.getBlockY() + yrange <= y && corner.getBlockY() >= y;
+		return corner.getBlockY() + yrange >= y && corner.getBlockY() <= y;
+	}
 
 	// *------------------------------------------------------------------------------------------------------------*
 	// | The following chooseSpawn method contains code made by NuclearW |
@@ -126,8 +126,8 @@ public class Portal implements QTBox, Comparable<Portal>{
 		double y = -1;
 		do {
 
-			xrand = qtXMin() + Math.random() * (qtXMax() - qtXMin() + 1);
-			zrand = qtZMin() + Math.random() * (qtZMax() - qtZMin() + 1);
+			xrand = qtXMin() + Math.random() * (qtXMax() - qtXMin());
+			zrand = qtZMin() + Math.random() * (qtZMax() - qtZMin());
 
 			y = getValidHighestY(corner.getWorld(), xrand, zrand);
 
@@ -140,103 +140,71 @@ public class Portal implements QTBox, Comparable<Portal>{
 
 	@SuppressWarnings("deprecation")
 	private double getValidHighestY(World world, double x, double z) {
-
 		world.getChunkAt(new Location(world, x, 0, z)).load();
-
-		int y = (int) corner.getY();
-		int blockid = 0;
-		
-		if (world.getBlockTypeIdAt((int)x,(int)y, (int)z) == 0 &&
-				world.getBlockTypeIdAt((int)x, (int)y+1, (int)z) == 0 &&
-				world.getBlockTypeIdAt((int)x, (int)y-1, (int)z) != 0){
-			return y;
-		}
-		
-		y = 0;
-		
-		if (world.getEnvironment().equals(Environment.NETHER)) {
-			int blockYid = world.getBlockTypeIdAt((int) x, (int) y, (int) z);
-			int blockY2id = world.getBlockTypeIdAt((int) x, (int) (y + 1),
-					(int) z);
-			while (y < 128 && !(blockYid == 0 && blockY2id == 0)) {
-				y++;
-				blockYid = blockY2id;
-				blockY2id = world.getBlockTypeIdAt((int) x, (int) (y + 1),
-						(int) z);
-			}
-			if (y == 127){
-				return -1;
-			} else {
-				y += 1;
-			}
-		} else {
-			y = 257;
-			while (y >= 0 && (blockid == 0 || !isValidY(y))) {
-				y--;
-				blockid = world.getBlockTypeIdAt((int) x, (int) y, (int) z);
-			}
-			if (y == 0){
-				return -1;
-			} else{
-				y += 1;
-			}
-		}
-		return y;
+		double y = corner.getBlockY()
+				+ ((yrange > 0 ? 1 : -1) * (Math.random() * (yrange)));
+		return world.getBlockAt(new Location(world, x, y, z)).getType().isSolid() 
+				&& world.getBlockAt(new Location(world, x, y+1, z)).getType() == Material.AIR
+				&& world.getBlockAt(new Location(world, x, y+2, z)).getType() == Material.AIR? 
+						y : -1;
 	}
 
 	public int getXRange() {
 		return xrange;
 	}
-	
+
 	public int getYRange() {
 		return yrange;
 	}
-	
+
 	public int getZRange() {
 		return zrange;
 	}
-	
+
 	public Location getCornerBlockLocation() {
 		return corner;
 	}
-	
+
 	public boolean isOnCurrentServer() {
 		return isOnCurrentServer;
 	}
-	
+
 	public void teleportPlayer(Player p) {
 		if (connection == null)
 			return;
 		if (connection.getServerName().equals(BetterShardsAPI.getServerName()))
 			p.teleport(connection.findRandomSafeLocation());
-		BetterShardsAPI.connectPlayer(p, connection, PlayerChangeServerReason.PORTAL);
+		BetterShardsAPI.connectPlayer(p, connection,
+				PlayerChangeServerReason.PORTAL);
 	}
 
 	@Override
 	public int compareTo(Portal o) {
 		if (isOnCurrentServer && !o.isOnCurrentServer())
 			return -1;
-		int x = corner.getBlockX(), y = corner.getBlockY(), z = corner.getBlockZ();
-		int ox = o.getCornerBlockLocation().getBlockX(), oy = o.getCornerBlockLocation().getBlockY(),
-				oz = o.getCornerBlockLocation().getBlockZ();
-	    if (x < ox) {
-	        return -1;
-	      }
-	      if (x > ox) {
-	        return 1;
-	      }
-	      if (z < oz) {
-	        return -1;
-	      }
-	      if (z > oz) {
-	        return 1;
-	      }
-	      if (y < oy) {
-	        return -1;
-	      }
-	      if (y > oy) {
-	        return 1;
-	      }
-	      return 0;  // equal
+		int x = corner.getBlockX(), y = corner.getBlockY(), z = corner
+				.getBlockZ();
+		int ox = o.getCornerBlockLocation().getBlockX(), oy = o
+				.getCornerBlockLocation().getBlockY(), oz = o
+				.getCornerBlockLocation().getBlockZ();
+		if (x < ox) {
+			return -1;
+		}
+		if (x > ox) {
+			return 1;
+		}
+		if (z < oz) {
+			return -1;
+		}
+		if (z > oz) {
+			return 1;
+		}
+		if (y < oy) {
+			return -1;
+		}
+		if (y > oy) {
+			return 1;
+		}
+		return 0; // equal
 	}
 }
