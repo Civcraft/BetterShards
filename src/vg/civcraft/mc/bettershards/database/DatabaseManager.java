@@ -133,7 +133,7 @@ public class DatabaseManager{
 	}
 	
 	/**
-	 * Adds a portal instance to the database.  Should be called only when
+	 * Adds a portal instance to the database. Should be called only when
 	 * initially creating a Portal Object.
 	 */
 	public void addPortal(Portal portal){
@@ -152,7 +152,11 @@ public class DatabaseManager{
 				addPortalLoc.execute();
 			}
 		} catch (SQLException e) {
-		e.printStackTrace();
+			e.printStackTrace();
+		} finally {
+			try {
+				addPortalLoc.close();
+			} catch (Exception ex) {}
 		}
 	}
 	
@@ -181,6 +185,10 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				addPortalData.close();
+			} catch (Exception ex) {}
 		}
 	}
 	
@@ -196,6 +204,10 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				addPlayerData.close();
+			} catch (Exception ex) {}
 		}
 	}
 	
@@ -214,6 +226,10 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				getPlayerData.close();
+			} catch (Exception ex) {}
 		}
 		return new ByteArrayInputStream(new byte[0]);
 	}
@@ -240,6 +256,11 @@ public class DatabaseManager{
 					int z = set.getInt("z");
 					String id = set.getString("id");
 
+					try {
+						getPortalLocation.close();
+						getPortalLocation = null;
+					} catch (Exception ex) {}
+
 					Location loc = new Location(w, x, y, z);
 					Portal p = getPortalData(id, loc, rangex, rangey, rangez);
 					portals.add(p);
@@ -247,11 +268,17 @@ public class DatabaseManager{
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			} finally {
+				try {
+					if (getPortalLocation != null) {
+						getPortalLocation.close();
+					}
+				} catch (Exception ex) {}
 			}
 		}
 		return portals;
 	}
-	
+
 	public Portal getPortal(String name) {
 		PreparedStatement getPortalData = db.prepareStatement(this.getPortalLoc);
 		try {
@@ -277,10 +304,14 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				getPortalData.close();
+			} catch (Exception ex) {}
 		}
 		return null;
 	}
-	
+
 	private Portal getPortalData(String name, Location corner, int xrange, int yrange, int zrange){
 		PreparedStatement getPortalData = db.prepareStatement(this.getPortalData);
 		try {
@@ -303,10 +334,14 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				getPortalData.close();
+			} catch (Exception ex) {}
 		}
 		return null;
 	}
-	
+
 	public void removePlayerData(UUID uuid, InventoryIdentifier id) {
 		PreparedStatement removePlayerData = db.prepareStatement(this.removePlayerData);
 		try {
@@ -316,9 +351,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				removePlayerData.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public void removePortalLoc(Portal p) {
 		PreparedStatement removePortalLoc = db.prepareStatement(this.removePortalLoc);
 		try {
@@ -327,9 +366,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				removePortalLoc.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public void removePortalData(Portal p) {
 		PreparedStatement removePortalData = db.prepareStatement(this.removePortalData);
 		try {
@@ -338,9 +381,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				removePortalData.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public void updatePortalData(Portal p) {
 		PreparedStatement updatePortalData = db.prepareStatement(this.updatePortalData);
 		try {
@@ -353,9 +400,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				updatePortalData.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public void addExclude(String server) {
 		PreparedStatement addExclude = db.prepareStatement(this.addExclude);
 		try {
@@ -364,9 +415,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				addExclude.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public String getAllExclude() {
 		PreparedStatement getAllExclude = db.prepareStatement(this.getAllExclude);
 		StringBuilder builder = new StringBuilder();
@@ -377,10 +432,14 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				getAllExclude.close();
+			} catch (Exception ex) {}
 		}
 		return builder.toString();
 	}
-	
+
 	public void removeExclude(String server) {
 		PreparedStatement removeExclude = db.prepareStatement(this.removeExclude);
 		try {
@@ -389,9 +448,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				removeExclude.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public void addBedLocation(BedLocation bed) {
 		PreparedStatement addBedLocation = db.prepareStatement(this.addBedLocation);
 		try {
@@ -406,9 +469,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				addBedLocation.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public List<BedLocation> getAllBedLocations() {
 		List<BedLocation> beds = new ArrayList<BedLocation>();
 		PreparedStatement getAllBedLocation = db.prepareStatement(this.getAllBedLocation);
@@ -428,10 +495,14 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				getAllBedLocation.close();
+			} catch (Exception ex) {}
 		}
 		return beds;
 	}
-	
+
 	public void removeBed(UUID uuid) {
 		PreparedStatement removeBedLocation = db.prepareStatement(this.removeBedLocation);
 		try {
@@ -440,6 +511,10 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				removeBedLocation.close();
+			} catch (Exception ex) {}
 		}
 	}
 }
