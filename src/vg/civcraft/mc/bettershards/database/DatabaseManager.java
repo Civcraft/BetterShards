@@ -25,6 +25,7 @@ import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.civmodcore.annotations.CivConfig;
 import vg.civcraft.mc.civmodcore.annotations.CivConfigType;
 import vg.civcraft.mc.civmodcore.annotations.CivConfigs;
+import vg.civcraft.mc.mercury.MercuryAPI;
 
 public class DatabaseManager{
 
@@ -290,7 +291,7 @@ public class DatabaseManager{
 			PortalType type = PortalType.fromOrdeal(set.getInt("portal_type"));
 			String serverName = set.getString("server_name");
 			String partner = set.getString("partner_id");
-			boolean currentServer = corner != null;
+			boolean currentServer = serverName.equals(MercuryAPI.serverName());
 			switch (type) {
 			case CUBOID:
 				CuboidPortal p = new CuboidPortal(name, corner, xrange, yrange, zrange, partner, currentServer);

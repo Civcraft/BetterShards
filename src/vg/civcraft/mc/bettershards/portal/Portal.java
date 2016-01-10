@@ -127,8 +127,8 @@ public class Portal implements QTBox, Comparable<Portal> {
 		double y = -1;
 		do {
 
-			xrand = qtXMin() + Math.random() * (qtXMax() - qtXMin());
-			zrand = qtZMin() + Math.random() * (qtZMax() - qtZMin());
+			xrand = qtXMin() + Math.random() * Math.abs(qtXMax() - qtXMin());
+			zrand = qtZMin() + Math.random() * Math.abs(qtZMax() - qtZMin());
 			y = getValidHighestY(corner.getWorld(), xrand, zrand);
 			tries++;
 
