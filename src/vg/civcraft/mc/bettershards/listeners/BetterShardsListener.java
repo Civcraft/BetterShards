@@ -194,8 +194,10 @@ public class BetterShardsListener implements Listener{
 		Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
 		BedLocation bed = plugin.getBed(uuid);
-		if (bed == null)
-			rs.handleDeath(p);
+		if (bed == null) {
+			//rs.handleDeath(p);
+			return;
+		}
 		String info = bed.getUUID().toString() + " " + bed.getLocation(); 
 		mercManager.teleportPlayer(info);
 		BetterShardsAPI.connectPlayer(p, bed.getServer(), PlayerChangeServerReason.BED);
