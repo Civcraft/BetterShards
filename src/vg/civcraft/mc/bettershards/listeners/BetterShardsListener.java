@@ -60,6 +60,7 @@ public class BetterShardsListener implements Listener{
 		pm = plugin.getPortalManager();
 		config = plugin.GetConfig();
 		mercManager = BetterShardsPlugin.getMercuryManager();
+		rs = BetterShardsPlugin.getRandomSpawn();
 		Bukkit.getScheduler().runTask(plugin, new Runnable() {
 
 			@Override

@@ -85,11 +85,10 @@ public class BetterShardsPlugin extends ACivMod{
 		pm.loadPortalsManager();
 		setWorldNBTStorage();
 		combatManager = new CombatTagManager(getServer());
+		randomSpawn = new RandomSpawn(config.get("randomspawn.range").getInt(), config.get("randomspawn.spawnworld").getString());
 		registerListeners();
 		uploadExistingPlayers();
-		
 		new BetterShardsAPI();
-		
 		handle = new BetterCommandHandler();
 		handle.registerCommands();
 		
@@ -102,7 +101,6 @@ public class BetterShardsPlugin extends ACivMod{
 			
 		}, 100, 1000);
 		loadAllBeds();
-		randomSpawn = new RandomSpawn(config.get("randomspawn.range").getInt(), config.get("randomspawn.spawnworld").getString());
 	}
 	
 	@Override
