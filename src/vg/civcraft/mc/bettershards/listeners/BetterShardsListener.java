@@ -1,5 +1,7 @@
 package vg.civcraft.mc.bettershards.listeners;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.Collection;
@@ -209,15 +211,19 @@ public class BetterShardsListener implements Listener{
 		if (b.getType() != Material.BED_BLOCK) 
 			return;
 		Block real = getRealFace(b);
+		List<BedLocation> toBeRemoved = new ArrayList<BedLocation>();
 		for (BedLocation bed: plugin.getAllBeds()) {
 			if (!bed.getServer().equals(MercuryAPI.serverName()))
 					continue;
 			String loc = real.getWorld().getUID().toString() + " " + real.getX() + " " + real.getY() + " " + real.getZ();
 			if (bed.getLocation().equals(loc)) {
-				plugin.removeBed(bed.getUUID()); // remove from local cache.
-				db.removeBed(bed.getUUID()); // remove from db.
-				mercManager.removeBedLocation(bed); // send remove to other servers.
+				toBeRemoved.add(bed);
 			}
+		}
+		for (BedLocation bed: toBeRemoved) {
+			plugin.removeBed(bed.getUUID()); // remove from local cache.
+			db.removeBed(bed.getUUID()); // remove from db.
+			mercManager.removeBedLocation(bed); // send remove to other servers.
 		}
 	}
 	
