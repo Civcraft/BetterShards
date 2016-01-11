@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 import com.avaje.ebeaninternal.server.lib.sql.DataSourceException;
 public class Database {
-	private String host;
+    private String host;
     private int port;
     private String db;
     private String user;
@@ -56,6 +56,7 @@ public class Database {
         }
         try {
             connection = DriverManager.getConnection(jdbc);
+            connection.setAutoCommit(true);
             this.logger.log(Level.INFO, "Connected to database!");
             return true;
         } catch (SQLException ex) { //Error handling below:

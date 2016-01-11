@@ -35,6 +35,10 @@ public class RandomSpawn {
 	 */
 	public void handleDeath(Player p) {
 		List<String> servers = getAllowedServers();
+		if (servers.size() == 0) {
+			 p.teleport(getLocation());
+			 return;
+		}
 		int serverIndex = (int) (Math.random() * servers.size());
 		if (servers.get(serverIndex).equalsIgnoreCase(MercuryAPI.serverName())) {
 			// same server

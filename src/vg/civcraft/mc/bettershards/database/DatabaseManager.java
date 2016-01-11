@@ -31,6 +31,7 @@ import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.civmodcore.annotations.CivConfig;
 import vg.civcraft.mc.civmodcore.annotations.CivConfigType;
 import vg.civcraft.mc.civmodcore.annotations.CivConfigs;
+import vg.civcraft.mc.mercury.MercuryAPI;
 
 public class DatabaseManager{
 
@@ -181,7 +182,7 @@ public class DatabaseManager{
 	}
 	
 	/**
-	 * Adds a portal instance to the database.  Should be called only when
+	 * Adds a portal instance to the database. Should be called only when
 	 * initially creating a Portal Object.
 	 */
 	public void addPortal(Portal portal){
@@ -202,6 +203,10 @@ public class DatabaseManager{
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				addPortalLoc.close();
+			} catch (Exception ex) {}
 		}
 	}
 	
@@ -231,6 +236,10 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				addPortalData.close();
+			} catch (Exception ex) {}
 		}
 	}
 	
@@ -250,6 +259,10 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				addPlayerData.close();
+			} catch (Exception ex) {}
 		}
 	}
 	
@@ -275,6 +288,10 @@ public class DatabaseManager{
 		} catch (InvalidConfigurationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				getPlayerData.close();
+			} catch (Exception ex) {}
 		}
 		return new ByteArrayInputStream(new byte[0]);
 	}
@@ -302,6 +319,11 @@ public class DatabaseManager{
 					int z = set.getInt("z");
 					String id = set.getString("id");
 
+					try {
+						getPortalLocation.close();
+						getPortalLocation = null;
+					} catch (Exception ex) {}
+
 					Location loc = new Location(w, x, y, z);
 					Portal p = getPortalData(id, loc, rangex, rangey, rangez);
 					portals.add(p);
@@ -309,11 +331,17 @@ public class DatabaseManager{
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			} finally {
+				try {
+					if (getPortalLocation != null) {
+						getPortalLocation.close();
+					}
+				} catch (Exception ex) {}
 			}
 		}
 		return portals;
 	}
-	
+
 	public Portal getPortal(String name) {
 		isConnected();
 		PreparedStatement getPortalData = db.prepareStatement(this.getPortalLoc);
@@ -340,6 +368,10 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				getPortalData.close();
+			} catch (Exception ex) {}
 		}
 		return null;
 	}
@@ -355,7 +387,7 @@ public class DatabaseManager{
 			PortalType type = PortalType.fromOrdeal(set.getInt("portal_type"));
 			String serverName = set.getString("server_name");
 			String partner = set.getString("partner_id");
-			boolean currentServer = corner != null;
+			boolean currentServer = serverName.equals(MercuryAPI.serverName());
 			switch (type) {
 			case CUBOID:
 				CuboidPortal p = new CuboidPortal(name, corner, xrange, yrange, zrange, partner, currentServer);
@@ -367,10 +399,14 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				getPortalData.close();
+			} catch (Exception ex) {}
 		}
 		return null;
 	}
-	
+
 	public void removePlayerData(UUID uuid, InventoryIdentifier id) {
 		isConnected();
 		PreparedStatement removePlayerData = db.prepareStatement(this.removePlayerData);
@@ -381,9 +417,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				removePlayerData.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public void removePortalLoc(Portal p) {
 		isConnected();
 		PreparedStatement removePortalLoc = db.prepareStatement(this.removePortalLoc);
@@ -393,9 +433,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				removePortalLoc.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public void removePortalData(Portal p) {
 		isConnected();
 		PreparedStatement removePortalData = db.prepareStatement(this.removePortalData);
@@ -405,9 +449,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				removePortalData.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public void updatePortalData(Portal p) {
 		isConnected();
 		PreparedStatement updatePortalData = db.prepareStatement(this.updatePortalData);
@@ -421,9 +469,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				updatePortalData.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public void addExclude(String server) {
 		isConnected();
 		PreparedStatement addExclude = db.prepareStatement(this.addExclude);
@@ -433,9 +485,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				addExclude.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public String getAllExclude() {
 		isConnected();
 		PreparedStatement getAllExclude = db.prepareStatement(this.getAllExclude);
@@ -447,10 +503,14 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				getAllExclude.close();
+			} catch (Exception ex) {}
 		}
 		return builder.toString();
 	}
-	
+
 	public void removeExclude(String server) {
 		isConnected();
 		PreparedStatement removeExclude = db.prepareStatement(this.removeExclude);
@@ -460,9 +520,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				removeExclude.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public void addBedLocation(BedLocation bed) {
 		isConnected();
 		PreparedStatement addBedLocation = db.prepareStatement(this.addBedLocation);
@@ -478,9 +542,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				addBedLocation.close();
+			} catch (Exception ex) {}
 		}
 	}
-	
+
 	public List<BedLocation> getAllBedLocations() {
 		isConnected();
 		List<BedLocation> beds = new ArrayList<BedLocation>();
@@ -501,10 +569,14 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				getAllBedLocation.close();
+			} catch (Exception ex) {}
 		}
 		return beds;
 	}
-	
+
 	public void removeBed(UUID uuid) {
 		isConnected();
 		PreparedStatement removeBedLocation = db.prepareStatement(this.removeBedLocation);
@@ -514,6 +586,10 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				removeBedLocation.close();
+			} catch (Exception ex) {}
 		}
 	}
 }

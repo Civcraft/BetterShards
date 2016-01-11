@@ -127,8 +127,8 @@ public class Portal implements QTBox, Comparable<Portal> {
 		double y = -1;
 		do {
 
-			xrand = qtXMin() + Math.random() * (qtXMax() - qtXMin());
-			zrand = qtZMin() + Math.random() * (qtZMax() - qtZMin());
+			xrand = qtXMin() + Math.random() * Math.abs(qtXMax() - qtXMin());
+			zrand = qtZMin() + Math.random() * Math.abs(qtZMax() - qtZMin());
 			y = getValidHighestY(corner.getWorld(), xrand, zrand);
 			tries++;
 
@@ -136,11 +136,14 @@ public class Portal implements QTBox, Comparable<Portal> {
 		
 		if (y == -1) {
 			//still not found
-			for(; y<256;y++) {
+			for(y = 255; y>0 ; y--) {
 				if (validSpawn(corner.getWorld(), xrand, y, zrand)) {
 					break;
 				}
 			}
+		} 
+		if (y == 0) {
+			y = 255;
 		}
 		Location location = new Location(corner.getWorld(), xrand, y, zrand);
 
@@ -151,7 +154,7 @@ public class Portal implements QTBox, Comparable<Portal> {
 	private double getValidHighestY(World world, double x, double z) {
 		world.getChunkAt(new Location(world, x, 0, z)).load();
 		double y = corner.getBlockY()
-				+ ((yrange > 0 ? 1 : -1) * (Math.random() * (yrange)));
+				+ Math.abs(Math.random() * (yrange));
 		y = (double) ((int)y);  //round it
 		return validSpawn(world,x,y,z) ? y : -1;
 	}
