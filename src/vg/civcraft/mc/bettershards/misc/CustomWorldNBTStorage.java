@@ -10,6 +10,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.MemoryConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -29,6 +31,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	
 	private static CustomWorldNBTStorage storage;
 	private Map<UUID, InventoryIdentifier> invs = new HashMap<UUID, InventoryIdentifier>(); 
+	private Map<UUID, ConfigurationSection> sect = new HashMap<UUID, ConfigurationSection>();
 
 	public CustomWorldNBTStorage(File file, String s, boolean flag) {
 		super(file, s, flag);
@@ -48,7 +51,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			UUID uuid = entityhuman.getUniqueID();
 			//BetterShardsPlugin.getInstance().getLogger()
 			//		.log(Level.INFO, "Save for " + uuid);
-			db.savePlayerData(uuid, output, getInvIdentifier(uuid));
+			db.savePlayerData(uuid, output, getInvIdentifier(uuid), sect.get(uuid));
 
 		} catch (Exception localException) {
 			BetterShardsPlugin
@@ -150,7 +153,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		db.savePlayerData(uuid, output, iden);
+		db.savePlayerData(uuid, output, iden, sect.get(uuid));
 		//BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s (%s) "
 		//		+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
 	}
@@ -164,7 +167,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		db.savePlayerData(uuid, output, iden);
+		db.savePlayerData(uuid, output, iden, sect.get(uuid));
 		//BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s "
 		//		+ "inventory from non default way.", uuid.toString()));
 	}
@@ -179,17 +182,30 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 		return invs.get(uuid);
 	}
 	
+	public void loadConfigurationSectionForPlayer(UUID uuid, ConfigurationSection section) {
+		sect.put(uuid, section);
+	}
+	
 	/** 
 	 * Gets a ConfigurationSection that allows other plugins to store data that will be saved in the 
-	 * PlayerNBT Storage.  Keep in mind that this data will automaticly be saved with the player on quit.
+	 * PlayerNBT Storage. Keep in mind the ConfigurationSection returned will be autosaved on save.
 	 * If there is a previous ConfigurationSection this plugin will load it and return it.
 	 * @param uuid The uuid of the player.
 	 * @param plugin The name of the plugin for tracking purposes.
-	 * @return
+	 * @return Returns a ConfigurationSection that can be used by a plugin.  
 	 */
-	//public ConfigurationSection getConfigurationSection(UUID uuid, JavaPlugin plugin) {
-		
-	//}
+	public ConfigurationSection getConfigurationSection(UUID uuid, JavaPlugin plugin) {
+		ConfigurationSection configSect = sect.get(uuid);
+		if (configSect == null) {
+			configSect = new YamlConfiguration();
+			sect.put(uuid, configSect);
+		}
+		ConfigurationSection pluginSect = configSect.getConfigurationSection(plugin.getName());
+		if (pluginSect == null) {
+			return configSect.createSection(plugin.getName());
+		}
+		return pluginSect;
+	}
 	
 	/**
 	 * Sets the InventoryIdentifier of a player while logging in.

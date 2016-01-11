@@ -24,6 +24,7 @@ import net.minecraft.server.v1_8_R3.WorldServer;
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -306,7 +307,8 @@ public class BetterShardsPlugin extends ACivMod{
 					output.write(IOUtils.toByteArray(stream));
 					// Now to run our custom mysql code
 					UUID uuid = UUID.fromString(name);
-					db.savePlayerData(uuid, output, CustomWorldNBTStorage.getWorldNBTStorage().getInvIdentifier(uuid));
+					CustomWorldNBTStorage storage = CustomWorldNBTStorage.getWorldNBTStorage();
+					db.savePlayerData(uuid, output, storage.getInvIdentifier(uuid), new YamlConfiguration());
 					file.delete();
 					stream.close();
 				} catch (Exception localException) {

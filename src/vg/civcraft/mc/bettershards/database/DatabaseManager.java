@@ -5,7 +5,9 @@ import java.io.ByteArrayOutputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -14,9 +16,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
+import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.PortalType;
@@ -39,13 +45,14 @@ public class DatabaseManager{
 	private String addPortalData, getPortalData, removePortalData, updatePortalData;
 	private String addExclude, getAllExclude, removeExclude;
 	private String addBedLocation, getAllBedLocation, removeBedLocation;
+	private String version, updateVersion;
 	
 	public DatabaseManager(){
 		config = plugin.GetConfig();
 		if (!isValidConnection())
 			return;
-		executeDatabaseStatements();
 		loadPreparedStatements();
+		executeDatabaseStatements();
 	}
 	
 	@CivConfigs({
@@ -98,14 +105,53 @@ public class DatabaseManager{
 				+ "y int not null,"
 				+ "z int not null,"
 				+ "primary key bed_id(uuid));");
+		db.execute("create table if not exists bettershards_version("
+				+ "db_version int not null,"
+				+ "update_time varchar(24));");
+		int ver = checkVersion();
+		if (ver == 1) {
+			BetterShardsPlugin.getInstance().getLogger().info("Update to version 2 of the BetterShards.");
+			db.execute("alter table createPlayerData add config_sect text;");
+			ver = updateVersion(ver);
+		}
+	}
+	
+	private int checkVersion() {
+		PreparedStatement version = db.prepareStatement(this.version);
+		try {
+			ResultSet set = version.executeQuery();
+			if (!set.next())
+				return 1;
+			return set.getInt("db_version");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return 1;
+	}
+	
+	private int updateVersion(int version) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		PreparedStatement updateVersion = db.prepareStatement(this.updateVersion);
+		try {
+			updateVersion.setInt(1, version+ 1);
+			updateVersion.setString(2, sdf.format(new Date()));
+			updateVersion.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ++version;
 	}
 	
 	public boolean isConnected() {
+		if (!db.isConnected())
+			db.connect();
 		return db.isConnected();
 	}
 	
 	private void loadPreparedStatements(){
-		addPlayerData = "insert into createPlayerData(uuid, entity, server) values(?,?,?);";
+		addPlayerData = "insert into createPlayerData(uuid, entity, server, config_sect) values(?,?,?,?);";
 		getPlayerData = "select * from createPlayerData where uuid = ? and server = ?;";
 		removePlayerData = "delete from createPlayerData where uuid = ? and server = ?;";
 		
@@ -129,6 +175,9 @@ public class DatabaseManager{
 				+ "x, y, z) values (?,?,?,?,?,?)";
 		getAllBedLocation = "select * from player_beds;";
 		removeBedLocation = "delete from player_beds where uuid = ?;";
+		
+		version = "select max(db_version) as db_version from db_version;";
+		updateVersion = "insert into db_version (db_version, update_time) values (?,?)";
 	}
 	
 	/**
@@ -136,6 +185,7 @@ public class DatabaseManager{
 	 * initially creating a Portal Object.
 	 */
 	public void addPortal(Portal portal){
+		isConnected();
 		PreparedStatement addPortalLoc = db.prepareStatement(this.addPortalLoc);
 		try {
 			if (portal instanceof CuboidPortal){
@@ -151,7 +201,7 @@ public class DatabaseManager{
 				addPortalLoc.execute();
 			}
 		} catch (SQLException e) {
-		e.printStackTrace();
+			e.printStackTrace();
 		}
 	}
 	
@@ -167,6 +217,7 @@ public class DatabaseManager{
 	
 	private String serverName = plugin.getCurrentServerName();
 	public void addPortalData(Portal portal, Portal connection){
+		isConnected();
 		PreparedStatement addPortalData = db.prepareStatement(this.addPortalData);
 		try {
 			addPortalData.setString(1, portal.getName());
@@ -183,7 +234,9 @@ public class DatabaseManager{
 		}
 	}
 	
-	public void savePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id) {
+	public void savePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
+			ConfigurationSection section) {
+		isConnected();
 		invCache.remove(uuid); // So if it is loaded again it is recaught.
 		PreparedStatement addPlayerData = db.prepareStatement(this.addPlayerData);
 		removePlayerData(uuid, id); // So player data won't throw mysql error.
@@ -191,6 +244,8 @@ public class DatabaseManager{
 			addPlayerData.setString(1, uuid.toString());
 			addPlayerData.setBytes(2, output.toByteArray());
 			addPlayerData.setInt(3, id.ordinal());
+			YamlConfiguration yaml = (YamlConfiguration) section;
+			addPlayerData.setString(4, yaml.saveToString());
 			addPlayerData.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -199,6 +254,7 @@ public class DatabaseManager{
 	}
 	
 	public ByteArrayInputStream loadPlayerData(UUID uuid, InventoryIdentifier id){
+		isConnected();
 		// Here we had it caches before hand so no need to load it again.
 		if (invCache.containsKey(uuid))
 			return invCache.get(uuid);
@@ -209,8 +265,14 @@ public class DatabaseManager{
 			ResultSet set = getPlayerData.executeQuery();
 			if (!set.next())
 				return new ByteArrayInputStream(new byte[0]);
+			YamlConfiguration sect = new YamlConfiguration();
+			sect.loadFromString(set.getString("config_sect"));
+			CustomWorldNBTStorage.getWorldNBTStorage().loadConfigurationSectionForPlayer(uuid, sect);
 			return new ByteArrayInputStream(set.getBytes("entity"));			
 		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidConfigurationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -223,6 +285,7 @@ public class DatabaseManager{
 	 * get portals from Worlds that are not present on this server.
 	 */
 	public List<Portal> getAllPortalsByWorld(World[] worlds){
+		isConnected();
 		List<Portal> portals = new ArrayList<Portal>();
 		for (World w: worlds){
 			String world = w.getName();
@@ -252,6 +315,7 @@ public class DatabaseManager{
 	}
 	
 	public Portal getPortal(String name) {
+		isConnected();
 		PreparedStatement getPortalData = db.prepareStatement(this.getPortalLoc);
 		try {
 			getPortalData.setString(1, name);
@@ -280,7 +344,8 @@ public class DatabaseManager{
 		return null;
 	}
 	
-	private Portal getPortalData(String name, Location corner, int xrange, int yrange, int zrange){
+	private Portal getPortalData(String name, Location corner, int xrange, int yrange, int zrange) {
+		isConnected();
 		PreparedStatement getPortalData = db.prepareStatement(this.getPortalData);
 		try {
 			getPortalData.setString(1, name);
@@ -307,6 +372,7 @@ public class DatabaseManager{
 	}
 	
 	public void removePlayerData(UUID uuid, InventoryIdentifier id) {
+		isConnected();
 		PreparedStatement removePlayerData = db.prepareStatement(this.removePlayerData);
 		try {
 			removePlayerData.setString(1, uuid.toString());
@@ -319,6 +385,7 @@ public class DatabaseManager{
 	}
 	
 	public void removePortalLoc(Portal p) {
+		isConnected();
 		PreparedStatement removePortalLoc = db.prepareStatement(this.removePortalLoc);
 		try {
 			removePortalLoc.setString(1, p.getName());
@@ -330,6 +397,7 @@ public class DatabaseManager{
 	}
 	
 	public void removePortalData(Portal p) {
+		isConnected();
 		PreparedStatement removePortalData = db.prepareStatement(this.removePortalData);
 		try {
 			removePortalData.setString(1, p.getName());
@@ -341,6 +409,7 @@ public class DatabaseManager{
 	}
 	
 	public void updatePortalData(Portal p) {
+		isConnected();
 		PreparedStatement updatePortalData = db.prepareStatement(this.updatePortalData);
 		try {
 			String partner = null;
@@ -356,6 +425,7 @@ public class DatabaseManager{
 	}
 	
 	public void addExclude(String server) {
+		isConnected();
 		PreparedStatement addExclude = db.prepareStatement(this.addExclude);
 		try {
 			addExclude.setString(1, server);
@@ -367,6 +437,7 @@ public class DatabaseManager{
 	}
 	
 	public String getAllExclude() {
+		isConnected();
 		PreparedStatement getAllExclude = db.prepareStatement(this.getAllExclude);
 		StringBuilder builder = new StringBuilder();
 		try {
@@ -381,6 +452,7 @@ public class DatabaseManager{
 	}
 	
 	public void removeExclude(String server) {
+		isConnected();
 		PreparedStatement removeExclude = db.prepareStatement(this.removeExclude);
 		try {
 			removeExclude.setString(1, server);
@@ -392,6 +464,7 @@ public class DatabaseManager{
 	}
 	
 	public void addBedLocation(BedLocation bed) {
+		isConnected();
 		PreparedStatement addBedLocation = db.prepareStatement(this.addBedLocation);
 		try {
 			addBedLocation.setString(1, bed.getUUID().toString());
@@ -409,6 +482,7 @@ public class DatabaseManager{
 	}
 	
 	public List<BedLocation> getAllBedLocations() {
+		isConnected();
 		List<BedLocation> beds = new ArrayList<BedLocation>();
 		PreparedStatement getAllBedLocation = db.prepareStatement(this.getAllBedLocation);
 		try {
@@ -432,6 +506,7 @@ public class DatabaseManager{
 	}
 	
 	public void removeBed(UUID uuid) {
+		isConnected();
 		PreparedStatement removeBedLocation = db.prepareStatement(this.removeBedLocation);
 		try {
 			removeBedLocation.setString(1, uuid.toString());
