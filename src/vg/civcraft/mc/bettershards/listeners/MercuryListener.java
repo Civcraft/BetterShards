@@ -92,6 +92,21 @@ public class MercuryListener implements Listener{
 				plugin.removeBed(uuid);
 			}
 		}
+		else if (content[0].equals("portal")) {
+			if (content[1].equals("connect")) {
+				Portal p1 = pm.getPortal(content[2]);
+				Portal p2 = pm.getPortal(content[3]);
+				if (p1 == null || p2 == null)
+					return;
+				p1.setPartnerPortal(p2);
+			}
+			else if (content[1].equals("remove")) {
+				Portal p1 = pm.getPortal(content[2]);
+				if (p1 == null)
+					return;
+				p1.setPartnerPortal(null);
+			}
+		}
 	}
 	
 	public static Location getTeleportLocation(UUID uuid) {

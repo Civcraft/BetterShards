@@ -498,8 +498,9 @@ public class DatabaseManager{
 		StringBuilder builder = new StringBuilder();
 		try {
 			ResultSet set = getAllExclude.executeQuery();
-			while (set.next())
-				builder.append(set.getString("name") + " ");
+			while (set.next()) {
+				builder.append(set.getString("name") + "|");
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -508,7 +509,10 @@ public class DatabaseManager{
 				getAllExclude.close();
 			} catch (Exception ex) {}
 		}
-		return builder.toString();
+		String x = builder.toString();
+		if (x.length() != 0) 
+			x = x.substring(0, x.length()-2);
+		return x;
 	}
 
 	public void removeExclude(String server) {

@@ -23,6 +23,7 @@ public class Portal implements QTBox, Comparable<Portal> {
 	protected PortalType type;
 	private boolean isOnCurrentServer; // Set to false if not on current server
 	protected DatabaseManager db;
+	private boolean isDirty = false;
 
 	public Portal(String name, Location corner, int xrange, int yrange,
 			int zrange, Portal connection, PortalType type,
@@ -48,12 +49,12 @@ public class Portal implements QTBox, Comparable<Portal> {
 
 	public void setName(String name) {
 		this.name = name;
-		db.updatePortalData(this);
+		setDirty(true);
 	}
 
 	public void setPartnerPortal(Portal connection) {
 		this.connection = connection;
-		db.updatePortalData(this);
+		setDirty(true);
 	}
 
 	public PortalType getType() {
@@ -66,7 +67,7 @@ public class Portal implements QTBox, Comparable<Portal> {
 
 	public void setServerName(String serverName) {
 		this.serverName = serverName;
-		db.updatePortalData(this);
+		setDirty(true);
 	}
 
 	@Override
@@ -222,5 +223,13 @@ public class Portal implements QTBox, Comparable<Portal> {
 			return 1;
 		}
 		return 0; // equal
+	}
+	
+	public boolean isDirty() {
+		return isDirty;
+	}
+	
+	public void setDirty(boolean dirty) {
+		isDirty = dirty;
 	}
 }

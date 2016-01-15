@@ -1,6 +1,7 @@
 package vg.civcraft.mc.bettershards;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ public class PortalsManager extends SparseQuadTree{
 	public void loadPortalsManager() {
 		loadPortalsFromServer();
 		removeTeleportedPlayers();
+		autoSaveTimer();
 	}
 	
 	public void createPortal(Portal portal){
@@ -127,5 +129,24 @@ public class PortalsManager extends SparseQuadTree{
 	
 	public void addArrivedPlayer(Player p) {
 		arrivedPlayers.add(p);
+	}
+	
+	// We want it sync incase a mercury message comes through we don't want it to override the db before 
+	// mercury gets a chance to update the portal.
+	private void autoSaveTimer() {
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(BetterShardsPlugin.getInstance(), new Runnable() {
+
+			@Override
+			public void run() {
+				Collection<Portal> ports = portals.values();
+				for (Portal p: ports) {
+					if (p.isDirty()) {
+						db.updatePortalData(p);
+						p.setDirty(false);
+					}
+				}
+			}
+			
+		}, 500, 1000);
 	}
 }

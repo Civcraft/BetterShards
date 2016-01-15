@@ -6,6 +6,10 @@ import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.mercury.MercuryAPI;
 
+/**
+ * @author Rourke750
+ *
+ */
 public class MercuryManager {
 
 	public MercuryManager() {
@@ -13,7 +17,7 @@ public class MercuryManager {
 	}
 
 	public void sendPortalDelete(String name) {
-		MercuryAPI.sendGlobalMessage("delete " + name, "BetterShards");
+		MercuryAPI.sendGlobalMessage("delete|" + name, "BetterShards");
 	}
 
 	/**
@@ -23,7 +27,7 @@ public class MercuryManager {
 	 * @param p
 	 */
 	public void teleportPlayer(UUID uuid, Portal p) {
-		MercuryAPI.sendGlobalMessage("teleport portal " + uuid.toString() + " " + p.getName(), "BetterShards");
+		MercuryAPI.sendGlobalMessage("teleport|portal|" + uuid.toString() + "|" + p.getName(), "BetterShards");
 	}
 
 	/**
@@ -32,7 +36,7 @@ public class MercuryManager {
 	 * world can be either the world name or world uuid.
 	 */
 	public void teleportPlayer(String info) {
-		MercuryAPI.sendGlobalMessage("teleport command " + info , "BetterShards");
+		MercuryAPI.sendGlobalMessage("teleport|command|" + info , "BetterShards");
 	}
 
 	private void registerMercuryChannels() {
@@ -40,19 +44,27 @@ public class MercuryManager {
 	}
 
 	public void sendBedLocation(BedLocation bed) {
-		String info = bed.getUUID().toString() + " " + bed.getServer() + " " + bed.getLocation();
-		MercuryAPI.sendGlobalMessage("bed add " + info, "BetterShards");
+		String info = bed.getUUID().toString() + "|" + bed.getServer() + "|" + bed.getLocation();
+		MercuryAPI.sendGlobalMessage("bed|add|" + info, "BetterShards");
 	}
 	
 	public void notifyRandomSpawn(String server, UUID player) {
-		MercuryAPI.sendMessage(server, "teleport randomspawn " + player.toString(), "BetterShards");
+		MercuryAPI.sendMessage(server, "teleport|randomspawn|" + player.toString(), "BetterShards");
 	}
 
 	public void removeBedLocation(BedLocation bed) {
-		MercuryAPI.sendGlobalMessage("bed remove " + bed.getUUID().toString(), "BetterShards");
+		MercuryAPI.sendGlobalMessage("bed|remove|" + bed.getUUID().toString(), "BetterShards");
 	}
 
 	public void sendBungeeUpdateMessage(String allExclude) {
-		MercuryAPI.sendGlobalMessage("removeServer " + allExclude, "BetterShards");
+		MercuryAPI.sendGlobalMessage("removeServer|" + allExclude, "BetterShards");
+	}
+	
+	public void sendPortalJoin(Portal main, Portal con) {
+		MercuryAPI.sendGlobalMessage("portal|connect|"+main.getName()+"|"+con.getName(), "BetterShards");
+	}
+	
+	public void removePortalJoin(Portal main) {
+		MercuryAPI.sendGlobalMessage("portal|remove|"+main.getName(), "BetterShards");
 	}
 }
