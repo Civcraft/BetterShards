@@ -34,11 +34,13 @@ import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.PortalsManager;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
+import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
+import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.bettershards.misc.RandomSpawn;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.Config;
@@ -95,6 +97,9 @@ public class BetterShardsListener implements Listener{
 		Location loc = MercuryListener.getTeleportLocation(event.getPlayer().getUniqueId());
 		if (loc == null)
 			return;
+		PlayerArrivedChangeServerEvent e = new PlayerArrivedChangeServerEvent(event.getPlayer(), loc);
+		Bukkit.getPluginManager().callEvent(e);
+		loc = e.getLocation();
 		pm.addArrivedPlayer(event.getPlayer());
 		event.getPlayer().teleport(loc);
 	}
@@ -193,16 +198,28 @@ public class BetterShardsListener implements Listener{
 	
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void playerRespawnEvent(PlayerRespawnEvent event) {
-		Player p = event.getPlayer();
+		final Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
-		BedLocation bed = plugin.getBed(uuid);
+		final BedLocation bed = plugin.getBed(uuid);
 		if (bed == null) {
 			//rs.handleDeath(p);
 			return;
 		}
-		String info = bed.getUUID().toString() + " " + bed.getLocation(); 
-		mercManager.teleportPlayer(info);
-		BetterShardsAPI.connectPlayer(p, bed.getServer(), PlayerChangeServerReason.BED);
+		final String info = bed.getUUID().toString() + " " + bed.getLocation();
+		Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+
+			@Override
+			public void run() {
+				mercManager.teleportPlayer(info);
+				try {
+					BetterShardsAPI.connectPlayer(p, bed.getServer(), PlayerChangeServerReason.BED);
+				} catch (PlayerStillDeadException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
+		});
 	}
 	
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

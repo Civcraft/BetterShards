@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -13,6 +14,7 @@ import org.bukkit.event.Listener;
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.PortalsManager;
+import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.mercury.events.AsyncPluginBroadcastMessageEvent;
@@ -70,8 +72,13 @@ public class MercuryListener implements Listener{
 						
 					}
 					
-					if (Bukkit.getPlayer(uuid) != null){
-						Bukkit.getPlayer(uuid).teleport(getTeleportLocation(uuid));
+					Player p = Bukkit.getPlayer(uuid);
+					if (p != null){
+						Location loc = getTeleportLocation(uuid);
+						PlayerArrivedChangeServerEvent event = new PlayerArrivedChangeServerEvent(p, loc);
+						Bukkit.getPluginManager().callEvent(event);
+						loc = event.getLocation();
+						p.teleport(loc);
 					}
 				}
 				

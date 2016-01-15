@@ -43,6 +43,7 @@ import vg.civcraft.mc.bettershards.listeners.MercuryListener;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
+import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.bettershards.misc.RandomSpawn;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.ACivMod;
@@ -150,10 +151,10 @@ public class BetterShardsPlugin extends ACivMod{
 	
 	/**
 	 * Teleports a player to a specific server.
-	 * @param p- The Player to teleport.
-	 * @param server- The server to teleport the player to.
+	 * @param p The Player to teleport.
+	 * @param server The server to teleport the player to.
 	 */
-	public boolean teleportPlayerToServer(Player p, String server, PlayerChangeServerReason reason){
+	public boolean teleportPlayerToServer(Player p, String server, PlayerChangeServerReason reason) throws PlayerStillDeadException {
 		if (isPlayerInTransit(p.getUniqueId())) // Somehow this got triggered twice for one reason or another
 				return false; // We dont wan't to continue twice because it could cause issues with the db.
 		PlayerChangeServerEvent event = new PlayerChangeServerEvent(reason, p.getUniqueId(), server);
@@ -164,8 +165,9 @@ public class BetterShardsPlugin extends ACivMod{
 			return false;
 		if (p.isInsideVehicle())
 			p.getVehicle().eject();
-		if (p.isDead())
-			p.teleport(p);
+		if (p.isDead()) {
+			throw new PlayerStillDeadException();
+		}
 		addPlayerToTransit(p.getUniqueId()); // So the player isn't tried to be sent twice.
 		CustomWorldNBTStorage.getWorldNBTStorage().save(((CraftPlayer) p).getHandle());
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
@@ -175,7 +177,7 @@ public class BetterShardsPlugin extends ACivMod{
 		return true;
 	}
 	
-	public DatabaseManager getDatabaseManager(){
+	public DatabaseManager getDatabaseManager() {
 		return db;
 	}
 	

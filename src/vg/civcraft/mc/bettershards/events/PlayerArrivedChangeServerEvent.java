@@ -1,5 +1,6 @@
 package vg.civcraft.mc.bettershards.events;
 
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -11,27 +12,26 @@ public class PlayerArrivedChangeServerEvent extends Event{
 
 	private static HandlerList handler = new HandlerList();
 	private final Player p;
-	private Portal portal;
+	private Location loc;
 	
-	public PlayerArrivedChangeServerEvent(Player p, Portal portal) {
+	public PlayerArrivedChangeServerEvent(Player p, Location loc) {
 		this.p = p;
-		this.portal = portal;
+		this.loc = loc;
 	}
 	
 	public Player getPlayer() {
 		return p;
 	}
 	
-	public Portal getPortal() {
-		return portal;
+	public Location getLocation() {
+		return loc;
 	}
 	
 	/**
-	 * Sets the portal the player will teleport to. If the portal is set to null
-	 * then the player will not be teleported anywhere.
+	 * Sets the Location that the player will be teleported to.
 	 */
-	public void setPortal(Portal portal) {
-		this.portal = portal;
+	public void setLocation(Location loc) {
+		this.loc = loc;
 	}
 	
 	@Override

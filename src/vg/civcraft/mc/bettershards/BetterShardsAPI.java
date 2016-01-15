@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
+import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class BetterShardsAPI {
@@ -21,7 +22,15 @@ public class BetterShardsAPI {
 		mercManager = BetterShardsPlugin.getMercuryManager();
 	}
 	
-	public static void connectPlayer(Player p, String serverName, PlayerChangeServerReason reason) {
+	/**
+	 * Teleports a player to a different shard.
+	 * @param p The Player that you wish to connect.
+	 * @param serverName The name of the server that you wish the player to be sent to.
+	 * @param reason The reason to be identified by the PlayerChangeServerEvent triggered by this method.
+	 * @throws PlayerStillDeadException If the player is dead than this exception is thrown. There are issues with trying
+	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
+	 */
+	public static void connectPlayer(Player p, String serverName, PlayerChangeServerReason reason) throws PlayerStillDeadException {
 		plugin.teleportPlayerToServer(p, serverName, reason);
 	}
 	
@@ -33,7 +42,15 @@ public class BetterShardsAPI {
 		plugin.teleportOtherServerPlayer(name);
 	}
 	
-	public static void connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason) {
+	/**
+	 * Teleports a player to a different shard.
+	 * @param p The Player that you wish to connect.
+	 * @param portal The portal that the player should be teleported to.
+	 * @param reason The reason to be identified by the PlayerChangeServerEvent triggered by this method.
+	 * @throws PlayerStillDeadException If the player is dead than this exception is thrown. There are issues with trying
+	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
+	 */
+	public static void connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason) throws PlayerStillDeadException {
 		if (plugin.teleportPlayerToServer(p, portal.getServerName(), reason))
 			mercManager.teleportPlayer(p.getUniqueId(), portal); // We want to do this after because we don't know if a player was teleported yet.
 	}

@@ -13,6 +13,7 @@ import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
+import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 import vg.civcraft.mc.mercury.MercuryAPI;
 
@@ -130,7 +131,12 @@ public class Teleport extends PlayerCommand {
 		for (int x = 1; x < args.length; x++) {
 			message.append(args[x] + " ");
 		}
-		BetterShardsAPI.connectPlayer(p, server, PlayerChangeServerReason.TP_COMMAND);
+		try {
+			BetterShardsAPI.connectPlayer(p, server, PlayerChangeServerReason.TP_COMMAND);
+		} catch (PlayerStillDeadException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		mercManager.teleportPlayer(message.toString());
 		return true;
 	}

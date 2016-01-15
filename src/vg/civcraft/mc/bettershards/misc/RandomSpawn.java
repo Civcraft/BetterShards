@@ -44,8 +44,13 @@ public class RandomSpawn {
 			// same server
 			p.teleport(getLocation());
 		} else {
-			BetterShardsAPI.connectPlayer(p, servers.get(serverIndex),
-					PlayerChangeServerReason.RANDOMSPAWN);
+			try {
+				BetterShardsAPI.connectPlayer(p, servers.get(serverIndex),
+						PlayerChangeServerReason.RANDOMSPAWN);
+			} catch (PlayerStillDeadException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			BetterShardsPlugin.getMercuryManager().notifyRandomSpawn(
 					servers.get(serverIndex), p.getUniqueId());
 		}

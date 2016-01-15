@@ -10,6 +10,7 @@ import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
+import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.civmodcore.locations.QTBox;
 
 public class Portal implements QTBox, Comparable<Portal> {
@@ -191,8 +192,13 @@ public class Portal implements QTBox, Comparable<Portal> {
 			return;
 		if (connection.getServerName().equals(BetterShardsAPI.getServerName()))
 			p.teleport(connection.findRandomSafeLocation());
-		BetterShardsAPI.connectPlayer(p, connection,
-				PlayerChangeServerReason.PORTAL);
+		try {
+			BetterShardsAPI.connectPlayer(p, connection,
+					PlayerChangeServerReason.PORTAL);
+		} catch (PlayerStillDeadException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
