@@ -259,6 +259,7 @@ public class BetterShardsListener implements Listener{
 		String bedLoc = loc.getWorld().getUID().toString() + " " + loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ();
 		BedLocation bed = new BedLocation(uuid, bedLoc, server);
 		plugin.addBedLocation(uuid, bed);
+		db.removeBed(uuid); // Incase a BedLocation already exists.
 		db.addBedLocation(bed); // Need to save the bed out to db
 		mercManager.sendBedLocation(bed);
 	}
