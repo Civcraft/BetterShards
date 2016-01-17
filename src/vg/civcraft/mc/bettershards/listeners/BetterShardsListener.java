@@ -238,9 +238,7 @@ public class BetterShardsListener implements Listener{
 			}
 		}
 		for (BedLocation bed: toBeRemoved) {
-			plugin.removeBed(bed.getUUID()); // remove from local cache.
-			db.removeBed(bed.getUUID()); // remove from db.
-			mercManager.removeBedLocation(bed); // send remove to other servers.
+			BetterShardsAPI.removeBedLocation(bed);
 		}
 	}
 	
@@ -258,10 +256,7 @@ public class BetterShardsListener implements Listener{
 		Location loc = b.getLocation();
 		String bedLoc = loc.getWorld().getUID().toString() + " " + loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ();
 		BedLocation bed = new BedLocation(uuid, bedLoc, server);
-		plugin.addBedLocation(uuid, bed);
-		db.removeBed(uuid); // Incase a BedLocation already exists.
-		db.addBedLocation(bed); // Need to save the bed out to db
-		mercManager.sendBedLocation(bed);
+		BetterShardsAPI.addBedLocation(uuid, bed);
 	}
 	
 	@EventHandler

@@ -67,4 +67,12 @@ public class MercuryManager {
 	public void removePortalJoin(Portal main) {
 		MercuryAPI.sendGlobalMessage("portal|remove|"+main.getName(), "BetterShards");
 	}
+	
+	public void requestWorldUUID(UUID uuid, String world, String server) {
+		MercuryAPI.sendMessage(server, "bed|request|" + uuid.toString() + "|" + world, "BetterShards");
+	}
+	
+	public void sendWorldUUID(UUID uuid, UUID world, String server) {
+		MercuryAPI.sendMessage(server, "bed|send|" + uuid.toString() + "|" + world.toString(), "BetterShards");
+	}
 }

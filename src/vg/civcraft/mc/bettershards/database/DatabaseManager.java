@@ -534,10 +534,10 @@ public class DatabaseManager{
 	public void addBedLocation(BedLocation bed) {
 		isConnected();
 		PreparedStatement addBedLocation = db.prepareStatement(this.addBedLocation);
+		String[] locs = bed.getLocation().split(" ");
 		try {
 			addBedLocation.setString(1, bed.getUUID().toString());
 			addBedLocation.setString(2, bed.getServer());
-			String[] locs = bed.getLocation().split(" ");
 			addBedLocation.setString(3, locs[0]);
 			addBedLocation.setInt(4, Integer.parseInt(locs[1]));
 			addBedLocation.setInt(5, Integer.parseInt(locs[2]));

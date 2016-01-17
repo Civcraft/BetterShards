@@ -11,7 +11,10 @@ public class BedLocation {
 	/**
 	 * Creates an object representing where a player slept.
 	 * @param uuid The UUID of the player.
-	 * @param location The String representation of the location. EX: world_uuid x y z
+	 * @param location The String representation of the location. EX: (world_uuid x y z).
+	 * If you do not have the world uuid because it is located on another server, you
+	 * may enter the world name and the object will contact the server and get
+	 * the required uuid. This method is not prefered.
 	 * @param server The server the bed is on.
 	 */
 	public BedLocation(UUID uuid, String location, String server) {

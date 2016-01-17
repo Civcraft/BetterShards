@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
+import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
@@ -70,5 +71,35 @@ public class BetterShardsAPI {
 	 */
 	public static boolean hasBed(UUID uuid) {
 		return plugin.getBed(uuid) != null;
+	}
+	
+	public static BedLocation getBedLocation(UUID uuid) {
+		return plugin.getBed(uuid);
+	}
+	
+	/**
+	 * Adds the BedLocation to both the db and to localcaching as well as sending it
+	 * to other servers.  This method will also remove any prexisting beds.
+	 * @param uuid The uuid of the player getting the bed.
+	 * @param bed The BedLocation object.
+	 */
+	public static void addBedLocation(UUID uuid, BedLocation bed) {
+		String w = bed.getLocation().split(" ")[0];
+		removeBedLocation(bed);
+		plugin.addBedLocation(uuid, bed);
+		try {
+			UUID.fromString(w);
+		} catch(IllegalArgumentException ex) {	
+			mercManager.requestWorldUUID(uuid, w, bed.getServer());
+			return;
+		}
+		db.addBedLocation(bed);
+		mercManager.sendBedLocation(bed);
+	}
+	
+	public static void removeBedLocation(BedLocation bed) {
+		plugin.removeBed(bed.getUUID());
+		db.removeBed(bed.getUUID());
+		mercManager.removeBedLocation(bed);
 	}
 }

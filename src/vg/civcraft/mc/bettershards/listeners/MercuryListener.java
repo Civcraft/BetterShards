@@ -3,9 +3,11 @@ package vg.civcraft.mc.bettershards.listeners;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -112,6 +114,28 @@ public class MercuryListener implements Listener{
 				if (p1 == null)
 					return;
 				p1.setPartnerPortal(null);
+			}
+			else if (content[1].equals("request")) {
+				UUID uuid = UUID.fromString(content[2]);
+				World w = Bukkit.getWorld(content[3]);
+				if (w == null) {
+					String error = "The server " + event.getOriginServer() + " requested world uuid info "
+							+ "but that world does not exist.";
+					plugin.getLogger().log(Level.INFO, error);
+					return;
+				}
+				BetterShardsPlugin.getMercuryManager().sendWorldUUID(uuid, w.getUID(), event.getOriginServer());
+			}
+			else if (content[1].equals("send")) {
+				UUID uuid = UUID.fromString(content[2]);
+				BedLocation loc = BetterShardsAPI.getBedLocation(uuid);
+				String[] locs = loc.getLocation().split(" ");
+				StringBuilder newLoc = new StringBuilder();
+				newLoc.append(content[3] + " ");
+				newLoc.append(locs[1] + " ");
+				newLoc.append(locs[2] + " ");
+				newLoc.append(locs[3]);
+				loc.setLocation(newLoc.toString());
 			}
 		}
 	}
