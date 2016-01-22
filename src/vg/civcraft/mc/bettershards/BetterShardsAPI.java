@@ -102,4 +102,13 @@ public class BetterShardsAPI {
 		db.removeBed(bed.getUUID());
 		mercManager.removeBedLocation(bed);
 	}
+	
+	/**
+	 * Sends the info to servers that a player needs to be teleported.
+	 * @param info- Use the format 'uuid server world x y z'
+	 * world can be either the world name or world uuid.
+	 */
+	public static void teleportPlayer(String info) {
+		mercManager.teleportPlayer(info);
+	}
 }
