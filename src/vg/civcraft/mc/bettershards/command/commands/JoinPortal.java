@@ -36,6 +36,9 @@ public class JoinPortal extends PlayerCommand {
 			return sendPlayerMessage(p, ChatColor.RED + "The first portal does not exist.", true);
 		if (two == null)
 			return sendPlayerMessage(p, ChatColor.RED + "The second portal does not exist.", true);
+		if (!one.getClass().equals(two.getClass())) {
+			return sendPlayerMessage(p, ChatColor.RED + "You can not join portals of a different type", true);
+		}
 		one.setPartnerPortal(two);
 		String m = "%s has been set as Portal %s partner.";
 		sender.sendMessage(ChatColor.GREEN + String.format(m, two.getName(), one.getName()));
