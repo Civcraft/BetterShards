@@ -26,6 +26,7 @@ import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
+import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
 import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.civmodcore.annotations.CivConfig;
 import vg.civcraft.mc.civmodcore.annotations.CivConfigType;
@@ -85,12 +86,12 @@ public class DatabaseManager{
 				+ "partner_id varchar(255),"
 				+ "primary key(id));");
 		db.execute("create table if not exists createPortalLocData("
-				+ "rangex int not null,"
-				+ "rangey int not null,"
-				+ "rangez int not null,"
-				+ "x int not null,"
-				+ "y int not null,"
-				+ "z int not null,"
+				+ "x1 int not null,"
+				+ "y1 int not null,"
+				+ "z1 int not null,"
+				+ "x2 int not null,"
+				+ "y2 int not null,"
+				+ "z2 int not null,"
 				+ "world varchar(255) not null,"
 				+ "id varchar(255) not null,"
 				+ "primary key loc_id (x, y, z, world, id));");
@@ -155,7 +156,7 @@ public class DatabaseManager{
 		getPlayerData = "select * from createPlayerData where uuid = ? and server = ?;";
 		removePlayerData = "delete from createPlayerData where uuid = ? and server = ?;";
 		
-		addPortalLoc = "insert into createPortalLocData(rangex, rangey, rangez, x, y, z, world, id)"
+		addPortalLoc = "insert into createPortalLocData(x1, y1, z1, x2, y2, z2, world, id)"
 				+ "values (?,?,?,?,?,?,?,?);";
 		getPortalLocByWorld = "select * from createPortalLocData where world = ?;";
 		getPortalLoc = "select * from createPortalLocData where id = ?;";
@@ -190,13 +191,15 @@ public class DatabaseManager{
 		try {
 			if (portal instanceof CuboidPortal){
 				CuboidPortal p = (CuboidPortal) portal;
-				addPortalLoc.setInt(1, p.getXRange());
-				addPortalLoc.setInt(2, p.getYRange());
-				addPortalLoc.setInt(3, p.getZRange());
-				addPortalLoc.setInt(4, p.getCornerBlockLocation().getBlockX());
-				addPortalLoc.setInt(5, p.getCornerBlockLocation().getBlockY());
-				addPortalLoc.setInt(6, p.getCornerBlockLocation().getBlockZ());
-				addPortalLoc.setString(7, p.getCornerBlockLocation().getWorld().getName());
+				Location first = p.getFirst();
+				Location second = p.getSecond();
+				addPortalLoc.setInt(1, first.getBlockX());
+				addPortalLoc.setInt(2, first.getBlockY());
+				addPortalLoc.setInt(3, first.getBlockZ());
+				addPortalLoc.setInt(4, second.getBlockX());
+				addPortalLoc.setInt(5, second.getBlockY());
+				addPortalLoc.setInt(6, second.getBlockZ());
+				addPortalLoc.setString(7, first.getWorld().getName());
 				addPortalLoc.setString(8, p.getName());
 				addPortalLoc.execute();
 			}
@@ -219,14 +222,14 @@ public class DatabaseManager{
 		invCache.remove(uuid);
 	}
 	
-	private String serverName = plugin.getCurrentServerName();
+	private String serverName = MercuryAPI.serverName();
 	public void addPortalData(Portal portal, Portal connection){
 		isConnected();
 		PreparedStatement addPortalData = db.prepareStatement(this.addPortalData);
 		try {
 			addPortalData.setString(1, portal.getName());
 			addPortalData.setString(2, serverName);
-			addPortalData.setInt(3, portal.getType().ordinal());
+			addPortalData.setInt(3, portal.specialId);
 			String name = null;
 			if (connection != null)
 				name = connection.getName();
@@ -310,12 +313,12 @@ public class DatabaseManager{
 				getPortalLocation.setString(1, world);
 				ResultSet set = getPortalLocation.executeQuery();
 				while (set.next()) {
-					int rangex = set.getInt("rangex");
-					int rangey = set.getInt("rangey");
-					int rangez = set.getInt("rangez");
-					int x = set.getInt("x");
-					int y = set.getInt("y");
-					int z = set.getInt("z");
+					int x1 = set.getInt("x1");
+					int y1 = set.getInt("y1");
+					int z1 = set.getInt("z1");
+					int x2 = set.getInt("x2");
+					int y2 = set.getInt("y2");
+					int z2 = set.getInt("z2");
 					String id = set.getString("id");
 
 					try {
@@ -323,8 +326,9 @@ public class DatabaseManager{
 						getPortalLocation = null;
 					} catch (Exception ex) {}
 
-					Location loc = new Location(w, x, y, z);
-					Portal p = getPortalData(id, loc, rangex, rangey, rangez);
+					Location first = new Location(w, x1, y1, z1);
+					Location second = new Location(w, x2, y2, z2);
+					Portal p = getPortalData(id, first, second);
 					portals.add(p);
 				}
 			} catch (SQLException e) {
@@ -349,21 +353,23 @@ public class DatabaseManager{
 			ResultSet set = getPortalData.executeQuery();
 			if (!set.next())
 				return null;
-			int rangex = set.getInt("rangex");
-			int rangey = set.getInt("rangey");
-			int rangez = set.getInt("rangez");
-			int x = set.getInt("x");
-			int y = set.getInt("y");
-			int z = set.getInt("z");
+			int x1 = set.getInt("x1");
+			int y1 = set.getInt("y1");
+			int z1 = set.getInt("z1");
+			int x2 = set.getInt("x2");
+			int y2 = set.getInt("y2");
+			int z2 = set.getInt("z2");
 			String world = set.getString("world");
 			World w = Bukkit.getWorld(world);
-			Location corner = null;
+			Location first = null, second = null;
 			
 			// If the World object does not equal null then we know that it is on this server.
-			if (w != null)
-				corner = new Location(w, x, y, z);
+			if (w != null) {
+				first = new Location(w, x1, y1, z1);
+				second = new Location(w, x2, y2, z2);
+			}
 			
-			return getPortalData(name, corner, rangex, rangey, rangez);
+			return getPortalData(name, first, second);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -375,7 +381,7 @@ public class DatabaseManager{
 		return null;
 	}
 	
-	private Portal getPortalData(String name, Location corner, int xrange, int yrange, int zrange) {
+	private Portal getPortalData(String name, Location first, Location second) {
 		isConnected();
 		PreparedStatement getPortalData = db.prepareStatement(this.getPortalData);
 		try {
@@ -383,15 +389,19 @@ public class DatabaseManager{
 			ResultSet set = getPortalData.executeQuery();
 			if (!set.next())
 				return null;
-			PortalType type = PortalType.fromOrdeal(set.getInt("portal_type"));
+			int specialId = set.getInt("portal_type"); // determine the type of portal.
 			String serverName = set.getString("server_name");
 			String partner = set.getString("partner_id");
 			boolean currentServer = serverName.equals(MercuryAPI.serverName());
-			switch (type) {
-			case CUBOID:
-				CuboidPortal p = new CuboidPortal(name, corner, xrange, yrange, zrange, partner, currentServer);
+			switch (specialId) {
+			case 0:
+				CuboidPortal p = new CuboidPortal(name, first, second, partner, currentServer);
 				p.setServerName(serverName);
 				return p;
+			case 1:
+				WorldBorderPortal wb = new WorldBorderPortal(name, partner, currentServer, first, second);
+				wb.setServerName(serverName);
+				return wb;
 			default:
 				return null;
 			}

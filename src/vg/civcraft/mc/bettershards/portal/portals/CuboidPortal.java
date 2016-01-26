@@ -1,39 +1,34 @@
 package vg.civcraft.mc.bettershards.portal.portals;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class CuboidPortal extends Portal {
 
-	protected Location corner; // This should be the location of the first block
-	// identified
-	protected int xrange, yrange, zrange;
+	protected Location first; // This should be the location of the first block
+	protected Location second;
 
-	public CuboidPortal(String name, Location corner, int xrange, int yrange,
-			int zrange, Portal connection, boolean isOnCurrentServer) {
-		super(name, connection, isOnCurrentServer);
-		this.corner = corner;
-		this.xrange = xrange;
-		this.yrange = yrange;
-		this.zrange = zrange;
-
-		/*
-		 * Bukkit.getScheduler().scheduleSyncDelayedTask(BetterShardsPlugin.
-		 * getInstance(), new Runnable() {
-		 * 
-		 * @Override public void run() {
-		 * setPartnerPortal(BetterShardsPlugin.getInstance
-		 * ().getPortalManager().getPortal(con)); }
-		 * 
-		 * }, 1);
-		 */
+	public CuboidPortal(String name, Location first, Location second, String connection, boolean isOnCurrentServer) {
+		super(name, connection, isOnCurrentServer, 0);
+		this.first = first;
+		this.second = second;
+	}
+	
+	public Location getFirst() {
+		return first;
+	}
+	
+	public Location getSecond() {
+		return second;
 	}
 
 	public int qtXMax() {
@@ -149,10 +144,6 @@ public class CuboidPortal extends Portal {
 
 	public int getZRange() {
 		return zrange;
-	}
-
-	public Location getCornerBlockLocation() {
-		return corner;
 	}
 	
 	public void teleport(Player p) {

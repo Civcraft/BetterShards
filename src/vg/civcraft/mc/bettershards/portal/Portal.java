@@ -1,8 +1,10 @@
 package vg.civcraft.mc.bettershards.portal;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
+import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 
@@ -14,12 +16,21 @@ public abstract class Portal {
 	private boolean isOnCurrentServer; // Set to false if not on current server
 	protected DatabaseManager db;
 	private boolean isDirty = false;
+	public final int specialId;
 
-	public Portal(String name, Portal connection, boolean isOnCurrentServer) {
-		this.connection = connection;
+	public Portal(String name, final String con, boolean isOnCurrentServer, int specialId) {
+		Bukkit.getScheduler().scheduleSyncDelayedTask(BetterShardsPlugin.getInstance(), new Runnable() {
+
+			@Override
+			public void run() {
+				connection = BetterShardsAPI.getPortalsManager().getPortal(con);
+			}
+			
+		});
 		this.name = name;
 		this.isOnCurrentServer = isOnCurrentServer;
 		db = BetterShardsPlugin.getInstance().getDatabaseManager();
+		this.specialId = specialId;
 	}
 
 	public Portal getPartnerPortal() {
