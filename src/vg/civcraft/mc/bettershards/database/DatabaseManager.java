@@ -254,7 +254,7 @@ public class DatabaseManager{
 			addPlayerData.setBytes(2, output.toByteArray());
 			addPlayerData.setInt(3, id.ordinal());
 			YamlConfiguration yaml = (YamlConfiguration) section;
-			addPlayerData.setString(4, yaml.saveToString());
+			addPlayerData.setString(4, yaml != null ? yaml.saveToString() : null);
 			addPlayerData.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -279,7 +279,9 @@ public class DatabaseManager{
 			if (!set.next())
 				return new ByteArrayInputStream(new byte[0]);
 			YamlConfiguration sect = new YamlConfiguration();
-			sect.loadFromString(set.getString("config_sect"));
+			String sectString = set.getString("config_sect");
+			if (sectString != null)
+				sect.loadFromString(sectString);
 			CustomWorldNBTStorage.getWorldNBTStorage().loadConfigurationSectionForPlayer(uuid, sect);
 			return new ByteArrayInputStream(set.getBytes("entity"));			
 		} catch (SQLException e) {
