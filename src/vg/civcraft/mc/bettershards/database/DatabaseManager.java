@@ -178,7 +178,7 @@ public class DatabaseManager{
 		removeBedLocation = "delete from player_beds where uuid = ?;";
 		
 		version = "select max(db_version) as db_version from db_version;";
-		updateVersion = "insert into db_version (db_version, update_time) values (?,?)";
+		updateVersion = "insert into bettershards_version (db_version, update_time) values (?,?)";
 	}
 	
 	/**
