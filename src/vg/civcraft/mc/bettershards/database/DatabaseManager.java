@@ -177,8 +177,8 @@ public class DatabaseManager{
 		getAllBedLocation = "select * from player_beds;";
 		removeBedLocation = "delete from player_beds where uuid = ?;";
 		
-		version = "select max(db_version) as bettershards_version from db_version;";
-		updateVersion = "insert into bettershards_version (db_version, update_time) values (?,?)";
+		version = "select max(db_version) as db_version from bettershards_version;";
+		updateVersion = "insert into bettershards_version (db_version, update_time) values (?,?);";
 	}
 	
 	/**
