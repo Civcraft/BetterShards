@@ -43,7 +43,7 @@ public class CreatePortal extends PlayerCommand {
 			return sendPlayerMessage(p, ChatColor.RED + "Your primary selection has not been chosen.", true);
 		Portal portal = null;
 		if (args.length == 1 || args[1].equalsIgnoreCase("cuboid")) {
-			portal = new CuboidPortal(args[0], g.getFocusedLocation(), g.getXRadius(), g.getYRadius(), g.getZRadius(), null, true);
+			portal = new CuboidPortal(args[0], g.getLeftClickLocation(), g.getRightClickLocation(), null, true);
 		}
 		else if (args [1].equalsIgnoreCase("worldborder") || args [1].equalsIgnoreCase("wb")) {
 			portal = new WorldBorderPortal(args[0],null, true, g.getRightClickLocation(), g.getLeftClickLocation());
