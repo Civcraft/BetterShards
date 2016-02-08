@@ -48,12 +48,13 @@ public class BetterShardsAPI {
 	 * @param p The Player that you wish to connect.
 	 * @param portal The portal that the player should be teleported to.
 	 * @param reason The reason to be identified by the PlayerChangeServerEvent triggered by this method.
+	 * @param data Additional data provided for the teleport
 	 * @throws PlayerStillDeadException If the player is dead than this exception is thrown. There are issues with trying
 	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
 	 */
-	public static void connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason) throws PlayerStillDeadException {
+	public static void connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason, Object ... data) throws PlayerStillDeadException {
 		if (plugin.teleportPlayerToServer(p, portal.getServerName(), reason))
-			mercManager.teleportPlayer(p.getUniqueId(), portal); // We want to do this after because we don't know if a player was teleported yet.
+			mercManager.teleportPlayer(p.getUniqueId(), portal, data); // We want to do this after because we don't know if a player was teleported yet.
 	}
 
 	public static String getServerName() {
