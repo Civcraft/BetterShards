@@ -86,7 +86,9 @@ public class RandomSpawn {
 	 */
 	public Location getLocation() {
 		int x = (int) (spawnRange * Math.random());
+		x = x * (Math.random() > 0.5 ? 1 : -1);
 		int z = (int) (spawnRange * Math.random());
+		z = z * (Math.random() > 0.5 ? 1 : -1);
 
 		if (Math.sqrt((double) ((x * x) + (z * z))) > spawnRange) {
 			// the location is outside the circle, even though x and z are in

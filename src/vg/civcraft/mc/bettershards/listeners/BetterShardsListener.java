@@ -202,7 +202,14 @@ public class BetterShardsListener implements Listener{
 		UUID uuid = p.getUniqueId();
 		final BedLocation bed = plugin.getBed(uuid);
 		if (bed == null) {
-			//rs.handleDeath(p);
+			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+
+				@Override
+				public void run() {
+					rs.handleDeath(p);
+				}
+				
+			});
 			return;
 		}
 		final String info = bed.getUUID().toString() + " " + bed.getLocation();
