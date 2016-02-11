@@ -100,21 +100,6 @@ public class MercuryListener implements Listener{
 				UUID uuid = UUID.fromString(content[2]);
 				plugin.removeBed(uuid);
 			}
-		}
-		else if (content[0].equals("portal")) {
-			if (content[1].equals("connect")) {
-				Portal p1 = pm.getPortal(content[2]);
-				Portal p2 = pm.getPortal(content[3]);
-				if (p1 == null || p2 == null)
-					return;
-				p1.setPartnerPortal(p2);
-			}
-			else if (content[1].equals("remove")) {
-				Portal p1 = pm.getPortal(content[2]);
-				if (p1 == null)
-					return;
-				p1.setPartnerPortal(null);
-			}
 			else if (content[1].equals("request")) {
 				UUID uuid = UUID.fromString(content[2]);
 				World w = Bukkit.getWorld(content[3]);
@@ -136,6 +121,21 @@ public class MercuryListener implements Listener{
 				newLoc.append(locs[2] + " ");
 				newLoc.append(locs[3]);
 				loc.setLocation(newLoc.toString());
+			}
+		}
+		else if (content[0].equals("portal")) {
+			if (content[1].equals("connect")) {
+				Portal p1 = pm.getPortal(content[2]);
+				Portal p2 = pm.getPortal(content[3]);
+				if (p1 == null || p2 == null)
+					return;
+				p1.setPartnerPortal(p2);
+			}
+			else if (content[1].equals("remove")) {
+				Portal p1 = pm.getPortal(content[2]);
+				if (p1 == null)
+					return;
+				p1.setPartnerPortal(null);
 			}
 		}
 	}
