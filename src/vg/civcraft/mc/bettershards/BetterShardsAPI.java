@@ -31,8 +31,8 @@ public class BetterShardsAPI {
 	 * @throws PlayerStillDeadException If the player is dead than this exception is thrown. There are issues with trying
 	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
 	 */
-	public static void connectPlayer(Player p, String serverName, PlayerChangeServerReason reason) throws PlayerStillDeadException {
-		plugin.teleportPlayerToServer(p, serverName, reason);
+	public static boolean connectPlayer(Player p, String serverName, PlayerChangeServerReason reason) throws PlayerStillDeadException {
+		return plugin.teleportPlayerToServer(p, serverName, reason);
 	}
 	
 	/**
@@ -52,9 +52,12 @@ public class BetterShardsAPI {
 	 * @throws PlayerStillDeadException If the player is dead than this exception is thrown. There are issues with trying
 	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
 	 */
-	public static void connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason, Object ... data) throws PlayerStillDeadException {
-		if (plugin.teleportPlayerToServer(p, portal.getServerName(), reason))
+	public static boolean connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason, Object ... data) throws PlayerStillDeadException {
+		if (plugin.teleportPlayerToServer(p, portal.getServerName(), reason)) {
 			mercManager.teleportPlayer(p.getUniqueId(), portal, data); // We want to do this after because we don't know if a player was teleported yet.
+			return true;
+		}
+		return false;
 	}
 
 	public static String getServerName() {
