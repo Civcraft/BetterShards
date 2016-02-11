@@ -19,6 +19,7 @@ import vg.civcraft.mc.bettershards.PortalsManager;
 import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.portal.Portal;
+import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
 import vg.civcraft.mc.mercury.events.AsyncPluginBroadcastMessageEvent;
 
 public class MercuryListener implements Listener{
@@ -54,7 +55,18 @@ public class MercuryListener implements Listener{
 						Portal portal = pm.getPortal(p);
 						if (!portal.isOnCurrentServer())
 							return;
-						uuids.put(uuid, portal.findRandomSafeLocation());
+						Location targetLoc = null;
+						if (content.length > 4) {
+							if (portal instanceof WorldBorderPortal) {
+								double angle = Double.valueOf(content[4]);
+								targetLoc = ((WorldBorderPortal) portal).calculateSpawnLocation(angle);
+							}
+						}
+						if (targetLoc == null) {
+							targetLoc = portal.findSpawnLocation();
+							//just randomize it
+						}
+						uuids.put(uuid, targetLoc);
 					}
 					else if (action.equals("command")) {
 						uuid = UUID.fromString(content[2]);

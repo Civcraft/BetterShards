@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -15,11 +14,8 @@ import org.bukkit.entity.Player;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.portal.Portal;
-import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
-import vg.civcraft.mc.civmodcore.locations.QTBox;
-import vg.civcraft.mc.civmodcore.locations.SparseQuadTree;
 
-public class PortalsManager extends SparseQuadTree{
+public class PortalsManager {
 
 	private DatabaseManager db = BetterShardsPlugin.getInstance().getDatabaseManager();
 	private Map<String, Portal> portals;
@@ -40,13 +36,11 @@ public class PortalsManager extends SparseQuadTree{
 	
 	public void createPortal(Portal portal){
 		portals.put(portal.getName(), portal);
-		add(portal);
 		db.addPortal(portal);
 		db.addPortalData(portal, null); // At this point it won't have a connection
 	}
 	
 	public void deletePortal(Portal portal){
-		remove(portal);
 		portals.remove(portal.getName());
 		db.removePortalData(portal);
 		db.removePortalLoc(portal);
@@ -60,15 +54,9 @@ public class PortalsManager extends SparseQuadTree{
 	 * that is the portal you will get.
 	 */
 	public Portal getPortal(Location loc){
-		Set<QTBox> portals = find(loc.getBlockX(), loc.getBlockZ());
-		for (String name: this.portals.keySet()) {
-			Portal p = this.portals.get(name);
-		for (QTBox box: portals){
-			if (!(box instanceof Portal))
-				continue;
-			CuboidPortal portal = (CuboidPortal) box;
-			if (portal.isValidY(loc.getBlockY()))
-				return portal;
+		for(Portal p : portals.values()) {
+			if (p.inPortal(loc)) {
+				return p;
 			}
 		}
 		return null; // Like the evil that is nothingness.
@@ -92,7 +80,6 @@ public class PortalsManager extends SparseQuadTree{
 		List<Portal> portals = db.getAllPortalsByWorld(worlds.toArray(new World[worlds.size()]));
 		for (Portal p: portals) {
 			this.portals.put(p.getName(), p);
-			add(p);
 		}
 	}
 	

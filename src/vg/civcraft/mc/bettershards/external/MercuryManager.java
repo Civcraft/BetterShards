@@ -26,8 +26,14 @@ public class MercuryManager {
 	 * @param uuid
 	 * @param p
 	 */
-	public void teleportPlayer(UUID uuid, Portal p) {
-		MercuryAPI.sendGlobalMessage("teleport|portal|" + uuid.toString() + "|" + p.getName(), "BetterShards");
+	public void teleportPlayer(UUID uuid, Portal p, Object ... data) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("teleport|portal|" + uuid.toString() + "|" + p.getName());
+		for(Object o:data) {
+			sb.append("|");
+			sb.append(o.toString());
+		}
+		MercuryAPI.sendGlobalMessage(sb.toString(), "BetterShards");
 	}
 
 	/**

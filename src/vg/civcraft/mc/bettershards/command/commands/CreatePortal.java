@@ -12,8 +12,8 @@ import vg.civcraft.mc.bettershards.PortalsManager;
 import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.misc.Grid.GridLocation;
 import vg.civcraft.mc.bettershards.portal.Portal;
-import vg.civcraft.mc.bettershards.portal.PortalType;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
+import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
 import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 
 public class CreatePortal extends PlayerCommand {
@@ -41,22 +41,12 @@ public class CreatePortal extends PlayerCommand {
 			return sendPlayerMessage(p, ChatColor.RED + "Your secondary selection has not been chosen.", true);
 		else if (g.getMissingSelection() == GridLocation.LEFTSELECTION)
 			return sendPlayerMessage(p, ChatColor.RED + "Your primary selection has not been chosen.", true);
-		int selection = -1;
-		try {
-			selection = Integer.parseInt(args[1]);
-		} catch (Exception e) {
-			PortalType.sendPlayerErrorMessage(p);
-			return true;
-		}
-		PortalType type = PortalType.fromOrdeal(selection);
-		if (type == null) {
-			PortalType.sendPlayerErrorMessage(p);
-			return true;
-		}
 		Portal portal = null;
-		switch(type.ordinal()) {
-		case 0:
-			portal = new CuboidPortal(args[0], g.getFocusedLocation(), g.getXRadius(), g.getYRadius(), g.getZRadius(), true);
+		if (args.length == 1 || args[1].equalsIgnoreCase("cuboid")) {
+			portal = new CuboidPortal(args[0], g.getLeftClickLocation(), g.getRightClickLocation(), null, true);
+		}
+		else if (args [1].equalsIgnoreCase("worldborder") || args [1].equalsIgnoreCase("wb")) {
+			portal = new WorldBorderPortal(args[0],null, true, g.getRightClickLocation(), g.getLeftClickLocation());
 		}
 		if (pm.getPortal(args[0]) != null) 
 			return sendPlayerMessage(p, ChatColor.RED + "That portal name already exists.", true);

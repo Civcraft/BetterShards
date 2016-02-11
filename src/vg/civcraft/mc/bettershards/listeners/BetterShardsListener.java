@@ -161,7 +161,7 @@ public class BetterShardsListener implements Listener{
         // We need this check incase the player just teleported inside the field.
         // We know he does not need to teleport back.
         if (pm.canTransferPlayer(player))
-        	p.teleportPlayer(player);
+        	p.teleport(player);
 	}
 	
 	@CivConfig(name = "allow_portals_build", def = "false", type = CivConfigType.Bool)
@@ -202,7 +202,14 @@ public class BetterShardsListener implements Listener{
 		UUID uuid = p.getUniqueId();
 		final BedLocation bed = plugin.getBed(uuid);
 		if (bed == null) {
-			//rs.handleDeath(p);
+			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+
+				@Override
+				public void run() {
+					rs.handleDeath(p);
+				}
+				
+			});
 			return;
 		}
 		final String info = bed.getUUID().toString() + " " + bed.getLocation();
