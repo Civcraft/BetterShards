@@ -201,8 +201,21 @@ public class DatabaseManager{
 				addPortalLoc.setInt(6, second.getBlockZ());
 				addPortalLoc.setString(7, first.getWorld().getName());
 				addPortalLoc.setString(8, p.getName());
-				addPortalLoc.execute();
 			}
+			else if (portal instanceof WorldBorderPortal) {
+				WorldBorderPortal p = (WorldBorderPortal) portal;
+				Location first = p.getFirst();
+				Location second = p.getSecond();
+				addPortalLoc.setInt(1, first.getBlockX());
+				addPortalLoc.setInt(2, first.getBlockY());
+				addPortalLoc.setInt(3, first.getBlockZ());
+				addPortalLoc.setInt(4, second.getBlockX());
+				addPortalLoc.setInt(5, second.getBlockY());
+				addPortalLoc.setInt(6, second.getBlockZ());
+				addPortalLoc.setString(7, first.getWorld().getName());
+				addPortalLoc.setString(8, p.getName());
+			}
+			addPortalLoc.execute();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
