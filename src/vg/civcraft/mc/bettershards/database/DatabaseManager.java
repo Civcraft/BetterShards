@@ -110,7 +110,7 @@ public class DatabaseManager{
 				+ "db_version int not null,"
 				+ "update_time varchar(24));");
 		int ver = checkVersion();
-		if (ver == 1) {
+		if (ver == 0) {
 			BetterShardsPlugin.getInstance().getLogger().info("Update to version 2 of the BetterShards.");
 			db.execute("alter table createPlayerData add config_sect text;");
 			ver = updateVersion(ver);
@@ -122,13 +122,13 @@ public class DatabaseManager{
 		try {
 			ResultSet set = version.executeQuery();
 			if (!set.next())
-				return 1;
+				return 0;
 			return set.getInt("db_version");
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return 1;
+		return 0;
 	}
 	
 	private int updateVersion(int version) {
