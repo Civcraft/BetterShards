@@ -86,9 +86,9 @@ public class WorldBorderPortal extends Portal {
 		double locAngle = getAdjustedAngle(loc);
 		if (fAngle == sAngle) {
 			return (Math.PI + locAngle) / arcLength;
-		} else if ((fAngle > sAngle && locAngle >= fAngle && locAngle <= sAngle) || 
-				(fAngle < sAngle && (locAngle >= fAngle || locAngle <= sAngle))) {
-			if (fAngle < sAngle && locAngle <= sAngle) {
+		} else if ((fAngle > sAngle && (locAngle >= fAngle || locAngle <= sAngle)) || 
+				(fAngle < sAngle && locAngle >= fAngle && locAngle <= sAngle)) {
+			if (fAngle > sAngle && locAngle <= sAngle) {
 				locAngle += 2.0*Math.PI;
 			}
 			return (locAngle - fAngle) / arcLength;
