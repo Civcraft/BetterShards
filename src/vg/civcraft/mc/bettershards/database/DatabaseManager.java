@@ -25,6 +25,7 @@ import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
 import vg.civcraft.mc.bettershards.portal.Portal;
+import vg.civcraft.mc.bettershards.portal.portals.CircularPortal;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
 import vg.civcraft.mc.bettershards.portal.portals.LocationWrapper;
 import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
@@ -216,6 +217,19 @@ public class DatabaseManager{
 				addPortalLoc.setInt(5, second.getBlockY());
 				addPortalLoc.setInt(6, second.getBlockZ());
 				addPortalLoc.setString(7, firstW.getActualWorld());
+				addPortalLoc.setString(8, p.getName());
+			}
+			else if (portal instanceof CircularPortal) {
+				CircularPortal p = (CircularPortal) portal;
+				Location first = p.getFirst();
+				Location second = p.getSecond();
+				addPortalLoc.setInt(1, first.getBlockX());
+				addPortalLoc.setInt(2, first.getBlockY());
+				addPortalLoc.setInt(3, first.getBlockZ());
+				addPortalLoc.setInt(4, second.getBlockX());
+				addPortalLoc.setInt(5, second.getBlockY());
+				addPortalLoc.setInt(6, second.getBlockZ());
+				addPortalLoc.setString(7, first.getWorld().getName());
 				addPortalLoc.setString(8, p.getName());
 			}
 			addPortalLoc.execute();
@@ -424,6 +438,8 @@ public class DatabaseManager{
 				WorldBorderPortal wb = new WorldBorderPortal(name, partner, currentServer, first, second);
 				wb.setServerName(serverName);
 				return wb;
+			case 2:
+				CircularPortal cp = new CircularPortal(name, partner, currentServer, first.getFakeLocation(), second.getFakeLocation());
 			default:
 				return null;
 			}
