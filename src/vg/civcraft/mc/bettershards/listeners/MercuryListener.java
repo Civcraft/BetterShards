@@ -17,10 +17,13 @@ import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.PortalsManager;
 import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
+import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
+import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
 import vg.civcraft.mc.mercury.events.AsyncPluginBroadcastMessageEvent;
+import vg.civcraft.mc.namelayer.NameAPI;
 
 public class MercuryListener implements Listener{
 	
@@ -71,11 +74,16 @@ public class MercuryListener implements Listener{
 					else if (action.equals("command")) {
 						uuid = UUID.fromString(content[2]);
 						Location loc = null;
-						try {
-							loc = new Location(Bukkit.getWorld(UUID.fromString(content[3])), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
-						} catch(IllegalArgumentException e) {
-							// The world uuid is none existent so it must be a world name.
+						if(content.length == 4){
+							Player targetPlayer = Bukkit.getPlayer(UUID.fromString(content[3]));
+							loc = targetPlayer.getLocation();
+						} else { 
+							try {
+								loc = new Location(Bukkit.getWorld(UUID.fromString(content[3])), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
+							} catch(IllegalArgumentException e) {
+								// The world uuid is none existent so it must be a world name.
 							loc = new Location(Bukkit.getWorld(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
+							}
 						}
 						uuids.put(uuid, loc);
 					}
@@ -83,7 +91,17 @@ public class MercuryListener implements Listener{
 						Location loc = plugin.getRandomSpawn().getLocation();
 						uuid =UUID.fromString(content[2]);		
 						uuids.put(uuid, loc);
-						
+					}
+					else if (action.equals("connect")){
+						Player player = Bukkit.getPlayer(UUID.fromString(content[2]));
+						if(player != null){
+							try {
+								BetterShardsAPI.connectPlayer(player, content[3], PlayerChangeServerReason.valueOf(content[4]));
+							} catch (PlayerStillDeadException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
 					}
 					
 					Player p = Bukkit.getPlayer(uuid);

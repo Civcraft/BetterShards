@@ -44,6 +44,18 @@ public class MercuryManager {
 	public void teleportPlayer(String info) {
 		MercuryAPI.sendGlobalMessage("teleport|command|" + info , "BetterShards");
 	}
+	
+	public void teleportPlayer(String server, UUID playerToTeleportUUID, UUID targetPlayerUUID) {
+		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + targetPlayerUUID , "BetterShards");
+	}
+	
+	public void teleportPlayer(String server, UUID playerToTeleportUUID, int x, int y, int z) {
+		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + x + "|" + y +"|" + z , "BetterShards");
+	}
+	
+	public void teleportPlayer(String server, UUID playerToTeleportUUID, int x, int y, int z, String world) {
+		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + x + "|" + y +"|" + z + "|" + world, "BetterShards");
+	}
 
 	private void registerMercuryChannels() {
 		MercuryAPI.addChannels("BetterShards");
