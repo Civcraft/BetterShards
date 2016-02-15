@@ -16,6 +16,7 @@ import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
+import vg.civcraft.mc.bettershards.listeners.MercuryListener;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 import vg.civcraft.mc.mercury.MercuryAPI;
@@ -45,17 +46,16 @@ public class Teleport extends PlayerCommand {
 		}
 		if (args.length == 1)
 			return playerTeleport(sender, args);
-		if (args.length == 2)
+		else if (args.length == 2)
 			return playerToPlayerTeleport(sender, args);
-		if (args.length == 3)
+		else if (args.length == 3)
 			return cordsTeleport(sender, args);
 		else if (args.length == 4)
 			return worldTeleport(sender, args);
 		else if (args.length == 5)
 			return playerWorldTeleport(sender, args);
 		else {
-			sender.sendMessage(ChatColor.RED + "Syntax error");
-			return true;
+			return false;
 		}
 	}
 
@@ -120,9 +120,23 @@ public class Teleport extends PlayerCommand {
 			sender.sendMessage(ChatColor.RED + "Target Player is not online.");
 			return true;
 		}
-	
-		//Stage teleport on destination server
-		mercManager.teleportPlayer(serverName, PlayerUUID, targetPlayerUUID);
+		
+		//Check if the player is on the current server
+		Player player = Bukkit.getPlayer(PlayerUUID);
+		if(player != null){
+			playerTeleport(player, new String[]{args[1]});
+			return true;
+		}
+		
+		//check if the target player is on the current server
+		Player targetPlayer = Bukkit.getPlayer(targetPlayerUUID);
+		if (targetPlayer != null) {
+			//Stage teleport on current server
+			MercuryListener.stageTeleport(targetPlayerUUID, targetPlayer.getLocation());		
+		} else {
+			//Stage teleport on destination server
+			mercManager.teleportPlayer(serverName, PlayerUUID, targetPlayerUUID);
+		}
 		
 		//Send the player to destination server
 		try {
@@ -136,15 +150,23 @@ public class Teleport extends PlayerCommand {
 
 	@Override
 	public List<String> tabComplete(CommandSender sender, String[] args) {
-		if (args.length > 2)
-			return null;
-		List<String> namesToReturn = new ArrayList<String>();
-		Set<String> players = MercuryAPI.instance.getAllPlayers();
-		if(args.length == 2)
-			players.remove(args[0]);
-		for (String x : players) {
-			if (x.toLowerCase().startsWith(args[0].toLowerCase()))
-				namesToReturn.add(x);
+		if (args.length <= 2) {
+			List<String> namesToReturn = new ArrayList<String>();
+			Set<String> players = MercuryAPI.instance.getAllPlayers();
+			if (args.length == 2)
+				players.remove(args[0]);
+			for (String x : players) {
+				if (x.toLowerCase().startsWith(args[0].toLowerCase()))
+					namesToReturn.add(x);
+			}
+			return namesToReturn;
+		}
+		if(args.length >= 4){
+			List<String> worldsToReturn = new ArrayList<String>();
+			for(World world : Bukkit.getWorlds()){
+				worldsToReturn.add(world.getName());
+			}
+			return worldsToReturn;
 		}
 		return null;
 	}
@@ -179,12 +201,14 @@ public class Teleport extends PlayerCommand {
 					+ "What do you expect, teleporting the console to a Location...");
 			return true;
 		}
+		
 		Player p = (Player)sender;
-		World w = Bukkit.getWorld(args[0]);
+		World w = Bukkit.getWorld(args[3]);
 		if (w == null) {
 			p.sendMessage(ChatColor.RED + "That world does not exist.");
 			return true;
 		}
+		
 		int x, y, z;
 		try {
 			x = Integer.parseInt(args[0]);
@@ -194,32 +218,35 @@ public class Teleport extends PlayerCommand {
 			p.sendMessage(ChatColor.RED + "Please make sure you entered the cords correctly.");
 			return true;
 		}
+		
 		Location newLoc = new Location(w, x, y, z);
 		p.teleport(newLoc);
 		return true;
 	}
 	
-	private boolean playerWorldTeleport(CommandSender sender, String[] args) {
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("You must be a player to execute this command. "
-					+ "What do you expect, teleporting the console to a Location...");
+	private boolean playerWorldTeleport(CommandSender sender, String[] args) {	
+		Player p = Bukkit.getPlayer(args[0]);
+		if (p == null) {
+			sender.sendMessage(ChatColor.RED + "Player is not online.");
 			return true;
 		}
-		Player p = (Player)sender;
-		World w = Bukkit.getWorld(args[0]);
+		
+		World w = Bukkit.getWorld(args[4]);
 		if (w == null) {
 			p.sendMessage(ChatColor.RED + "That world does not exist.");
 			return true;
 		}
+		
 		int x, y, z;
 		try {
-			x = Integer.parseInt(args[0]);
-			y = Integer.parseInt(args[1]);
-			z = Integer.parseInt(args[2]);
+			x = Integer.parseInt(args[1]);
+			y = Integer.parseInt(args[2]);
+			z = Integer.parseInt(args[3]);
 		} catch(NumberFormatException e) {
 			p.sendMessage(ChatColor.RED + "Please make sure you entered the cords correctly.");
 			return true;
 		}
+		
 		Location newLoc = new Location(w, x, y, z);
 		p.teleport(newLoc);
 		return true;
