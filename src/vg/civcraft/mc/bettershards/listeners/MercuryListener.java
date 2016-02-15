@@ -36,7 +36,7 @@ public class MercuryListener implements Listener{
 		if (!channel.equals(c))
 			return;
 		String message = event.getMessage();
-		final String[] content = message.split(" ");
+		final String[] content = message.split("\\|");
 		if (content[0].equals("delete")) {
 			Portal p = pm.getPortal(content[1]);
 			if (p != null)

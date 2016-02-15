@@ -109,7 +109,7 @@ public class WorldBorderPortal extends Portal {
 		double z = (wbRange-2.0) * Math.sin(theta);
 		// TODO strengthen this
 		Block y = mapCenter.getWorld().getHighestBlockAt((int) x, (int) z);
-		Block eyes = y.getRelative(0,2,0);
+		Block eyes = y.getRelative(0,1,0);
 		return eyes.getLocation();
 	}
 	
