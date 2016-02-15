@@ -55,7 +55,7 @@ public class PortalsManager {
 	 */
 	public Portal getPortal(Location loc){
 		for(Portal p : portals.values()) {
-			if (p.inPortal(loc)) {
+			if (p.isOnCurrentServer() && p.inPortal(loc)) {
 				return p;
 			}
 		}
