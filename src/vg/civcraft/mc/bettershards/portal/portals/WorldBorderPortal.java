@@ -12,8 +12,8 @@ import vg.civcraft.mc.bettershards.portal.Portal;
 public class WorldBorderPortal extends Portal {
 
 	private Location mapCenter;
-	private Location first;
-	private Location second;
+	private LocationWrapper first;
+	private LocationWrapper second;
 	private double wbRange;
 	private double fAngle;
 	private double sAngle;
@@ -26,29 +26,29 @@ public class WorldBorderPortal extends Portal {
 	 */
 	public WorldBorderPortal(String name, String connection,
 			boolean isOnCurrentServer,
-			Location first, Location second) {
+			LocationWrapper first, LocationWrapper second) {
 		super(name, connection, isOnCurrentServer, 1);
-		this.mapCenter = new Location(first.getWorld(), 0, 0, 0);
+		this.mapCenter = new Location(first.getFakeLocation().getWorld(), 0, 0, 0);
 		this.first = first;
 		this.second = second;
 
-		double fRadius = getXZDistance(first);
-		double sRadius = getXZDistance(second);
+		double fRadius = getXZDistance(first.getFakeLocation());
+		double sRadius = getXZDistance(second.getFakeLocation());
 		this.wbRange = Math.min(fRadius, sRadius);
 
-		this.fAngle = getAdjustedAngle(first);
-		this.sAngle = getAdjustedAngle(second);
+		this.fAngle = getAdjustedAngle(first.getFakeLocation());
+		this.sAngle = getAdjustedAngle(second.getFakeLocation());
 
 		this.arcLength = (fAngle == sAngle) ? 2 * Math.PI : 
 				(fAngle > sAngle) ? 2 * Math.PI - fAngle + sAngle :
 				sAngle - fAngle;
 	}
 	
-	public Location getFirst() {
+	public LocationWrapper getFirst() {
 		return first;
 	}
 	
-	public Location getSecond() {
+	public LocationWrapper getSecond() {
 		return second;
 	}
 

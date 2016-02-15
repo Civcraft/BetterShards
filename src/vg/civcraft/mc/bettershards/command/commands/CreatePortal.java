@@ -13,6 +13,7 @@ import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.misc.Grid.GridLocation;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
+import vg.civcraft.mc.bettershards.portal.portals.LocationWrapper;
 import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
 import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 
@@ -46,7 +47,9 @@ public class CreatePortal extends PlayerCommand {
 			portal = new CuboidPortal(args[0], g.getLeftClickLocation(), g.getRightClickLocation(), null, true);
 		}
 		else if (args [1].equalsIgnoreCase("worldborder") || args [1].equalsIgnoreCase("wb")) {
-			portal = new WorldBorderPortal(args[0],null, true, g.getRightClickLocation(), g.getLeftClickLocation());
+			LocationWrapper firstLoc = new LocationWrapper(g.getLeftClickLocation());
+			LocationWrapper secondLoc = new LocationWrapper(g.getRightClickLocation());
+			portal = new WorldBorderPortal(args[0],null, true, firstLoc, secondLoc);
 		}
 		if (pm.getPortal(args[0]) != null) 
 			return sendPlayerMessage(p, ChatColor.RED + "That portal name already exists.", true);

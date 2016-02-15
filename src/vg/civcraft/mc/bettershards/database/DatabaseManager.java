@@ -26,6 +26,7 @@ import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
+import vg.civcraft.mc.bettershards.portal.portals.LocationWrapper;
 import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
 import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.civmodcore.annotations.CivConfig;
@@ -204,15 +205,17 @@ public class DatabaseManager{
 			}
 			else if (portal instanceof WorldBorderPortal) {
 				WorldBorderPortal p = (WorldBorderPortal) portal;
-				Location first = p.getFirst();
-				Location second = p.getSecond();
+				LocationWrapper firstW = p.getFirst();
+				LocationWrapper secondW = p.getSecond();
+				Location first = firstW.getFakeLocation();
+				Location second = secondW.getFakeLocation();
 				addPortalLoc.setInt(1, first.getBlockX());
 				addPortalLoc.setInt(2, first.getBlockY());
 				addPortalLoc.setInt(3, first.getBlockZ());
 				addPortalLoc.setInt(4, second.getBlockX());
 				addPortalLoc.setInt(5, second.getBlockY());
 				addPortalLoc.setInt(6, second.getBlockZ());
-				addPortalLoc.setString(7, first.getWorld().getName());
+				addPortalLoc.setString(7, firstW.getActualWorld());
 				addPortalLoc.setString(8, p.getName());
 			}
 			addPortalLoc.execute();
@@ -341,8 +344,8 @@ public class DatabaseManager{
 						getPortalLocation = null;
 					} catch (Exception ex) {}
 
-					Location first = new Location(w, x1, y1, z1);
-					Location second = new Location(w, x2, y2, z2);
+					LocationWrapper first = new LocationWrapper(new Location(w, x1, y1, z1));
+					LocationWrapper second = new LocationWrapper(new Location(w, x2, y2, z2));
 					Portal p = getPortalData(id, first, second);
 					portals.add(p);
 				}
@@ -376,12 +379,16 @@ public class DatabaseManager{
 			int z2 = set.getInt("z2");
 			String world = set.getString("world");
 			World w = Bukkit.getWorld(world);
-			Location first = null, second = null;
+			LocationWrapper first = null, second = null;
 			
 			// If the World object does not equal null then we know that it is on this server.
 			if (w != null) {
-				first = new Location(w, x1, y1, z1);
-				second = new Location(w, x2, y2, z2);
+				first = new LocationWrapper(new Location(w, x1, y1, z1));
+				second = new LocationWrapper(new Location(w, x2, y2, z2));
+			}
+			else {
+				first = new LocationWrapper(world, x1, y1, z1);
+				second = new LocationWrapper(world, x2, y2, z2);
 			}
 			
 			return getPortalData(name, first, second);
@@ -396,7 +403,7 @@ public class DatabaseManager{
 		return null;
 	}
 	
-	private Portal getPortalData(String name, Location first, Location second) {
+	private Portal getPortalData(String name, LocationWrapper first, LocationWrapper second) {
 		isConnected();
 		PreparedStatement getPortalData = db.prepareStatement(this.getPortalData);
 		try {
@@ -410,7 +417,7 @@ public class DatabaseManager{
 			boolean currentServer = serverName.equals(MercuryAPI.serverName());
 			switch (specialId) {
 			case 0:
-				CuboidPortal p = new CuboidPortal(name, first, second, partner, currentServer);
+				CuboidPortal p = new CuboidPortal(name, first.getFakeLocation(), second.getFakeLocation(), partner, currentServer);
 				p.setServerName(serverName);
 				return p;
 			case 1:
