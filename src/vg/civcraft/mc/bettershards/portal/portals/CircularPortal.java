@@ -66,12 +66,9 @@ public class CircularPortal extends Portal {
 	}
 	
 	public void teleport(Player p) {
-		System.out.println("Calling tp method");
 		Location loc = p.getLocation();
 		Double xScale = (loc.getX() - center.getX()) / range;
-		System.out.println("xscale:" + xScale);
 		Double zScale = (loc.getZ() - center.getZ()) / range;
-		System.out.println("zscale:" + zScale);
 		try {
 			BetterShardsAPI.connectPlayer(p, connection,
 					PlayerChangeServerReason.PORTAL, xScale, zScale);

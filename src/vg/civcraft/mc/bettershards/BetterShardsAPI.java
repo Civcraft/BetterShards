@@ -53,9 +53,7 @@ public class BetterShardsAPI {
 	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
 	 */
 	public static boolean connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason, Object ... data) throws PlayerStillDeadException {
-		System.out.println("Called connect method");
 		if (plugin.teleportPlayerToServer(p, portal.getServerName(), reason)) {
-			System.out.println("Called merc manager");
 			mercManager.teleportPlayer(p.getUniqueId(), portal, data); // We want to do this after because we don't know if a player was teleported yet.
 			return true;
 		}
