@@ -85,9 +85,9 @@ public class TeleportServer extends PlayerCommand{
 	// Format for args server, x, y, z, world
 	private boolean serverTeleport(Player p, String[] args) {
 		try {
-			Integer.parseInt(args[0]);
 			Integer.parseInt(args[1]);
 			Integer.parseInt(args[2]);
+			Integer.parseInt(args[3]);
 		} catch(NumberFormatException e) {
 			p.sendMessage(ChatColor.RED + "Please make sure you entered the cords correctly.");
 			return true;

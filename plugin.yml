@@ -16,6 +16,8 @@ commands:
   permission: bettershards.*
  tp:
   permission: bettershards.*
+ ts:
+  permission: bettershards.*
 permissions:
   bettershards.*:
    default: op

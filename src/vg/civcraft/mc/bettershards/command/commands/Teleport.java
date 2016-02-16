@@ -134,7 +134,7 @@ public class Teleport extends PlayerCommand {
 		Player targetPlayer = Bukkit.getPlayer(targetPlayerUUID);
 		if (targetPlayer != null) {
 			//Stage teleport on current server
-			MercuryListener.stageTeleport(targetPlayerUUID, targetPlayer.getLocation());		
+			MercuryListener.stageTeleport(PlayerUUID, targetPlayer.getLocation());		
 		} else {
 			//Stage teleport on destination server
 			mercManager.teleportPlayer(serverName, PlayerUUID, targetPlayerUUID);
