@@ -36,6 +36,18 @@ public class BetterShardsAPI {
 	}
 	
 	/**
+	 * Teleports a player to a different shard.
+	 * @param p The UUID of the Player that you wish to connect.
+	 * @param serverName The name of the server that you wish the player to be sent to.
+	 * @param reason The reason to be identified by the PlayerChangeServerEvent triggered by this method.
+	 * @throws PlayerStillDeadException If the player is dead than this exception is thrown. There are issues with trying
+	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
+	 */
+	public static boolean connectPlayer(UUID p, String serverName, PlayerChangeServerReason reason) throws PlayerStillDeadException {
+		return plugin.teleportPlayerToServer(p, serverName, reason);
+	}
+	
+	/**
 	 * Teleports the specified player to the current server.
 	 * @param uuid The name of said player.
 	 */
@@ -112,7 +124,7 @@ public class BetterShardsAPI {
 	 * @param info- Use the format 'uuid server world x y z'
 	 * world can be either the world name or world uuid.
 	 */
-	public static void teleportPlayer(String info) {
-		mercManager.teleportPlayer(info);
+	public static void teleportPlayer(String server, String info) {
+		mercManager.teleportPlayer(server, info);
 	}
 }

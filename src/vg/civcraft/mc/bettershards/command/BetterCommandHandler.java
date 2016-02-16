@@ -5,6 +5,7 @@ import vg.civcraft.mc.bettershards.command.commands.DeletePortal;
 import vg.civcraft.mc.bettershards.command.commands.ExcludeServer;
 import vg.civcraft.mc.bettershards.command.commands.JoinPortal;
 import vg.civcraft.mc.bettershards.command.commands.RemovePortal;
+import vg.civcraft.mc.bettershards.command.commands.Teleport;
 import vg.civcraft.mc.civmodcore.command.CommandHandler;
 
 public class BetterCommandHandler extends CommandHandler{
@@ -16,6 +17,7 @@ public class BetterCommandHandler extends CommandHandler{
 		addCommands(new ExcludeServer("ExcludeServer"));
 		addCommands(new JoinPortal("JoinPortal"));
 		addCommands(new RemovePortal("RemovePortal"));
+		addCommands(new Teleport("Teleport"));
 	}
 
 }

@@ -212,12 +212,12 @@ public class BetterShardsListener implements Listener{
 			});
 			return;
 		}
-		final String info = bed.getUUID().toString() + " " + bed.getLocation();
+		final String info = bed.getUUID().toString() + "|" + bed.getLocation();
 		Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 
 			@Override
 			public void run() {
-				mercManager.teleportPlayer(info);
+				mercManager.teleportPlayer(bed.getServer(), bed.getServer());
 				try {
 					BetterShardsAPI.connectPlayer(p, bed.getServer(), PlayerChangeServerReason.BED);
 				} catch (PlayerStillDeadException e) {
