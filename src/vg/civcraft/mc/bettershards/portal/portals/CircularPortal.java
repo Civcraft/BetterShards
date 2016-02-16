@@ -59,16 +59,23 @@ public class CircularPortal extends Portal {
 		return loc;
 	}
 	
+	public Location calculateLocation(double xScale, double zScale) {
+		double x = (xScale * range) + center.getX();
+		double z = (zScale * range) + center.getZ();
+		return new Location(center.getWorld(), x, center.getY(), z);
+	}
+	
 	public void teleport(Player p) {
+		System.out.println("Calling tp method");
 		Location loc = p.getLocation();
 		Double xScale = (loc.getX() - center.getX()) / range;
+		System.out.println("xscale:" + xScale);
 		Double zScale = (loc.getZ() - center.getZ()) / range;
-		Vector velocity = p.getVelocity();
+		System.out.println("zscale:" + zScale);
 		try {
 			BetterShardsAPI.connectPlayer(p, connection,
-					PlayerChangeServerReason.PORTAL, xScale, zScale, velocity.getX(), velocity.getY(), velocity.getBlockZ());
+					PlayerChangeServerReason.PORTAL, xScale, zScale);
 		} catch (PlayerStillDeadException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

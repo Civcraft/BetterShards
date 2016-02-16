@@ -19,6 +19,7 @@ import vg.civcraft.mc.bettershards.PortalsManager;
 import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.portal.Portal;
+import vg.civcraft.mc.bettershards.portal.portals.CircularPortal;
 import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
 import vg.civcraft.mc.mercury.events.AsyncPluginBroadcastMessageEvent;
 
@@ -60,6 +61,11 @@ public class MercuryListener implements Listener{
 							if (portal instanceof WorldBorderPortal) {
 								double angle = Double.valueOf(content[4]);
 								targetLoc = ((WorldBorderPortal) portal).calculateSpawnLocation(angle);
+							}
+							else if(portal instanceof CircularPortal) {
+								double xScale = Double.valueOf(content[4]);
+								double zScale = Double.valueOf(content[5]);
+								targetLoc = ((CircularPortal) portal).calculateLocation(xScale, zScale);
 							}
 						}
 						if (targetLoc == null) {

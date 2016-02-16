@@ -353,11 +353,6 @@ public class DatabaseManager{
 					int z2 = set.getInt("z2");
 					String id = set.getString("id");
 
-					try {
-						getPortalLocation.close();
-						getPortalLocation = null;
-					} catch (Exception ex) {}
-
 					LocationWrapper first = new LocationWrapper(new Location(w, x1, y1, z1));
 					LocationWrapper second = new LocationWrapper(new Location(w, x2, y2, z2));
 					Portal p = getPortalData(id, first, second);
@@ -440,6 +435,8 @@ public class DatabaseManager{
 				return wb;
 			case 2:
 				CircularPortal cp = new CircularPortal(name, partner, currentServer, first.getFakeLocation(), second.getFakeLocation());
+				cp.setServerName(serverName);
+				return cp;
 			default:
 				return null;
 			}
