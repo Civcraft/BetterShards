@@ -61,7 +61,13 @@ public class RandomSpawn {
 	 * @param p Player who just joined.
 	 */
 	public void handleFirstJoin(Player p) {
-		p.teleport(getLocation());
+		final Player player = p;
+		Bukkit.getScheduler().scheduleSyncDelayedTask(BetterShardsPlugin.getInstance(), new Runnable() {
+			@Override
+			public void run() {
+				handleDeath(player);
+			}
+		});
 	}
 
 	/**
