@@ -317,7 +317,7 @@ public class BetterShardsPlugin extends ACivMod{
 		List <String> exc = db.getAllExclude();
 		StringBuilder sb = new StringBuilder();
 		for(String s : exc) {
-			sb.append(s+ "|");
+			sb.append(s + "|");
 		}
 		if (sb.length() == 0) {
 			mercuryManager.sendBungeeUpdateMessage("");
