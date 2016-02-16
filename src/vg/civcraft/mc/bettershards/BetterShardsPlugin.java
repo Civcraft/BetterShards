@@ -314,7 +314,16 @@ public class BetterShardsPlugin extends ACivMod{
 	}
 	
 	public void sendBungeeUpdateMessage() {
-		mercuryManager.sendBungeeUpdateMessage(db.getAllExclude());
+		List <String> exc = db.getAllExclude();
+		StringBuilder sb = new StringBuilder();
+		for(String s : exc) {
+			sb.append(s+ "|");
+		}
+		if (sb.length() == 0) {
+			mercuryManager.sendBungeeUpdateMessage("");
+			return;
+		}
+		mercuryManager.sendBungeeUpdateMessage(sb.toString().substring(0, sb.length()-1));
 	}
 	
 	public static CombatTagManager getCombatTagManager() {
