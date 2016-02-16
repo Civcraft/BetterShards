@@ -77,12 +77,14 @@ public class MercuryListener implements Listener{
 						if(content.length == 4){
 							Player targetPlayer = Bukkit.getPlayer(UUID.fromString(content[3]));
 							loc = targetPlayer.getLocation();
-						} else { 
+						} else if(content.length == 6){
+								loc = new Location(Bukkit.getWorlds().get(0), Integer.parseInt(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]));
+						} else if(content.length == 7){
 							try {
 								loc = new Location(Bukkit.getWorld(UUID.fromString(content[3])), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
 							} catch(IllegalArgumentException e) {
 								// The world uuid is none existent so it must be a world name.
-							loc = new Location(Bukkit.getWorld(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
+								loc = new Location(Bukkit.getWorld(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
 							}
 						}
 						uuids.put(uuid, loc);

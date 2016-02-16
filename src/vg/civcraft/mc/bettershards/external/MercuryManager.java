@@ -38,23 +38,23 @@ public class MercuryManager {
 
 	/**
 	 * Sends the info to servers that a player needs to be teleported.
-	 * @param info- Use the format 'uuid server world x y z'
+	 * @param info- Use the format 'uuid world x y z'
 	 * world can be either the world name or world uuid.
 	 */
-	public void teleportPlayer(String info) {
-		MercuryAPI.sendGlobalMessage("teleport|command|" + info , "BetterShards");
+	public void teleportPlayer(String server, String info) {
+		MercuryAPI.sendMessage(server, "teleport|command|" + info , "BetterShards");
 	}
 	
 	public void teleportPlayer(String server, UUID playerToTeleportUUID, UUID targetPlayerUUID) {
 		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + targetPlayerUUID , "BetterShards");
 	}
 	
-	public void teleportPlayer(String server, UUID playerToTeleportUUID, int x, int y, int z) {
+	public void teleportPlayer(String server, UUID playerToTeleportUUID, String x, String y, String z) {
 		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + x + "|" + y +"|" + z , "BetterShards");
 	}
 	
-	public void teleportPlayer(String server, UUID playerToTeleportUUID, int x, int y, int z, String world) {
-		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + x + "|" + y +"|" + z + "|" + world, "BetterShards");
+	public void teleportPlayer(String server, UUID playerToTeleportUUID, String x, String y, String z, String world) {
+		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + world + "|" + x + "|" + y +"|" + z, "BetterShards");
 	}
 
 	private void registerMercuryChannels() {

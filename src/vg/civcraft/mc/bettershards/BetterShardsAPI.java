@@ -124,7 +124,7 @@ public class BetterShardsAPI {
 	 * @param info- Use the format 'uuid server world x y z'
 	 * world can be either the world name or world uuid.
 	 */
-	public static void teleportPlayer(String info) {
-		mercManager.teleportPlayer(info);
+	public static void teleportPlayer(String server, String info) {
+		mercManager.teleportPlayer(server, info);
 	}
 }
