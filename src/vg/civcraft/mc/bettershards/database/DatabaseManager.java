@@ -536,14 +536,14 @@ public class DatabaseManager{
 		}
 	}
 
-	public String getAllExclude() {
+	public List <String> getAllExclude() {
 		isConnected();
 		PreparedStatement getAllExclude = db.prepareStatement(this.getAllExclude);
-		StringBuilder builder = new StringBuilder();
+		List <String> result = new LinkedList <String> ();
 		try {
 			ResultSet set = getAllExclude.executeQuery();
 			while (set.next()) {
-				builder.append(set.getString("name") + "|");
+				result.add(set.getString("name"));
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -553,10 +553,7 @@ public class DatabaseManager{
 				getAllExclude.close();
 			} catch (Exception ex) {}
 		}
-		String x = builder.toString();
-		if (x.length() != 0) 
-			x = x.substring(0, x.length()-2);
-		return x;
+		return result;
 	}
 
 	public void removeExclude(String server) {

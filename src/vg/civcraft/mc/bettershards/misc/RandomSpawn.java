@@ -78,7 +78,7 @@ public class RandomSpawn {
 		for (String s : MercuryAPI.getAllConnectedServers()) {
 			servers.add(s);
 		}
-		for (String s : dbm.getAllExclude().split("\\|")) {
+		for (String s : dbm.getAllExclude()) {
 			servers.remove(s);
 		}
 		return servers;
