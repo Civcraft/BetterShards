@@ -152,11 +152,11 @@ public class Teleport extends PlayerCommand {
 	public List<String> tabComplete(CommandSender sender, String[] args) {
 		if (args.length <= 2) {
 			List<String> namesToReturn = new ArrayList<String>();
-			Set<String> players = MercuryAPI.instance.getAllPlayers();
+			Set<String> players = MercuryAPI.getAllPlayers();
 			if (args.length == 2)
 				players.remove(args[0]);
 			for (String x : players) {
-				if (x.toLowerCase().startsWith(args[0].toLowerCase()))
+				if (x.toLowerCase().startsWith(args[args.length-1].toLowerCase()))
 					namesToReturn.add(x);
 			}
 			return namesToReturn;
@@ -164,7 +164,8 @@ public class Teleport extends PlayerCommand {
 		if(args.length >= 4){
 			List<String> worldsToReturn = new ArrayList<String>();
 			for(World world : Bukkit.getWorlds()){
-				worldsToReturn.add(world.getName());
+				if (world.getName().toLowerCase().startsWith(args[args.length-1].toLowerCase()))
+					worldsToReturn.add(world.getName());
 			}
 			return worldsToReturn;
 		}
