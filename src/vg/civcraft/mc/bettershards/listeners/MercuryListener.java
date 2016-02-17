@@ -20,11 +20,11 @@ import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
+import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.portals.CircularPortal;
 import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
 import vg.civcraft.mc.mercury.events.AsyncPluginBroadcastMessageEvent;
-import vg.civcraft.mc.namelayer.NameAPI;
 
 public class MercuryListener implements Listener{
 	
@@ -126,12 +126,11 @@ public class MercuryListener implements Listener{
 		}
 		else if (content[0].equals("bed")) { 
 			if (content[1].equals("add")) {
-				StringBuilder builder = new StringBuilder();
 				UUID uuid = UUID.fromString(content[2]);
 				String server = content[3];
-				for (int x = 4; x < content.length; x++)
-					builder.append(content[x] + " ");
-				BedLocation bed = new BedLocation(uuid, builder.toString(), server);
+				TeleportInfo info = new TeleportInfo(content[4], server, Integer.parseInt(content[5]), Integer.parseInt(content[6]),
+						Integer.parseInt(content[7]));
+				BedLocation bed = new BedLocation(uuid, info);
 				plugin.addBedLocation(uuid, bed);
 			}
 			else if (content[1].equals("remove")) {
@@ -152,13 +151,7 @@ public class MercuryListener implements Listener{
 			else if (content[1].equals("send")) {
 				UUID uuid = UUID.fromString(content[2]);
 				BedLocation loc = BetterShardsAPI.getBedLocation(uuid);
-				String[] locs = loc.getLocation().split(" ");
-				StringBuilder newLoc = new StringBuilder();
-				newLoc.append(content[3] + " ");
-				newLoc.append(locs[1] + " ");
-				newLoc.append(locs[2] + " ");
-				newLoc.append(locs[3]);
-				loc.setLocation(newLoc.toString());
+				loc.getTeleportInfo().setWorld(content[3]);
 			}
 		}
 		else if (content[0].equals("portal")) {

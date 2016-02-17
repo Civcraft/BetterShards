@@ -1,4 +1,4 @@
-package vg.civcraft.mc.bettershards.portal.portals;
+package vg.civcraft.mc.bettershards.misc;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

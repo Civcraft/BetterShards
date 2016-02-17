@@ -5,44 +5,34 @@ import java.util.UUID;
 public class BedLocation {
 
 	private UUID uuid;
-	private String location;
-	private String server;
+	private TeleportInfo info;
 	
 	/**
 	 * Creates an object representing where a player slept.
 	 * @param uuid The UUID of the player.
-	 * @param location The String representation of the location. EX: (world_uuid x y z).
-	 * If you do not have the world uuid because it is located on another server, you
-	 * may enter the world name and the object will contact the server and get
-	 * the required uuid. This method is not prefered.
-	 * @param server The server the bed is on.
+	 * @param info The TeleportInfo object
 	 */
-	public BedLocation(UUID uuid, String location, String server) {
+	public BedLocation(UUID uuid, TeleportInfo info) {
 		this.uuid = uuid;
-		this.location = location;
-		this.server = server;
 	}
 	
 	public String getServer() {
-		return server;
+		return info.getServer();
 	}
 	
-	/** 
-	 * @return The location of the player's bed format: world_uuid x y z
-	 */
-	public String getLocation() {
-		return location;
+	public TeleportInfo getTeleportInfo() {
+		return info;
 	}
 	
 	public UUID getUUID() {
 		return uuid;
 	}
 	
-	public void setLocation(String location) {
-		this.location = location;
+	public void setTeleportInfo(TeleportInfo info) {
+		this.info = info;
 	}
 	
 	public void setServer(String server) {
-		this.server = server;
+		info.setServer(server);
 	}
 }

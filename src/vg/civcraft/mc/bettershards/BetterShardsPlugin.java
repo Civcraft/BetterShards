@@ -383,4 +383,8 @@ public class BetterShardsPlugin extends ACivMod{
 	public static MercuryManager getMercuryManager() { 
 		return mercuryManager;
 	}
+	
+	public static boolean isNameLayerEnabled() {
+		return Bukkit.getPluginManager().isPluginEnabled("NameLayer");
+	}
 }

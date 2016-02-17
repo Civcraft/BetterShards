@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -75,7 +76,7 @@ public class Teleport extends PlayerCommand {
 		}
 		
 		//Target player is on a different server. Get the UUID of the target Player.
-		UUID targetPlayerUUID = NameAPI.getUUID(targetPlayerName);
+		UUID targetPlayerUUID = other.getUniqueId();
 		if(targetPlayerUUID == null){
 			sender.sendMessage(ChatColor.RED + "Player does not exist.");
 			return true;
@@ -110,7 +111,11 @@ public class Teleport extends PlayerCommand {
 		}
 		
 		//Get the UUID of the target player
-		UUID targetPlayerUUID = NameAPI.getUUID(targetPlayerName);
+		UUID targetPlayerUUID = null;
+		if (BetterShardsPlugin.isNameLayerEnabled())
+			targetPlayerUUID = NameAPI.getUUID(targetPlayerName);
+		else
+			targetPlayerUUID = Bukkit.getOfflinePlayer(targetPlayerName) != null ? Bukkit.getOfflinePlayer(targetPlayerName).getUniqueId() : null;
 		if(targetPlayerUUID == null){
 			sender.sendMessage(ChatColor.RED + "Target player does not exist.");
 			return true;
@@ -124,7 +129,11 @@ public class Teleport extends PlayerCommand {
 		}
 		
 		//Get the UUID of the player
-		UUID PlayerUUID = NameAPI.getUUID(playerName);
+		UUID PlayerUUID;
+		if (BetterShardsPlugin.isNameLayerEnabled())
+			PlayerUUID = NameAPI.getUUID(playerName);
+		else
+			PlayerUUID = Bukkit.getOfflinePlayer(playerName) != null ? Bukkit.getOfflinePlayer(playerName).getUniqueId() : null;
 		if(PlayerUUID == null){
 			sender.sendMessage(ChatColor.RED + "Player does not exist.");
 			return true;

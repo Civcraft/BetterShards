@@ -9,6 +9,7 @@ import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
+import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class BetterShardsAPI {
@@ -100,7 +101,7 @@ public class BetterShardsAPI {
 	 * @param bed The BedLocation object.
 	 */
 	public static void addBedLocation(UUID uuid, BedLocation bed) {
-		String w = bed.getLocation().split(" ")[0];
+		String w = bed.getTeleportInfo().getWorld();
 		removeBedLocation(bed);
 		plugin.addBedLocation(uuid, bed);
 		try {
@@ -121,10 +122,12 @@ public class BetterShardsAPI {
 	
 	/**
 	 * Sends the info to servers that a player needs to be teleported.
-	 * @param info- Use the format 'uuid server world x y z'
+	 * @param server The server to teleport the player to.
+	 * @param uuid The uuid of the player to teleport.
+	 * @param info Create a TeleportInfo object to pass.
 	 * world can be either the world name or world uuid.
 	 */
-	public static void teleportPlayer(String server, String info) {
-		mercManager.teleportPlayer(server, info);
+	public static void teleportPlayer(String server, UUID uuid, TeleportInfo info) {
+		mercManager.teleportPlayer(server, uuid, info);
 	}
 }

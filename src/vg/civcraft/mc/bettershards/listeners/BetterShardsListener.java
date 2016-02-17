@@ -42,6 +42,7 @@ import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.bettershards.misc.RandomSpawn;
+import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.civmodcore.annotations.CivConfig;
@@ -212,12 +213,12 @@ public class BetterShardsListener implements Listener{
 			});
 			return;
 		}
-		final String info = bed.getUUID().toString() + "|" + bed.getLocation();
+		
 		Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 
 			@Override
 			public void run() {
-				mercManager.teleportPlayer(bed.getServer(), bed.getServer());
+				mercManager.teleportPlayer(bed.getServer(), bed.getUUID(), bed.getTeleportInfo());
 				try {
 					BetterShardsAPI.connectPlayer(p, bed.getServer(), PlayerChangeServerReason.BED);
 				} catch (PlayerStillDeadException e) {
@@ -240,7 +241,7 @@ public class BetterShardsListener implements Listener{
 			if (!bed.getServer().equals(MercuryAPI.serverName()))
 					continue;
 			String loc = real.getWorld().getUID().toString() + " " + real.getX() + " " + real.getY() + " " + real.getZ();
-			if (bed.getLocation().equals(loc)) {
+			if (bed.getTeleportInfo().equals(loc)) {
 				toBeRemoved.add(bed);
 			}
 		}
@@ -261,8 +262,9 @@ public class BetterShardsListener implements Listener{
 		String server = MercuryAPI.serverName();
 		Block b = getRealFace(event.getBed());
 		Location loc = b.getLocation();
-		String bedLoc = loc.getWorld().getUID().toString() + " " + loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ();
-		BedLocation bed = new BedLocation(uuid, bedLoc, server);
+		TeleportInfo info = new TeleportInfo(loc.getWorld().getUID(), MercuryAPI.serverName(), loc.getBlockX(),
+				loc.getBlockY(), loc.getBlockZ());
+		BedLocation bed = new BedLocation(uuid, info);
 		BetterShardsAPI.addBedLocation(uuid, bed);
 	}
 	

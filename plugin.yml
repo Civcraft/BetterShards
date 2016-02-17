@@ -3,6 +3,7 @@ main: vg.civcraft.mc.bettershards.BetterShardsPlugin
 version: ${project.version}
 author: Rourke750
 depend: [Mercury]
+softdepend: [NameLayer]
 commands:
  bsc:
   permission: bettershards.*
