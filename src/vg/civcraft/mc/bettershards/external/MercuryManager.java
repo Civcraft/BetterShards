@@ -3,6 +3,7 @@ package vg.civcraft.mc.bettershards.external;
 import java.util.UUID;
 
 import vg.civcraft.mc.bettershards.misc.BedLocation;
+import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.mercury.MercuryAPI;
 
@@ -38,11 +39,23 @@ public class MercuryManager {
 
 	/**
 	 * Sends the info to servers that a player needs to be teleported.
-	 * @param info- Use the format 'uuid server world x y z'
+	 * @param info Use the TeleportInfo object.
 	 * world can be either the world name or world uuid.
 	 */
-	public void teleportPlayer(String info) {
-		MercuryAPI.sendGlobalMessage("teleport|command|" + info , "BetterShards");
+	public void teleportPlayer(String server, UUID uuid, TeleportInfo info) {
+		MercuryAPI.sendMessage(server, "teleport|command|" + uuid.toString() + "|" + info , "BetterShards");
+	}
+	
+	public void teleportPlayer(String server, UUID playerToTeleportUUID, UUID targetPlayerUUID) {
+		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + targetPlayerUUID , "BetterShards");
+	}
+	
+	public void teleportPlayer(String server, UUID playerToTeleportUUID, String x, String y, String z) {
+		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + x + "|" + y +"|" + z , "BetterShards");
+	}
+	
+	public void teleportPlayer(String server, UUID playerToTeleportUUID, String x, String y, String z, String world) {
+		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + world + "|" + x + "|" + y +"|" + z, "BetterShards");
 	}
 
 	private void registerMercuryChannels() {
@@ -50,7 +63,7 @@ public class MercuryManager {
 	}
 
 	public void sendBedLocation(BedLocation bed) {
-		String info = bed.getUUID().toString() + "|" + bed.getServer() + "|" + bed.getLocation();
+		String info = bed.getUUID().toString() + "|" + bed.getServer() + "|" + bed.getTeleportInfo();
 		MercuryAPI.sendGlobalMessage("bed|add|" + info, "BetterShards");
 	}
 	

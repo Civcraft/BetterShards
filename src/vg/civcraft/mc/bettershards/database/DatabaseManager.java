@@ -25,10 +25,11 @@ import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
+import vg.civcraft.mc.bettershards.misc.LocationWrapper;
+import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.portals.CircularPortal;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
-import vg.civcraft.mc.bettershards.portal.portals.LocationWrapper;
 import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
 import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.civmodcore.annotations.CivConfig;
@@ -576,14 +577,14 @@ public class DatabaseManager{
 	public void addBedLocation(BedLocation bed) {
 		isConnected();
 		PreparedStatement addBedLocation = db.prepareStatement(this.addBedLocation);
-		String[] locs = bed.getLocation().split(" ");
+		TeleportInfo info = bed.getTeleportInfo();
 		try {
 			addBedLocation.setString(1, bed.getUUID().toString());
 			addBedLocation.setString(2, bed.getServer());
-			addBedLocation.setString(3, locs[0]);
-			addBedLocation.setInt(4, Integer.parseInt(locs[1]));
-			addBedLocation.setInt(5, Integer.parseInt(locs[2]));
-			addBedLocation.setInt(6, Integer.parseInt(locs[3]));
+			addBedLocation.setString(3, info.getWorld());
+			addBedLocation.setInt(4, info.getX());
+			addBedLocation.setInt(5, info.getY());
+			addBedLocation.setInt(6, info.getZ());
 			addBedLocation.execute();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -608,8 +609,8 @@ public class DatabaseManager{
 				int x = set.getInt("x");
 				int y = set.getInt("y");
 				int z = set.getInt("z");
-				String loc = world_uuid.toString() + " " + x + " " + y + " " + z;
-				BedLocation bed = new BedLocation(uuid, loc, server);
+				TeleportInfo info = new TeleportInfo(world_uuid, server, x, y, z);
+				BedLocation bed = new BedLocation(uuid, info);
 				beds.add(bed);
 			}
 		} catch (SQLException e) {

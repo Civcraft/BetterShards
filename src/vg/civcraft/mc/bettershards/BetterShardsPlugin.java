@@ -23,6 +23,7 @@ import net.minecraft.server.v1_8_R3.WorldServer;
 
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
@@ -175,6 +176,16 @@ public class BetterShardsPlugin extends ACivMod{
 		out.writeUTF(server);
 		p.sendPluginMessage(this, "BungeeCord", out.toByteArray());
 		return true;
+	}
+	
+	public boolean teleportPlayerToServer(UUID playerUUID, String server, PlayerChangeServerReason reason) throws PlayerStillDeadException {
+		//Get the server of the player
+		String currentServer = MercuryAPI.getServerforAccount(playerUUID).getServerName();
+		if(currentServer == null){
+			return false;
+		}
+		MercuryAPI.sendMessage(currentServer, "teleport|connect|" + playerUUID + "|" + server + "|" + reason, "BetterShards");
+		return false;
 	}
 	
 	public DatabaseManager getDatabaseManager() {
@@ -371,5 +382,9 @@ public class BetterShardsPlugin extends ACivMod{
 	
 	public static MercuryManager getMercuryManager() { 
 		return mercuryManager;
+	}
+	
+	public static boolean isNameLayerEnabled() {
+		return Bukkit.getPluginManager().isPluginEnabled("NameLayer");
 	}
 }

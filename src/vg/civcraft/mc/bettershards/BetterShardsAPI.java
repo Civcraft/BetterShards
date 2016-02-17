@@ -9,6 +9,7 @@ import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
+import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class BetterShardsAPI {
@@ -32,6 +33,18 @@ public class BetterShardsAPI {
 	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
 	 */
 	public static boolean connectPlayer(Player p, String serverName, PlayerChangeServerReason reason) throws PlayerStillDeadException {
+		return plugin.teleportPlayerToServer(p, serverName, reason);
+	}
+	
+	/**
+	 * Teleports a player to a different shard.
+	 * @param p The UUID of the Player that you wish to connect.
+	 * @param serverName The name of the server that you wish the player to be sent to.
+	 * @param reason The reason to be identified by the PlayerChangeServerEvent triggered by this method.
+	 * @throws PlayerStillDeadException If the player is dead than this exception is thrown. There are issues with trying
+	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
+	 */
+	public static boolean connectPlayer(UUID p, String serverName, PlayerChangeServerReason reason) throws PlayerStillDeadException {
 		return plugin.teleportPlayerToServer(p, serverName, reason);
 	}
 	
@@ -88,7 +101,7 @@ public class BetterShardsAPI {
 	 * @param bed The BedLocation object.
 	 */
 	public static void addBedLocation(UUID uuid, BedLocation bed) {
-		String w = bed.getLocation().split(" ")[0];
+		String w = bed.getTeleportInfo().getWorld();
 		removeBedLocation(bed);
 		plugin.addBedLocation(uuid, bed);
 		try {
@@ -109,10 +122,12 @@ public class BetterShardsAPI {
 	
 	/**
 	 * Sends the info to servers that a player needs to be teleported.
-	 * @param info- Use the format 'uuid server world x y z'
+	 * @param server The server to teleport the player to.
+	 * @param uuid The uuid of the player to teleport.
+	 * @param info Create a TeleportInfo object to pass.
 	 * world can be either the world name or world uuid.
 	 */
-	public static void teleportPlayer(String info) {
-		mercManager.teleportPlayer(info);
+	public static void teleportPlayer(String server, UUID uuid, TeleportInfo info) {
+		mercManager.teleportPlayer(server, uuid, info);
 	}
 }
