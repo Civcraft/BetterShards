@@ -54,13 +54,8 @@ public class WorldBorderPortal extends Portal {
 	}
 
 	public boolean inPortal(Location loc) {
-		double x1 = first.getFakeLocation().getX();
-		double x2 = second.getFakeLocation().getX();
-		double z1 = first.getFakeLocation().getZ();
-		double z2 = second.getFakeLocation().getZ();
 		return getXZDistance(loc) > wbRange && 
-				((loc.getX() >= x1 && loc.getX() <= x2) || (loc.getX() <= x1 && loc.getX() >= x2)) && 
-				((loc.getZ() >= z1 && loc.getZ() <= z2) || (loc.getZ() <= z1 && loc.getZ() >= z2));
+				getArcPosition(loc) >= 0.0;
 	}
 
 	private double getXZDistance(Location loc) {
