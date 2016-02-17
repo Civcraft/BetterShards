@@ -44,7 +44,7 @@ public class MercuryListener implements Listener{
 		if (content[0].equals("delete")) {
 			Portal p = pm.getPortal(content[1]);
 			if (p != null)
-				pm.deletePortal(p);
+				pm.deletePortalLocally(p);
 		}
 		else if (content[0].equals("teleport")) {
 			Bukkit.getScheduler().runTask(BetterShardsPlugin.getInstance(), new Runnable() {

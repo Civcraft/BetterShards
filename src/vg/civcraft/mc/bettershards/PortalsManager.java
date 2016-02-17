@@ -3,8 +3,10 @@ package vg.civcraft.mc.bettershards;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -40,11 +42,24 @@ public class PortalsManager {
 		db.addPortalData(portal, null); // At this point it won't have a connection
 	}
 	
-	public void deletePortal(Portal portal){
-		portals.remove(portal.getName());
+	public void deletePortal(Portal portal) {
+		deletePortalLocally(portal);
 		db.removePortalData(portal);
 		db.removePortalLoc(portal);
 		mercManager.sendPortalDelete(portal.getName());
+	}
+	
+	public void deletePortalLocally(Portal portal) {
+		List <Portal> toRemove = new LinkedList<Portal>();
+		for(Entry <String, Portal> entry : portals.entrySet()) {
+			if (entry.getValue().getPartnerPortal() == portal) {
+				toRemove.add(entry.getValue());
+			}
+		}
+		for(Portal p : toRemove) {
+			p.setPartnerPortal(null);
+		}
+		portals.remove(portal.getName());
 	}
 	
 	/*
