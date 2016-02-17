@@ -18,6 +18,7 @@ import vg.civcraft.mc.mercury.MercuryAPI;
 
 public class TeleportServer extends PlayerCommand{
 	private MercuryManager mercManager = BetterShardsPlugin.getMercuryManager();
+	private BetterShardsPlugin plugin = BetterShardsPlugin.getInstance();
 
 	public TeleportServer(String name) {
 		super(name);
@@ -31,11 +32,6 @@ public class TeleportServer extends PlayerCommand{
 
 	@Override
 	public boolean execute(CommandSender sender, String[] args) {
-		if (!(sender.hasPermission("BetterShards.admin") || sender.isOp())) {
-			sender.sendMessage(ChatColor.RED + "You must have permission or be an admin to execute this command.");
-			return true;
-		}
-		
 		if (!(sender instanceof Player)) {
 			sender.sendMessage("You must be a player to execute this command. "
 					+ "What do you expect, teleporting the console to a server...");
@@ -68,17 +64,18 @@ public class TeleportServer extends PlayerCommand{
 	}
 	
 	private boolean serverTeleport(Player p, String serverName){
-		if(!MercuryAPI.getAllConnectedServers().contains(serverName)){
-			p.sendMessage(ChatColor.RED + "Sorry that server is not connected to the network.");
-			return true;
+		for(String server : MercuryAPI.getAllConnectedServers()){
+			if(server.equalsIgnoreCase(serverName)){
+				try {
+					BetterShardsAPI.connectPlayer(p, server, PlayerChangeServerReason.TP_COMMAND);
+				} catch (PlayerStillDeadException e) {
+					p.sendMessage(ChatColor.RED + "You can not switch a server when you are dead");
+					plugin.info("Teleported " + p.getName() + " to server " + server);
+				}
+				return true;
+			}
 		}
-		
-		try {
-			BetterShardsAPI.connectPlayer(p, serverName, PlayerChangeServerReason.TP_COMMAND);
-		} catch (PlayerStillDeadException e) {
-			p.sendMessage(ChatColor.RED + "You cant switch server when you are dead");
-		}
-		
+		p.sendMessage(ChatColor.RED + "Sorry that server is not connected to the network.");
 		return true;
 	}
 	
@@ -93,25 +90,25 @@ public class TeleportServer extends PlayerCommand{
 			return true;
 		}
 		
-		String server = args[0];
-		if (!MercuryAPI.getAllConnectedServers().contains(server)) {
-			p.sendMessage(ChatColor.RED + "Sorry that server is not connected to the network.");
-			return true;
+		String serverName = args[0];
+		for(String server : MercuryAPI.getAllConnectedServers()){
+			if(server.equalsIgnoreCase(serverName)){
+				if(args.length == 4){
+					//default world
+					mercManager.teleportPlayer(server ,p.getUniqueId(), args[1], args[2], args[3]);
+				} else if(args.length == 5){
+					mercManager.teleportPlayer(server ,p.getUniqueId(), args[1], args[2], args[3], args[4]);
+				}
+				
+				try {
+					BetterShardsAPI.connectPlayer(p, server, PlayerChangeServerReason.TP_COMMAND);
+					plugin.info("Teleported " + p.getName() + " to server " + server + " at " + args[1] + "," + args[2] + "," + args[3]);
+				} catch (PlayerStillDeadException e) {
+					p.sendMessage(ChatColor.RED + "You can not switch a server when you are dead");
+				}
+			}
 		}
-		
-		if(args.length == 4){
-			mercManager.teleportPlayer(server ,p.getUniqueId(), args[1], args[2], args[3]);
-		} else if(args.length == 5){
-			mercManager.teleportPlayer(server ,p.getUniqueId(), args[1], args[2], args[3], args[4]);
-		}
-		
-		try {
-			BetterShardsAPI.connectPlayer(p, server, PlayerChangeServerReason.TP_COMMAND);
-		} catch (PlayerStillDeadException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
+		p.sendMessage(ChatColor.RED + "Sorry that server is not connected to the network.");
 		return true;
 	}
 }

@@ -13,6 +13,7 @@ public class BedLocation {
 	 * @param info The TeleportInfo object
 	 */
 	public BedLocation(UUID uuid, TeleportInfo info) {
+		this.info = info;
 		this.uuid = uuid;
 	}
 	

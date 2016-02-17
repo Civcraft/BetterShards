@@ -26,6 +26,7 @@ import vg.civcraft.mc.namelayer.NameAPI;
 public class Teleport extends PlayerCommand {
 	
 	private MercuryManager mercManager = BetterShardsPlugin.getMercuryManager();
+	private BetterShardsPlugin plugin = BetterShardsPlugin.getInstance();
 
 	public Teleport(String name) {
 		super(name);
@@ -41,10 +42,6 @@ public class Teleport extends PlayerCommand {
 
 	@Override
 	public boolean execute(CommandSender sender, String[] args) {
-		if (!(sender.hasPermission("BetterShards.admin") || sender.isOp())) {
-			sender.sendMessage(ChatColor.RED + "You must have permission or be an admin to execute this command.");
-			return true;
-		}
 		if (args.length == 1)
 			return playerTeleport(sender, args[0]);
 		else if (args.length == 2)
@@ -76,7 +73,11 @@ public class Teleport extends PlayerCommand {
 		}
 		
 		//Target player is on a different server. Get the UUID of the target Player.
-		UUID targetPlayerUUID = other.getUniqueId();
+		UUID targetPlayerUUID;
+		if (BetterShardsPlugin.isNameLayerEnabled())
+			targetPlayerUUID = NameAPI.getUUID(targetPlayerName);
+		else
+			targetPlayerUUID = Bukkit.getOfflinePlayer(targetPlayerName) != null ? Bukkit.getOfflinePlayer(targetPlayerName).getUniqueId() : null;
 		if(targetPlayerUUID == null){
 			sender.sendMessage(ChatColor.RED + "Player does not exist.");
 			return true;
@@ -95,6 +96,7 @@ public class Teleport extends PlayerCommand {
 		//Send the player to destination server
 		try {
 			BetterShardsAPI.connectPlayer(p, serverName, PlayerChangeServerReason.TP_COMMAND);
+			plugin.info("Teleported " + p.getName() + " to " + targetPlayerName);
 		} catch (PlayerStillDeadException e) {
 			sender.sendMessage(ChatColor.RED + "Player is still dead.");
 		}
@@ -152,6 +154,7 @@ public class Teleport extends PlayerCommand {
 		//Send the player to destination server
 		try {
 			BetterShardsAPI.connectPlayer(PlayerUUID, serverName, PlayerChangeServerReason.TP_COMMAND);
+			plugin.info("Teleported " + playerName + " to " + targetPlayerName);
 		} catch (PlayerStillDeadException e) {
 			sender.sendMessage(ChatColor.RED + "Player is still dead.");
 		}
@@ -205,6 +208,7 @@ public class Teleport extends PlayerCommand {
 		
 		Location newLocation = new Location(w, x, y, z);
 		p.teleport(newLocation);
+		plugin.info("Teleported " + p.getName() + " to " + newLocation);
 		return true;
 	}
 	
@@ -235,6 +239,7 @@ public class Teleport extends PlayerCommand {
 		
 		Location newLoc = new Location(w, x, y, z);
 		p.teleport(newLoc);
+		plugin.info("Teleported " + p.getName() + " to " + newLoc);
 		return true;
 	}
 	
@@ -264,6 +269,7 @@ public class Teleport extends PlayerCommand {
 		
 		Location newLoc = new Location(w, x, y, z);
 		p.teleport(newLoc);
+		plugin.info("Teleported " + p.getName() + " to " + newLoc);
 		return true;
 	}
 }
