@@ -3,6 +3,8 @@ package vg.civcraft.mc.bettershards.misc;
 
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
+
 public class TeleportInfo {
 
 	private String world;
@@ -40,6 +42,32 @@ public class TeleportInfo {
 		builder.append("|");
 		builder.append(z);
 		return builder.toString();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		final TeleportInfo other = (TeleportInfo) obj;
+		
+		try {
+			if (!(world.equalsIgnoreCase(other.getWorld())
+					|| (Bukkit.getWorld(UUID.fromString(world)).getName().equalsIgnoreCase(other.getWorld())
+							|| Bukkit.getWorld(UUID.fromString(other.getWorld())).getName().equalsIgnoreCase(world)))) {
+				return false;
+			}
+		} catch (Exception e) {
+			return false;
+		}
+		
+		return server.equalsIgnoreCase(other.getServer()) && x == other.getX() && y == other.getY()
+				&& z == other.getZ();
 	}
 	
 	public String getServer() {

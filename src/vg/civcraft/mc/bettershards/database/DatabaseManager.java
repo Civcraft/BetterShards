@@ -98,7 +98,7 @@ public class DatabaseManager{
 				+ "z2 int not null,"
 				+ "world varchar(255) not null,"
 				+ "id varchar(255) not null,"
-				+ "primary key loc_id (x, y, z, world, id));");
+				+ "primary key loc_id (x1, y1, z1, x2, y2, z2, world, id));");
 		db.execute("create table if not exists excludedServers("
 				+ "name varchar(20) not null,"
 				+ "primary key name_id(name));");
