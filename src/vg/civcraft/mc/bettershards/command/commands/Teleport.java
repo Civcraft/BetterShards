@@ -21,6 +21,7 @@ import vg.civcraft.mc.bettershards.listeners.MercuryListener;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 import vg.civcraft.mc.mercury.MercuryAPI;
+import vg.civcraft.mc.mercury.PlayerDetails;
 import vg.civcraft.mc.namelayer.NameAPI;
 
 public class Teleport extends PlayerCommand {
@@ -84,11 +85,12 @@ public class Teleport extends PlayerCommand {
 		}
 		
 		//Get the server of the target player
-		String serverName = MercuryAPI.getServerforAccount(targetPlayerUUID).getServerName();
-		if(serverName == null){
+		PlayerDetails pd = MercuryAPI.getServerforAccount(targetPlayerUUID);
+		if(pd == null){
 			sender.sendMessage(ChatColor.RED + "Player is not online.");
 			return true;
 		}
+		String serverName = pd.getServerName();
 		
 		//Stage teleport on destination server
 		mercManager.teleportPlayer(serverName, p.getUniqueId(), targetPlayerUUID);
@@ -124,11 +126,12 @@ public class Teleport extends PlayerCommand {
 		}
 		
 		//Get the server of the target player
-		String serverName = MercuryAPI.getServerforAccount(targetPlayerUUID).getServerName();
-		if(serverName == null){
-			sender.sendMessage(ChatColor.RED + "Target Player is not online.");
+		PlayerDetails pd = MercuryAPI.getServerforAccount(targetPlayerUUID);
+		if(pd == null){
+			sender.sendMessage(ChatColor.RED + "Player is not online.");
 			return true;
 		}
+		String serverName = pd.getServerName();
 		
 		//Get the UUID of the player
 		UUID PlayerUUID;
