@@ -29,6 +29,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.material.Bed;
+import org.bukkit.util.Vector;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
@@ -98,6 +99,7 @@ public class BetterShardsListener implements Listener{
 		Location loc = MercuryListener.getTeleportLocation(event.getPlayer().getUniqueId());
 		if (loc == null)
 			return;
+		loc.setDirection(new Vector(loc.getBlockX() * -1, 0, loc.getBlockZ() * -1));
 		PlayerArrivedChangeServerEvent e = new PlayerArrivedChangeServerEvent(event.getPlayer(), loc);
 		Bukkit.getPluginManager().callEvent(e);
 		loc = e.getLocation();
