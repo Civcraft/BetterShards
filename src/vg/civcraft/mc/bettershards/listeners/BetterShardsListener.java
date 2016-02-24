@@ -240,7 +240,7 @@ public class BetterShardsListener implements Listener{
 		for (BedLocation bed: plugin.getAllBeds()) {
 			if (!bed.getServer().equals(MercuryAPI.serverName()))
 					continue;
-			TeleportInfo loc = new TeleportInfo(real.getWorld().getUID(), bed.getServer(), real.getX(), real.getY(), real.getZ());
+			TeleportInfo loc = new TeleportInfo(real.getWorld().getName(), bed.getServer(), real.getX(), real.getY(), real.getZ());
 			if (bed.getTeleportInfo().equals(loc)) {
 				toBeRemoved.add(bed);
 			}
@@ -262,7 +262,7 @@ public class BetterShardsListener implements Listener{
 		String server = MercuryAPI.serverName();
 		Block b = getRealFace(event.getBed());
 		Location loc = b.getLocation();
-		TeleportInfo info = new TeleportInfo(loc.getWorld().getUID(), MercuryAPI.serverName(), loc.getBlockX(),
+		TeleportInfo info = new TeleportInfo(loc.getWorld().getName(), MercuryAPI.serverName(), loc.getBlockX(),
 				loc.getBlockY(), loc.getBlockZ());
 		BedLocation bed = new BedLocation(uuid, info);
 		BetterShardsAPI.addBedLocation(uuid, bed);

@@ -105,7 +105,7 @@ public class DatabaseManager{
 		db.execute("create table if not exists player_beds("
 				+ "uuid varchar(36) not null,"
 				+ "server varchar(36) not null,"
-				+ "world_uuid varchar(36) not null,"
+				+ "world_name varchar(36) not null,"
 				+ "x int not null,"
 				+ "y int not null,"
 				+ "z int not null,"
@@ -176,7 +176,7 @@ public class DatabaseManager{
 		removeExclude = "delete from excludedServers where name = ?;";
 		getAllExclude = "select * from excludedServers;";
 		
-		addBedLocation = "insert into player_beds (uuid, server, world_uuid, "
+		addBedLocation = "insert into player_beds (uuid, server, world_name, "
 				+ "x, y, z) values (?,?,?,?,?,?)";
 		getAllBedLocation = "select * from player_beds;";
 		removeBedLocation = "delete from player_beds where uuid = ?;";
@@ -605,11 +605,11 @@ public class DatabaseManager{
 			while (set.next()) {
 				UUID uuid = UUID.fromString(set.getString("uuid"));
 				String server = set.getString("server");
-				UUID world_uuid = UUID.fromString(set.getString("world_uuid"));
+				String world_name = set.getString("world_name");
 				int x = set.getInt("x");
 				int y = set.getInt("y");
 				int z = set.getInt("z");
-				TeleportInfo info = new TeleportInfo(world_uuid, server, x, y, z);
+				TeleportInfo info = new TeleportInfo(world_name, server, x, y, z);
 				BedLocation bed = new BedLocation(uuid, info);
 				beds.add(bed);
 			}
