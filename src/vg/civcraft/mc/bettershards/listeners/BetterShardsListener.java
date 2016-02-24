@@ -218,7 +218,16 @@ public class BetterShardsListener implements Listener{
 
 			@Override
 			public void run() {
-				mercManager.teleportPlayer(bed.getServer(), bed.getUUID(), bed.getTeleportInfo());
+				TeleportInfo teleportInfo = bed.getTeleportInfo();
+				if(bed.getServer() == MercuryAPI.serverName()){ //Player's bed is on the current server
+					if(Bukkit.getWorld(teleportInfo.getWorld()) == null){
+						rs.handleDeath(p);
+					}
+					p.teleport(new Location(Bukkit.getWorld(teleportInfo.getWorld()), teleportInfo.getX(), teleportInfo.getY(), teleportInfo.getZ()));
+					return;
+				}
+				
+				mercManager.teleportPlayer(bed.getServer(), bed.getUUID(), teleportInfo);
 				try {
 					BetterShardsAPI.connectPlayer(p, bed.getServer(), PlayerChangeServerReason.BED);
 				} catch (PlayerStillDeadException e) {
