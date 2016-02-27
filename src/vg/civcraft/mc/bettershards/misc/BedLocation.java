@@ -33,6 +33,10 @@ public class BedLocation {
 		this.info = info;
 	}
 	
+	public void setWorld(String world) {
+		info.setWorld(world);
+	}
+	
 	public void setServer(String server) {
 		info.setServer(server);
 	}

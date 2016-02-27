@@ -220,7 +220,16 @@ public class BetterShardsListener implements Listener{
 
 			@Override
 			public void run() {
-				mercManager.teleportPlayer(bed.getServer(), bed.getUUID(), bed.getTeleportInfo());
+				TeleportInfo teleportInfo = bed.getTeleportInfo();
+				if(bed.getServer() == MercuryAPI.serverName()){ //Player's bed is on the current server
+					if(Bukkit.getWorld(teleportInfo.getWorld()) == null){
+						rs.handleDeath(p);
+					}
+					p.teleport(new Location(Bukkit.getWorld(teleportInfo.getWorld()), teleportInfo.getX(), teleportInfo.getY(), teleportInfo.getZ()));
+					return;
+				}
+				
+				mercManager.teleportPlayer(bed.getServer(), bed.getUUID(), teleportInfo);
 				try {
 					BetterShardsAPI.connectPlayer(p, bed.getServer(), PlayerChangeServerReason.BED);
 				} catch (PlayerStillDeadException e) {
@@ -242,7 +251,7 @@ public class BetterShardsListener implements Listener{
 		for (BedLocation bed: plugin.getAllBeds()) {
 			if (!bed.getServer().equals(MercuryAPI.serverName()))
 					continue;
-			String loc = real.getWorld().getUID().toString() + " " + real.getX() + " " + real.getY() + " " + real.getZ();
+			TeleportInfo loc = new TeleportInfo(real.getWorld().getName(), bed.getServer(), real.getX(), real.getY(), real.getZ());
 			if (bed.getTeleportInfo().equals(loc)) {
 				toBeRemoved.add(bed);
 			}
@@ -264,7 +273,7 @@ public class BetterShardsListener implements Listener{
 		String server = MercuryAPI.serverName();
 		Block b = getRealFace(event.getBed());
 		Location loc = b.getLocation();
-		TeleportInfo info = new TeleportInfo(loc.getWorld().getUID(), MercuryAPI.serverName(), loc.getBlockX(),
+		TeleportInfo info = new TeleportInfo(loc.getWorld().getName(), MercuryAPI.serverName(), loc.getBlockX(),
 				loc.getBlockY(), loc.getBlockZ());
 		BedLocation bed = new BedLocation(uuid, info);
 		BetterShardsAPI.addBedLocation(uuid, bed);

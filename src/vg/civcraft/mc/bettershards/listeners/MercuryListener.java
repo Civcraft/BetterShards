@@ -83,15 +83,10 @@ public class MercuryListener implements Listener{
 						if(content.length == 4){
 							Player targetPlayer = Bukkit.getPlayer(UUID.fromString(content[3]));
 							loc = targetPlayer.getLocation();
-						} else if(content.length == 6){
+						} else if(content.length == 6){ //use default overworld
 								loc = new Location(Bukkit.getWorlds().get(0), Integer.parseInt(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]));
 						} else if(content.length == 7){
-							try {
-								loc = new Location(Bukkit.getWorld(UUID.fromString(content[3])), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
-							} catch(IllegalArgumentException e) {
-								// The world uuid is none existent so it must be a world name.
-								loc = new Location(Bukkit.getWorld(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
-							}
+							loc = new Location(Bukkit.getWorld(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
 						}
 						uuids.put(uuid, loc);
 					}
@@ -136,22 +131,6 @@ public class MercuryListener implements Listener{
 			else if (content[1].equals("remove")) {
 				UUID uuid = UUID.fromString(content[2]);
 				plugin.removeBed(uuid);
-			}
-			else if (content[1].equals("request")) {
-				UUID uuid = UUID.fromString(content[2]);
-				World w = Bukkit.getWorld(content[3]);
-				if (w == null) {
-					String error = "The server " + event.getOriginServer() + " requested world uuid info "
-							+ "but that world does not exist.";
-					plugin.getLogger().log(Level.INFO, error);
-					return;
-				}
-				BetterShardsPlugin.getMercuryManager().sendWorldUUID(uuid, w.getUID(), event.getOriginServer());
-			}
-			else if (content[1].equals("send")) {
-				UUID uuid = UUID.fromString(content[2]);
-				BedLocation loc = BetterShardsAPI.getBedLocation(uuid);
-				loc.getTeleportInfo().setWorld(content[3]);
 			}
 		}
 		else if (content[0].equals("portal")) {

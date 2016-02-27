@@ -101,15 +101,8 @@ public class BetterShardsAPI {
 	 * @param bed The BedLocation object.
 	 */
 	public static void addBedLocation(UUID uuid, BedLocation bed) {
-		String w = bed.getTeleportInfo().getWorld();
 		removeBedLocation(bed);
 		plugin.addBedLocation(uuid, bed);
-		try {
-			UUID.fromString(w);
-		} catch(IllegalArgumentException ex) {	
-			mercManager.requestWorldUUID(uuid, w, bed.getServer());
-			return;
-		}
 		db.addBedLocation(bed);
 		mercManager.sendBedLocation(bed);
 	}

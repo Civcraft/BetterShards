@@ -40,7 +40,6 @@ public class MercuryManager {
 	/**
 	 * Sends the info to servers that a player needs to be teleported.
 	 * @param info Use the TeleportInfo object.
-	 * world can be either the world name or world uuid.
 	 */
 	public void teleportPlayer(String server, UUID uuid, TeleportInfo info) {
 		MercuryAPI.sendMessage(server, "teleport|command|" + uuid.toString() + "|" + info , "BetterShards");
@@ -85,13 +84,5 @@ public class MercuryManager {
 	
 	public void removePortalJoin(Portal main) {
 		MercuryAPI.sendGlobalMessage("portal|remove|"+main.getName(), "BetterShards");
-	}
-	
-	public void requestWorldUUID(UUID uuid, String world, String server) {
-		MercuryAPI.sendMessage(server, "bed|request|" + uuid.toString() + "|" + world, "BetterShards");
-	}
-	
-	public void sendWorldUUID(UUID uuid, UUID world, String server) {
-		MercuryAPI.sendMessage(server, "bed|send|" + uuid.toString() + "|" + world.toString(), "BetterShards");
 	}
 }
