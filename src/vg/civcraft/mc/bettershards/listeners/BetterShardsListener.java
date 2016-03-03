@@ -267,16 +267,27 @@ public class BetterShardsListener implements Listener{
 		return block;
 	}
 	
-	@EventHandler(priority = EventPriority.NORMAL)
-	public void playerSleepInBed(PlayerBedEnterEvent event) {
+	/**
+	 * Sets the player bed location by right-clicking on a bed.
+	 * This allows players to set their bed at any time of the day.
+	 * Highest event priority so it ignores events canceled by citadel
+	 * @param event The event args
+	 */
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void playerSleepInBed(PlayerInteractEvent event) {
+		
+		if (!event.getAction().equals(Action.RIGHT_CLICK_BLOCK) || !event.getClickedBlock().getType().equals(Material.BED_BLOCK)) {
+			return;
+		}
+		
 		UUID uuid = event.getPlayer().getUniqueId();
 		String server = MercuryAPI.serverName();
-		Block b = getRealFace(event.getBed());
-		Location loc = b.getLocation();
+		Location loc = getRealFace(event.getClickedBlock()).getLocation();
 		TeleportInfo info = new TeleportInfo(loc.getWorld().getName(), MercuryAPI.serverName(), loc.getBlockX(),
 				loc.getBlockY(), loc.getBlockZ());
 		BedLocation bed = new BedLocation(uuid, info);
 		BetterShardsAPI.addBedLocation(uuid, bed);
+		event.getPlayer().sendMessage(ChatColor.GREEN + "You set your bed location.");
 	}
 	
 	@EventHandler
