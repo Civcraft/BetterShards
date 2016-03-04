@@ -2,6 +2,7 @@ package vg.civcraft.mc.bettershards;
 
 import java.util.UUID;
 
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
@@ -122,5 +123,19 @@ public class BetterShardsAPI {
 	 */
 	public static void teleportPlayer(String server, UUID uuid, TeleportInfo info) {
 		mercManager.teleportPlayer(server, uuid, info);
+	}
+	
+	/**
+	 * RandomSpawns a player on the server
+	 * @param server the server to randomspawn the player on
+	 * @param player the player to randomspawn
+	 */	
+	public static void randomSpawnPlayer(String server, UUID player) {
+		try {
+			connectPlayer(player, server, PlayerChangeServerReason.RANDOMSPAWN);
+		} catch (PlayerStillDeadException e) {
+			e.printStackTrace();
+		}
+		mercManager.notifyRandomSpawn(server, player);
 	}
 }
