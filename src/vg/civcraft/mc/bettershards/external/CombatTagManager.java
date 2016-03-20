@@ -25,16 +25,20 @@ public class CombatTagManager {
 			server.getPluginManager().registerEvents(new CombatTagListener(), BetterShardsPlugin.getInstance());
 		}
 	}
-	
-	public boolean isCombatTagPlusNPC(Player player) {
+
+	public boolean isCombatTagNPC(Player player) {
 		return combatTagPlusEnabled && combatTagPlusApi.isNpc(player);
 	}
 	
-	public NpcIdentity getCombatTagPlusNPCIdentity(Player player){
+	public NpcIdentity getCombatTagNPCIdentity(Player player){
 		return combatTagPlusApi.getIdentity(player);
 	}
 	
 	public boolean isInCombatTag(Player p) {
 		return combatTagPlusEnabled && tagManager != null && tagManager.isTagged(p.getUniqueId());
+	}
+	
+	public boolean unCombatTag(Player p){
+		return combatTagPlusEnabled && tagManager != null && tagManager.untag(p.getUniqueId());
 	}
 }
