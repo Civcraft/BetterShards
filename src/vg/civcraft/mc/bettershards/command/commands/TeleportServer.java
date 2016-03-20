@@ -106,6 +106,7 @@ public class TeleportServer extends PlayerCommand{
 				} catch (PlayerStillDeadException e) {
 					p.sendMessage(ChatColor.RED + "You can not switch a server when you are dead");
 				}
+				return true;
 			}
 		}
 		p.sendMessage(ChatColor.RED + "Sorry that server is not connected to the network.");
