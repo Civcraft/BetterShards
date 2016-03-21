@@ -70,6 +70,7 @@ public class BungeeListener implements Listener, EventListener {
 			String server = servers.get(random);
 			ServerInfo sInfo = ProxyServer.getInstance().getServerInfo(server);
 			event.setTarget(sInfo);
+			BungeeMercuryManager.sendRandomSpawn(uuid, server);
 		}
 	}
 
