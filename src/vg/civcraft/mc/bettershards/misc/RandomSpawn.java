@@ -19,6 +19,7 @@ public class RandomSpawn {
 	private DatabaseManager dbm;
 	private int spawnRange;
 	private World w;
+	private boolean disableFirstJoin = false;;
 
 	public RandomSpawn(Integer spawnRange, String worldName) {
 		dbm = BetterShardsPlugin.getInstance().getDatabaseManager();
@@ -58,10 +59,21 @@ public class RandomSpawn {
 	}
 	
 	/**
+	 * Sets whether or not to disable or enable randomspawn for players who have just joined.
+	 * @param disabled Set this to true to disable randomspawn for players who are new
+	 * and set to false to random spawn players who are new.
+	 */
+	public void setFirstJoin(boolean disabled) {
+		this.disableFirstJoin = disabled;
+	}
+	
+	/**
 	 * Called when it is the first time a player joins.
 	 * @param p Player who just joined.
 	 */
 	public void handleFirstJoin(Player p) {
+		if (disableFirstJoin)
+			return;
 		final Player player = p;
 		Bukkit.getScheduler().scheduleSyncDelayedTask(BetterShardsPlugin.getInstance(), new Runnable() {
 			@Override

@@ -20,6 +20,7 @@ import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
+import vg.civcraft.mc.bettershards.misc.RandomSpawn;
 import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.portals.CircularPortal;
@@ -31,6 +32,7 @@ public class MercuryListener implements Listener{
 	private String c = "BetterShards";
 	private PortalsManager pm = BetterShardsAPI.getPortalsManager();
 	private BetterShardsPlugin plugin = BetterShardsPlugin.getInstance();
+	private RandomSpawn rs = BetterShardsPlugin.getRandomSpawn();
 	
 	private static Map<UUID, Location> uuids = new ConcurrentHashMap<UUID, Location>();
 
@@ -146,6 +148,18 @@ public class MercuryListener implements Listener{
 				if (p1 == null)
 					return;
 				p1.setPartnerPortal(null);
+			}
+		}
+		else if (content[0].equals("info")) {
+			if (content[1].equals("randomspawn")) {
+				if (content[2].equals("disable")) {
+					rs.setFirstJoin(true);
+				}
+			}
+			else if (content[1].equals("db")) {
+				if (content[2].equals("request")) {
+					BetterShardsPlugin.getMercuryManager().sendDBInfo(event.getOriginServer());
+				}
 			}
 		}
 	}
