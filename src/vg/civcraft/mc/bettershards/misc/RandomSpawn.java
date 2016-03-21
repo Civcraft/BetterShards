@@ -117,10 +117,15 @@ public class RandomSpawn {
 		int y = 253;
 
 		while (y >= 0) {
-			if (w.getBlockAt(x, y, z).getType().isSolid()
-					&& w.getBlockAt(x, y + 1, z).getType() == Material.AIR
-					&& w.getBlockAt(x, y + 2, z).getType() == Material.AIR) {
-				return new Location(w, x, y + 1, z); //+1 because player position is in lower body half
+			if (w.getBlockAt(x, y, z).getType() != Material.AIR) {
+				if (w.getBlockAt(x, y, z).getType().isSolid()
+						&& w.getBlockAt(x, y + 1, z).getType() == Material.AIR
+						&& w.getBlockAt(x, y + 2, z).getType() == Material.AIR) {
+					return new Location(w, x, y + 1, z); //+1 because player position is in lower body half
+				}
+				else {
+					return getLocation();
+				}
 			}
 			y--;
 		}
