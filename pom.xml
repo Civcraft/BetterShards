@@ -17,9 +17,9 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<modules>
-				<module>NameLayerBungee</module>
-				<module>NameLayerBukkit</module>
-				<module>NameLayer</module>
+				<module>BetterShardsBungee</module>
+				<module>BetterShardsBukkit</module>
+				<module>BetterShards</module>
 			</modules>
 		</profile>
 	</profiles>
