@@ -15,7 +15,7 @@
 	</properties>
 
 	<parent>
-		<groupId>vg.civcraft.mc.namelayer</groupId>
+		<groupId>vg.civcraft.mc.bettershards</groupId>
 		<artifactId>BetterShards-parent</artifactId>
 		<version>1.0.0</version>
 	</parent>
