@@ -162,8 +162,9 @@ public class BetterShardsPlugin extends ACivMod{
 		Bukkit.getPluginManager().callEvent(event);
 		if (event.isCancelled())
 			return false;
-		if (combatManager.isCombatTagPlusNPC(p) || combatManager.isCombatTagPlusNPC(p)) 
+		if (combatManager.isCombatTagNPC(p)) 
 			return false;
+		combatManager.unCombatTag(p);
 		if (p.isInsideVehicle())
 			p.getVehicle().eject();
 		if (p.isDead()) {

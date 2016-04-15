@@ -19,6 +19,7 @@ public class RandomSpawn {
 	private DatabaseManager dbm;
 	private int spawnRange;
 	private World w;
+	private boolean disableFirstJoin = false;;
 
 	public RandomSpawn(Integer spawnRange, String worldName) {
 		dbm = BetterShardsPlugin.getInstance().getDatabaseManager();
@@ -58,10 +59,21 @@ public class RandomSpawn {
 	}
 	
 	/**
+	 * Sets whether or not to disable or enable randomspawn for players who have just joined.
+	 * @param disabled Set this to true to disable randomspawn for players who are new
+	 * and set to false to random spawn players who are new.
+	 */
+	public void setFirstJoin(boolean disabled) {
+		this.disableFirstJoin = disabled;
+	}
+	
+	/**
 	 * Called when it is the first time a player joins.
 	 * @param p Player who just joined.
 	 */
 	public void handleFirstJoin(Player p) {
+		if (disableFirstJoin)
+			return;
 		final Player player = p;
 		Bukkit.getScheduler().scheduleSyncDelayedTask(BetterShardsPlugin.getInstance(), new Runnable() {
 			@Override
@@ -105,10 +117,15 @@ public class RandomSpawn {
 		int y = 253;
 
 		while (y >= 0) {
-			if (w.getBlockAt(x, y, z).getType().isSolid()
-					&& w.getBlockAt(x, y + 1, z).getType() == Material.AIR
-					&& w.getBlockAt(x, y + 2, z).getType() == Material.AIR) {
-				return new Location(w, x, y + 1, z); //+1 because player position is in lower body half
+			if (w.getBlockAt(x, y, z).getType() != Material.AIR) {
+				if (w.getBlockAt(x, y, z).getType().isSolid()
+						&& w.getBlockAt(x, y + 1, z).getType() == Material.AIR
+						&& w.getBlockAt(x, y + 2, z).getType() == Material.AIR) {
+					return new Location(w, x, y + 1, z); //+1 because player position is in lower body half
+				}
+				else {
+					return getLocation();
+				}
 			}
 			y--;
 		}
