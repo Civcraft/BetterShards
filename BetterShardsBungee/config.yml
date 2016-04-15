@@ -1,0 +1,6 @@
+mysql:
+ host: localhost
+ username: ''
+ port: 3306
+ password: ''
+ dbname: BetterShardsDB
