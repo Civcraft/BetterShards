@@ -58,6 +58,10 @@
             <id>bungeecord-repo</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </repository>
+		<repository>
+			<id>minelink-releases</id>
+			<url>http://repo.minelink.net/content/repositories/releases/</url>
+		</repository>
 	</repositories>
 	<build>
 		<plugins>
