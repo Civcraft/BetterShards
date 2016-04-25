@@ -62,5 +62,11 @@
             <type>jar</type>
             <scope>provided</scope>
         </dependency>
+		<dependency>
+			<groupId>vg.civcraft.mc.mercury</groupId>
+			<artifactId>Mercury</artifactId>
+			<version>[1.1.97,)</version>
+			<scope>provided</scope>
+		</dependency>
 	</dependencies>
 </project>
