@@ -4,10 +4,10 @@
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>vg.civcraft.mc.bettershards</groupId>
-	<artifactId>BetterShards</artifactId>
+	<artifactId>BetterShardsBukkit</artifactId>
 	<packaging>jar</packaging>
 	<version>1.0.0</version>
-	<name>BetterShards</name>
+	<name>BetterShardsBukkit</name>
 	<url>https://github.com/Civcraft/BetterShards</url>
 
 	<properties>
