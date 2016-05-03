@@ -33,8 +33,8 @@
 			<dependencies>
 				<dependency>
 					<groupId>org.spigotmc</groupId>
-					<artifactId>Spigot1.8.7</artifactId>
-					<version>1.8.7</version>
+					<artifactId>Spigot1.9</artifactId>
+					<version>1.9</version>
 					<scope>provided</scope>
 				</dependency>
 				<dependency>

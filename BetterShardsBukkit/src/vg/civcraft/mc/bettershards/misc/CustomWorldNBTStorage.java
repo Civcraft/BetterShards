@@ -10,19 +10,19 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
-import net.minecraft.server.v1_8_R3.EntityHuman;
-import net.minecraft.server.v1_8_R3.EntityPlayer;
-import net.minecraft.server.v1_8_R3.NBTCompressedStreamTools;
-import net.minecraft.server.v1_8_R3.NBTTagCompound;
-import net.minecraft.server.v1_8_R3.ServerNBTManager;
+import net.minecraft.server.v1_9_R1.DataConverterManager;
+import net.minecraft.server.v1_9_R1.EntityHuman;
+import net.minecraft.server.v1_9_R1.EntityPlayer;
+import net.minecraft.server.v1_9_R1.NBTCompressedStreamTools;
+import net.minecraft.server.v1_9_R1.NBTTagCompound;
+import net.minecraft.server.v1_9_R1.ServerNBTManager;
 
 public class CustomWorldNBTStorage extends ServerNBTManager {
 
@@ -34,7 +34,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	private Map<UUID, ConfigurationSection> sect = new HashMap<UUID, ConfigurationSection>();
 
 	public CustomWorldNBTStorage(File file, String s, boolean flag) {
-		super(file, s, flag);
+		super(file, s, flag, new DataConverterManager(0));
 		storage = this;
 	}
 

@@ -16,18 +16,18 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
-import net.minecraft.server.v1_8_R3.IDataManager;
-import net.minecraft.server.v1_8_R3.MinecraftServer;
-import net.minecraft.server.v1_8_R3.WorldNBTStorage;
-import net.minecraft.server.v1_8_R3.WorldServer;
+import net.minecraft.server.v1_9_R1.IDataManager;
+import net.minecraft.server.v1_9_R1.MinecraftServer;
+import net.minecraft.server.v1_9_R1.WorldNBTStorage;
+import net.minecraft.server.v1_9_R1.WorldServer;
 
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_9_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_9_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import com.google.common.io.ByteArrayDataOutput;
@@ -237,7 +237,7 @@ public class BetterShardsPlugin extends ACivMod{
 			WorldServer nmsWorld = ((CraftWorld) w).getHandle();
 			Field fieldName;
 			try {
-				fieldName = net.minecraft.server.v1_8_R3.World.class.getDeclaredField("dataManager");
+				fieldName = net.minecraft.server.v1_9_R1.World.class.getDeclaredField("dataManager");
 				fieldName.setAccessible(true);
 				
 				IDataManager manager = nmsWorld.getDataManager();
