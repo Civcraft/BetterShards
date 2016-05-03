@@ -37,6 +37,7 @@ import vg.civcraft.mc.bettershards.command.BetterCommandHandler;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
+import vg.civcraft.mc.bettershards.events.PlayerEnsuredToTransitEvent;
 import vg.civcraft.mc.bettershards.events.PlayerFailedToTransitEvent;
 import vg.civcraft.mc.bettershards.external.CombatTagManager;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
@@ -130,6 +131,10 @@ public class BetterShardsPlugin extends ACivMod{
 				Player player = Bukkit.getPlayer(uuid);
 				if (player != null && !player.isOnline()) {
 					PlayerFailedToTransitEvent event = new PlayerFailedToTransitEvent(uuid, server);
+					Bukkit.getPluginManager().callEvent(event);
+				}
+				else {
+					PlayerEnsuredToTransitEvent event = new PlayerEnsuredToTransitEvent(uuid, server);
 					Bukkit.getPluginManager().callEvent(event);
 				}
 			}
