@@ -7,5 +7,6 @@ public enum PlayerChangeServerReason {
 	PLUGIN,
 	OTHER,
 	BED,
-	RANDOMSPAWN;
+	RANDOMSPAWN,
+	RETRY;
 }
