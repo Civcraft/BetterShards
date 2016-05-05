@@ -37,6 +37,8 @@ import vg.civcraft.mc.bettershards.command.BetterCommandHandler;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
+import vg.civcraft.mc.bettershards.events.PlayerEnsuredToTransitEvent;
+import vg.civcraft.mc.bettershards.events.PlayerFailedToTransitEvent;
 import vg.civcraft.mc.bettershards.external.CombatTagManager;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.listeners.BetterShardsListener;
@@ -119,13 +121,22 @@ public class BetterShardsPlugin extends ACivMod{
 	/**
 	 * This adds a player to a list that can be checked to see if a player is in transit.
 	 */
-	private void addPlayerToTransit(final UUID uuid){
+	private void addPlayerToTransit(final UUID uuid, final String server){
 		transit.add(uuid);
 		Bukkit.getScheduler().runTaskLater(this, new Runnable(){
 
 			@Override
 			public void run() {
 				transit.remove(uuid);
+				Player player = Bukkit.getPlayer(uuid);
+				if (player != null && !player.isOnline()) {
+					PlayerFailedToTransitEvent event = new PlayerFailedToTransitEvent(uuid, server);
+					Bukkit.getPluginManager().callEvent(event);
+				}
+				else {
+					PlayerEnsuredToTransitEvent event = new PlayerEnsuredToTransitEvent(uuid, server);
+					Bukkit.getPluginManager().callEvent(event);
+				}
 			}
 			
 		}, 20);
@@ -170,7 +181,7 @@ public class BetterShardsPlugin extends ACivMod{
 		if (p.isDead()) {
 			throw new PlayerStillDeadException();
 		}
-		addPlayerToTransit(p.getUniqueId()); // So the player isn't tried to be sent twice.
+		addPlayerToTransit(p.getUniqueId(), server); // So the player isn't tried to be sent twice.
 		CustomWorldNBTStorage.getWorldNBTStorage().save(((CraftPlayer) p).getHandle());
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
 		out.writeUTF("Connect");
