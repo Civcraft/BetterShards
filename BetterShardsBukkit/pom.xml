@@ -33,26 +33,26 @@
 			<dependencies>
 				<dependency>
 					<groupId>org.spigotmc</groupId>
-					<artifactId>Spigot1.8.7</artifactId>
-					<version>1.8.7</version>
+					<artifactId>Spigot</artifactId>
+					<version>1.9</version>
 					<scope>provided</scope>
 				</dependency>
 				<dependency>
 					<groupId>vg.civcraft.mc.mercury</groupId>
 					<artifactId>Mercury</artifactId>
-					<version>[1.1.97,)</version>
+					<version>1.2.0</version>
 					<scope>provided</scope>
 				</dependency>
 				<dependency>
 					<groupId>vg.civcraft.mc.civmodcore</groupId>
 					<artifactId>CivModCore</artifactId>
-					<version>1.0.7</version>
+					<version>1.3.2</version>
 					<scope>provided</scope>
 				</dependency>
 				<dependency>
 					<groupId>vg.civcraft.mc.namelayer</groupId>
 					<artifactId>NameLayer</artifactId>
-					<version>2.1.1</version>
+					<version>2.7</version>
 					<scope>provided</scope>
 				</dependency>
 				<dependency>

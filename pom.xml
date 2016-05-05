@@ -36,7 +36,7 @@
         </repository>
 		<repository>
 			<id>Jenkins-repo</id>
-			<url>http://build.civcraft.co:8080/plugin/repository/everything/</url>
+			<url>http://build.civcraft.co/plugin/repository/everything/</url>
 		</repository>
 		<repository>
 			<id>spigot-repo</id>
