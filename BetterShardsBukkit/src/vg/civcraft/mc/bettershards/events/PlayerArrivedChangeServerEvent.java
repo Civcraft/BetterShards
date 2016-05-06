@@ -39,7 +39,7 @@ public class PlayerArrivedChangeServerEvent extends Event{
 		return handler;
 	}
 	
-	public static HandlerList getHandler(){
+	public static HandlerList getHandlerList(){
 		return handler;
 	}
 }
