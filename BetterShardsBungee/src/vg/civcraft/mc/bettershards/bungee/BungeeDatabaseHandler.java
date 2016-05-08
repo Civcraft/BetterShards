@@ -36,7 +36,7 @@ public class BungeeDatabaseHandler {
 	private String setServer, getServer;
 	
 	private void setStatements() {
-		hasPlayedBefore = "select count(*) as count from BetterShardsBungeeConnection where id = ?;";
+		hasPlayedBefore = "select count(*) as count from BetterShardsBungeeConnection where uuid = ?;";
 		setServer = "insert into BetterShardsBungeeConnection (uuid, server) values (?, ?) "
 				+ "on duplicate key update server = ?;";
 		getServer = "select server from BetterShardsBungeeConnection where uuid = ?;";
