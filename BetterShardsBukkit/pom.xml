@@ -67,6 +67,12 @@
 					<version>[1.2.0,)</version>
 					<scope>provided</scope>
 				</dependency>
+				<dependency>
+					<groupId>vg.civcraft.mc.bettershards</groupId>
+					<artifactId>BetterShardsBungee</artifactId>
+					<version>1.0.0</version>
+					<scope>compile</scope>
+				</dependency>
 			</dependencies>
 		</profile>
 	</profiles>
