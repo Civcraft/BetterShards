@@ -36,7 +36,7 @@ public class BungeeDatabaseHandler {
 	private String setServer, getServer;
 	
 	private void setStatements() {
-		hasPlayedBefore = "select count(*) as count from createPortalLocData where id = ?;";
+		hasPlayedBefore = "select count(*) as count from BetterShardsBungeeConnection where id = ?;";
 		setServer = "insert into BetterShardsBungeeConnection (uuid, server) values (?, ?) "
 				+ "on duplicate key update server = ?;";
 		getServer = "select server from BetterShardsBungeeConnection where uuid = ?;";
@@ -67,7 +67,7 @@ public class BungeeDatabaseHandler {
 	}
 	
 	public void setServer(ProxiedPlayer p, String server) {
-		PreparedStatement setServer = db.prepareStatement(this.getServer);
+		PreparedStatement setServer = db.prepareStatement(this.setServer);
 		try {
 			setServer.setString(1, p.getUniqueId().toString());
 			setServer.setString(2, server);
