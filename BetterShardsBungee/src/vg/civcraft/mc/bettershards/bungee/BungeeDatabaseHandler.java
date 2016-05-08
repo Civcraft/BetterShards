@@ -80,9 +80,13 @@ public class BungeeDatabaseHandler {
 	}
 	
 	public ServerInfo getServer(ProxiedPlayer p) {
+		return getServer(p.getUniqueId());
+	}
+	
+	public ServerInfo getServer(UUID uuid) {
 		PreparedStatement getServer = db.prepareStatement(this.getServer);
 		try {
-			getServer.setString(1, p.getUniqueId().toString());
+			getServer.setString(1, uuid.toString());
 			ResultSet set = getServer.executeQuery();
 			if (!set.next())
 				return null;

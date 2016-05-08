@@ -11,6 +11,7 @@ import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.LoginEvent;
+import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
@@ -62,6 +63,7 @@ public class BungeeListener implements Listener, EventListener {
 		// Here we are going to check if new player.
 		if (db.hasPlayerBefore(uuid))
 			return;
+			
 		Random rand = new Random();
 		synchronized(servers) {
 			int random = rand.nextInt(servers.size());
@@ -82,6 +84,15 @@ public class BungeeListener implements Listener, EventListener {
 				excluded.clear();
 				excluded.add(content[x]);
 			}
+		}
+	}
+	
+	@EventHandler()
+	public void playerJoinBungeeServer(LoginEvent event) {
+		ServerInfo server = db.getServer(event.getConnection().getUniqueId());
+		if (!servers.contains(server.getName())) {
+			event.setCancelled(true);
+			event.setCancelReason("Disconnected because that server is down.");
 		}
 	}
 }
