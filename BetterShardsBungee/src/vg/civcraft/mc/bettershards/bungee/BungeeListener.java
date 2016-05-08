@@ -90,7 +90,7 @@ public class BungeeListener implements Listener, EventListener {
 	@EventHandler()
 	public void playerJoinBungeeServer(LoginEvent event) {
 		ServerInfo server = db.getServer(event.getConnection().getUniqueId());
-		if (!servers.contains(server.getName())) {
+		if (server != null && !servers.contains(server.getName())) {
 			event.setCancelled(true);
 			event.setCancelReason("Disconnected because that server is down.");
 		}
