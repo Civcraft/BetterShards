@@ -67,6 +67,8 @@ public class BungeeDatabaseHandler {
 	}
 	
 	public void setServer(ProxiedPlayer p, String server) {
+		if (!db.isConnected())
+			db.connect();
 		PreparedStatement setServer = db.prepareStatement(this.setServer);
 		try {
 			setServer.setString(1, p.getUniqueId().toString());
@@ -84,6 +86,8 @@ public class BungeeDatabaseHandler {
 	}
 	
 	public ServerInfo getServer(UUID uuid) {
+		if (!db.isConnected())
+			db.connect();
 		PreparedStatement getServer = db.prepareStatement(this.getServer);
 		try {
 			getServer.setString(1, uuid.toString());
