@@ -20,6 +20,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.player.PlayerChatTabCompleteEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -115,6 +116,20 @@ public class BetterShardsListener implements Listener{
 		db.playerQuitServer(uuid);
 		if (plugin.isPlayerInTransit(uuid))
 			return;
+	}
+	
+	//without this method players are able to detect who is in their shard as 
+	//the default behavior for tab completion is trying to complete the name of a player on the server
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void playerTabComplete(PlayerChatTabCompleteEvent event) {
+		Collection <String> res = event.getTabCompletions();
+		res.clear();
+		String lower = event.getLastToken() != null ? event.getLastToken() : "";
+		for(String player : MercuryAPI.getAllPlayers()) {
+			if (player.toLowerCase().startsWith(lower)) {
+				res.add(player);
+			}
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.LOWEST)
