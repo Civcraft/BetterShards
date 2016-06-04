@@ -216,6 +216,8 @@ public class BetterShardsListener implements Listener{
 	
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void playerRespawnEvent(PlayerRespawnEvent event) {
+		if (config.get("lobby").getBool())
+			return;
 		final Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
 		final BedLocation bed = plugin.getBed(uuid);
@@ -258,6 +260,8 @@ public class BetterShardsListener implements Listener{
 	
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void bedBreak(BlockBreakEvent event) {
+		if (config.get("lobby").getBool())
+			return;
 		Block b = event.getBlock();
 		if (b.getType() != Material.BED_BLOCK) 
 			return;
@@ -290,6 +294,8 @@ public class BetterShardsListener implements Listener{
 	 */
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void playerSleepInBed(PlayerInteractEvent event) {
+		if (config.get("lobby").getBool())
+			return;
 		
 		if (!event.getAction().equals(Action.RIGHT_CLICK_BLOCK) || !event.getClickedBlock().getType().equals(Material.BED_BLOCK)) {
 			return;

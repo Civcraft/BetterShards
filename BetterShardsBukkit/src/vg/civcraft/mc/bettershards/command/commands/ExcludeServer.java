@@ -10,16 +10,16 @@ import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 
-public class ExcludeServer extends PlayerCommand{
+public class ExcludeServer extends PlayerCommand {
 
 	private DatabaseManager db = BetterShardsPlugin.getInstance().getDatabaseManager();
-	
+
 	public ExcludeServer(String name) {
 		super(name);
 		setIdentifier("bse");
 		setDescription("Used to exclude or remove exclusion of a server on first join.");
-		setUsage("/bse <add/remove> <server>");
-		setArguments(2,2);
+		setUsage("/bse <add/remove/list> <server>");
+		setArguments(1, 2);
 	}
 
 	@Override
@@ -30,17 +30,23 @@ public class ExcludeServer extends PlayerCommand{
 		}
 		Player p = (Player) sender;
 		String action = args[0];
-		String server = args[1];
-		String message = ChatColor.RED + "You must type either add or remove to add or remove a portal.";
-		if (action.equalsIgnoreCase("add")) {
-			db.addExclude(server);
-			message = ChatColor.GREEN + "The server has been added to exclude, please wait shortly as "
-					+ "updates to this list take a little time.";
-		}
-		else if (action.equalsIgnoreCase("remove")) {
-			db.removeExclude(server);
-			message = ChatColor.GREEN + "The server has been removed drom exclude, please wait shortly as "
-					+ "updates to this list take a little time.";
+		String message = ChatColor.RED + "You must type either add, remove, or list to add, remove, or list a portal.";
+		if (args.length == 1 && action.equalsIgnoreCase("list")) {
+			List<String> servers = db.getAllExclude();
+			return sendPlayerMessage(p, ChatColor.GREEN + "List of servers are: " + servers.toString(), true);
+		} else if (args.length == 1) {
+			message = ChatColor.RED + "You do not have the right amount of arguments.";
+		} else {
+			String server = args[1];
+			if (action.equalsIgnoreCase("add")) {
+				db.addExclude(server);
+				message = ChatColor.GREEN + "The server has been added to exclude, please wait shortly as "
+						+ "updates to this list take a little time.";
+			} else if (action.equalsIgnoreCase("remove")) {
+				db.removeExclude(server);
+				message = ChatColor.GREEN + "The server has been removed drom exclude, please wait shortly as "
+						+ "updates to this list take a little time.";
+			}
 		}
 		return sendPlayerMessage(p, message, true);
 	}
