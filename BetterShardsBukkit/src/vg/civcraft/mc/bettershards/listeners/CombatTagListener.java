@@ -7,7 +7,7 @@ import net.minecraft.server.v1_10_R1.FoodMetaData;
 import net.minecraft.server.v1_10_R1.NBTTagCompound;
 import net.minecraft.server.v1_10_R1.NBTTagList;
 import net.minelink.ctplus.compat.api.NpcIdentity;
-import net.minelink.ctplus.compat.v1_9_R1.NpcPlayer;
+import net.minelink.ctplus.compat.v1_10_R1.NpcPlayer;
 import net.minelink.ctplus.event.NpcDespawnEvent;
 import net.minelink.ctplus.event.NpcDespawnReason;
 
