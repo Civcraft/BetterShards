@@ -42,6 +42,7 @@ import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
+import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.bettershards.misc.RandomSpawn;
 import vg.civcraft.mc.bettershards.misc.TeleportInfo;
@@ -106,6 +107,18 @@ public class BetterShardsListener implements Listener{
 		loc = e.getLocation();
 		pm.addArrivedPlayer(event.getPlayer());
 		event.getPlayer().teleport(loc);
+	}
+	
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void playerJoinedLobbyServer(AsyncPlayerPreLoginEvent event) {
+		if (!config.get("lobby").getBool())
+			return;
+		UUID uuid = event.getUniqueId();
+		if (st == null){ // Small race condition if someone logs on as soon as the server starts.
+			plugin.getLogger().log(Level.INFO, "Player logged on before async process was ready, skipping.");
+			return;
+		}
+		st.setInventoryIdentifier(uuid, InventoryIdentifier.IGNORE_INV);
 	}
 	
 	@EventHandler(priority = EventPriority.LOWEST)
