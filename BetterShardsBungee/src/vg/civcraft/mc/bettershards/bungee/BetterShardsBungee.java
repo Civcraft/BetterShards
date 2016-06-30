@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.io.ByteStreams;
@@ -23,6 +25,8 @@ public class BetterShardsBungee extends Plugin {
 	private ConfigurationProvider configManager;
 	private Configuration config;
 	
+	private static Map<String, Integer> serverMaxPlayerCount = new HashMap<String, Integer>();
+	
 	@Override
 	public void onEnable() {
 		plugin = this;
@@ -30,6 +34,7 @@ public class BetterShardsBungee extends Plugin {
 		loadConfiguration();
 		// Lets connect to the db.
 		loadDB();
+		QueueHandler.initialize();
 		getProxy().getPluginManager().registerListener(this, new BungeeListener());
 		BungeeMercuryManager.disableLocalRandomSpawn();
 		getProxy().setReconnectHandler(new BetterShardsReconnectHandler());
@@ -91,5 +96,18 @@ public class BetterShardsBungee extends Plugin {
 	
 	public static BungeeDatabaseHandler getDBHandler() {
 		return db;
+	}
+	
+	public static void setServerCount(String server, int count) {
+		serverMaxPlayerCount.put(server, count);
+	}
+	
+	public static int getServerCount(String server) {
+		return serverMaxPlayerCount.containsKey(server) ? serverMaxPlayerCount.get(server) : 100; // We can assume that at least 100 people
+		// until we get the correct count.
+	}
+	
+	public Configuration getConfig() {
+		return config;
 	}
 }

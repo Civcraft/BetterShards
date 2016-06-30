@@ -4,3 +4,5 @@ mysql:
  port: 3306
  password: ''
  dbname: BetterShardsDB
+lobby-server: ''
+primary-bungee: false
