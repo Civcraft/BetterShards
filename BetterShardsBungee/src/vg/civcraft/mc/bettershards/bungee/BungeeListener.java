@@ -98,6 +98,9 @@ public class BungeeListener implements Listener, EventListener {
 			// Now let's send them to the lobby server.
 			ServerInfo lobby = ProxyServer.getInstance().getServerInfo(lobbyServer);
 			event.setTarget(lobby);
+			BetterShardsBungee.getInstance().getLogger().info(String.format("Player %s tried to connect to %s but they "
+					+ "are at %d out of %d players so was denied and added to queue.", p.getDisplayName(), info.getName(),
+					count, current));
 			return;
 		}
 		// Now let's deal with the player leaving a server and now allowing another player to take its place.

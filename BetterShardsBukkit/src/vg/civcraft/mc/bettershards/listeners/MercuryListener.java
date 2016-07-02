@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.server.ServerListPingEvent;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
@@ -36,6 +37,11 @@ public class MercuryListener implements Listener{
 	
 	private static Map<UUID, Location> uuids = new ConcurrentHashMap<UUID, Location>();
 
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void serverListPingEvent(ServerListPingEvent event) {
+		BetterShardsPlugin.getMercuryManager().sendPlayerCount(event.getMaxPlayers());
+	}
+	
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void asyncPluginBroadcastMessageEvent(AsyncPluginBroadcastMessageEvent event) {
 		String channel = event.getChannel();
@@ -154,11 +160,6 @@ public class MercuryListener implements Listener{
 			if (content[1].equals("randomspawn")) {
 				if (content[2].equals("disable")) {
 					rs.setFirstJoin(true);
-				}
-			}
-			else if (content[1].equals("db")) {
-				if (content[2].equals("request")) {
-					BetterShardsPlugin.getMercuryManager().sendDBInfo(event.getOriginServer());
 				}
 			}
 		}

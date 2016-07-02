@@ -1,12 +1,16 @@
 package vg.civcraft.mc.bettershards.external;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.UUID;
+
+import org.bukkit.Bukkit;
+import org.bukkit.event.server.ServerListPingEvent;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
-import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.mercury.MercuryAPI;
 
 /**
@@ -17,6 +21,23 @@ public class MercuryManager {
 
 	public MercuryManager() {
 		registerMercuryChannels();
+		Bukkit.getScheduler().runTaskTimer(BetterShardsPlugin.getInstance(), new Runnable() {
+
+			@Override
+			public void run() {
+				InetAddress address = null;
+				try {
+					address = InetAddress.getByName("127.0.0.1");
+				} catch (UnknownHostException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				ServerListPingEvent event = new ServerListPingEvent(address, Bukkit.getMotd(), Bukkit.getOnlinePlayers().size(),
+						Bukkit.getMaxPlayers());
+				Bukkit.getPluginManager().callEvent(event);
+			}
+			
+		}, 100, 1200);
 	}
 
 	public void sendPortalDelete(String name) {
@@ -88,15 +109,7 @@ public class MercuryManager {
 		MercuryAPI.sendGlobalMessage("portal|remove|"+main.getName(), "BetterShards");
 	}
 	
-	public void sendDBInfo(String server) {
-		Config config = BetterShardsPlugin.getInstance().GetConfig();
-		String username = config.get("mysql.username").getString();
-		String host = config.get("mysql.host").getString();
-		int port = config.get("mysql.port").getInt();
-		String password = config.get("mysql.password").getString();
-		String dbname = config.get("mysql.dbname").getString();
-		String message = String.format("info|db|send|%s|%s|%d|%s|%s", username, host, port, password,
-				dbname);
-		MercuryAPI.sendMessage(server, message, "BetterShards");
+	public void sendPlayerCount(int count) {
+		MercuryAPI.sendGlobalMessage("count|" + count, "BetterShards");
 	}
 }
