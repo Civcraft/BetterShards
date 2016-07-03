@@ -16,6 +16,8 @@ import net.md_5.bungee.api.scheduler.ScheduledTask;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
+import vg.civcraft.mc.mercury.MercuryAPI;
+import vg.civcraft.mc.mercury.MercuryBungeeListener;
 
 public class BetterShardsBungee extends Plugin {
 
@@ -34,8 +36,11 @@ public class BetterShardsBungee extends Plugin {
 		loadConfiguration();
 		// Lets connect to the db.
 		loadDB();
+		MercuryAPI.addChannels("BetterShards");
+		BungeeListener listener = new BungeeListener();
+		MercuryAPI.registerListener(new MercuryBungeeListener(), "BetterShards");
 		QueueHandler.initialize();
-		getProxy().getPluginManager().registerListener(this, new BungeeListener());
+		getProxy().getPluginManager().registerListener(this, listener);
 		BungeeMercuryManager.disableLocalRandomSpawn();
 		getProxy().setReconnectHandler(new BetterShardsReconnectHandler());
 	}

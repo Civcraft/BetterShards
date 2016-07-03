@@ -37,20 +37,24 @@ public class QueueHandler {
 						message.setColor(ChatColor.GREEN);
 						for (int x = 0; x < uuids.size() && x < maxSlots - currentSlots; x++) {
 							ProxiedPlayer p = ProxyServer.getInstance().getPlayer(uuids.get(x));
+							UUID uuid = uuids.get(x);
+							uuids.remove(x);
+							uuidToServerMap.remove(uuid);
+							// The four lines above are important in that position.
+							// Without it we get an infinite lock situation.
 							if (p != null) {
 								p.sendMessage(message);
+								p.connect(ProxyServer.getInstance().getServerInfo(server));
 								BungeeMercuryManager.playerRemoveQueue(uuids.get(x), server); // We have dealt with the player now.
 							} else {
 								// may be on other bungee server. Either way lets remove him and get other servers to check.
 								BungeeMercuryManager.playerTransferQueue(server, uuids.get(x));
 							}
-							uuids.remove(x);
-							uuidToServerMap.remove(uuids.get(x));
 							x--;
 							currentSlots++;
 						}
-						
-						for (int x = 0; x < uuids.size() && x < maxSlots - currentSlots; x++) {
+						for (int x = 0; x < uuids.size(); x++) {
+							System.out.println(uuids.get(x));
 							ProxiedPlayer p = ProxyServer.getInstance().getPlayer(uuids.get(x));
 							if (p == null)
 								continue; // Not on this Mercury server.
@@ -62,7 +66,7 @@ public class QueueHandler {
 				}
 			}
 			
-		}, 100, 10, TimeUnit.SECONDS);
+		}, 10, 10, TimeUnit.SECONDS);
 		
 		if (isPrimaryBungee) {
 			ProxyServer.getInstance().getScheduler().schedule(BetterShardsBungee.getInstance(), new Runnable() {
@@ -150,7 +154,6 @@ public class QueueHandler {
 	
 	public static String getServerName(UUID uuid) {
 		synchronized(lockingObject) {
-			
 			return uuidToServerMap.get(uuid);
 		}
 	}

@@ -35,9 +35,10 @@ public class MercuryManager {
 				ServerListPingEvent event = new ServerListPingEvent(address, Bukkit.getMotd(), Bukkit.getOnlinePlayers().size(),
 						Bukkit.getMaxPlayers());
 				Bukkit.getPluginManager().callEvent(event);
+				sendPlayerCount(event.getMaxPlayers());
 			}
 			
-		}, 100, 1200);
+		}, 100, 100);
 	}
 
 	public void sendPortalDelete(String name) {

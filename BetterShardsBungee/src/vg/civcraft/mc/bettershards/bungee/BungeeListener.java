@@ -74,6 +74,7 @@ public class BungeeListener implements Listener, EventListener {
 			int random = rand.nextInt(servers.size());
 			String server = servers.get(random);
 			ServerInfo sInfo = ProxyServer.getInstance().getServerInfo(server);
+			System.out.println(sInfo);
 			event.setTarget(sInfo);
 			BungeeMercuryManager.sendRandomSpawn(uuid, server);
 		}
@@ -86,9 +87,9 @@ public class BungeeListener implements Listener, EventListener {
 		ServerInfo info = event.getTarget();
 		int count = BetterShardsBungee.getServerCount(info.getName());
 		int current = MercuryAPI.getAllAccountsByServer(info.getName()).size() + QueueHandler.getPlayerOrder(info.getName()).size();
+		ProxiedPlayer p = event.getPlayer();
 		if (current >= count) {
 			// Now we deal with redirecting the player.
-			ProxiedPlayer p = event.getPlayer();
 			p.setReconnectServer(info);
 			// Let's message the player and let them know what is happening.
 			TextComponent message = new TextComponent("The server you are trying to connect to is full, you are being trasnfered"
@@ -98,13 +99,15 @@ public class BungeeListener implements Listener, EventListener {
 			// Now let's send them to the lobby server.
 			ServerInfo lobby = ProxyServer.getInstance().getServerInfo(lobbyServer);
 			event.setTarget(lobby);
-			BetterShardsBungee.getInstance().getLogger().info(String.format("Player %s tried to connect to %s but they "
-					+ "are at %d out of %d players so was denied and added to queue.", p.getDisplayName(), info.getName(),
-					count, current));
+			QueueHandler.addPlayerToQueue(p.getUniqueId(), info.getName());
 			return;
 		}
 		// Now let's deal with the player leaving a server and now allowing another player to take its place.
-		handlePlayerQueueLeaving(event.getPlayer());
+		UUID uuid = p.getUniqueId();
+		String name = QueueHandler.getServerName(uuid);
+		if (name == null) // The player is not in a queue.
+			return;
+		QueueHandler.removePlayerQueue(uuid, name);
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -127,7 +130,7 @@ public class BungeeListener implements Listener, EventListener {
 	public void receiveMessage(String origin, String channel, String message) {
 		if (!channel.equals("BetterShards"))
 			return;
-		String[] content = message.split(" ");
+		String[] content = message.split("\\|");
 		if (content[0].equals("removeServer")) {
 			for (int x = 1; x < content.length; x++) {
 				excluded.clear();
@@ -159,12 +162,13 @@ public class BungeeListener implements Listener, EventListener {
 				String server = content[2];
 				UUID uuid = UUID.fromString(content[3]);
 				ProxiedPlayer p = ProxyServer.getInstance().getPlayer(uuid);
-				QueueHandler.removePlayerQueue(uuid, server);
 				if (p == null)
 					return;
 				TextComponent m = new TextComponent("A space is now available, you are being teleported to the server.");
 				m.setColor(ChatColor.GREEN);
 				p.sendMessage(m);
+				p.connect(ProxyServer.getInstance().getServerInfo(server));
+				QueueHandler.removePlayerQueue(uuid, server);
 			}
 			else if (type.equals("sync")) {
 				String server = content[2];
@@ -181,7 +185,12 @@ public class BungeeListener implements Listener, EventListener {
 	@EventHandler()
 	public void playerJoinBungeeServer(LoginEvent event) {
 		ServerInfo server = db.getServer(event.getConnection().getUniqueId());
-		if (server != null && !servers.contains(server.getName())) {
+		if (server.getName().equals(lobbyServer)) {
+			BetterShardsBungee.getInstance().getLogger().info(String.format("The player %s (%s) has somehow logged "
+					+ "onto the lobby server without being redirected there.", event.getConnection().getName(),
+					event.getConnection().getUniqueId().toString()));
+		}
+		else if (server != null && !servers.contains(server.getName())) {
 			event.setCancelled(true);
 			event.setCancelReason("Disconnected: server is down.");
 		}

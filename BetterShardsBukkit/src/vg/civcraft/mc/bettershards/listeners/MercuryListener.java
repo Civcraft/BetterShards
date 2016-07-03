@@ -3,17 +3,12 @@ package vg.civcraft.mc.bettershards.listeners;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.server.ServerListPingEvent;
-
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.PortalsManager;
@@ -36,11 +31,6 @@ public class MercuryListener implements Listener{
 	private RandomSpawn rs = BetterShardsPlugin.getRandomSpawn();
 	
 	private static Map<UUID, Location> uuids = new ConcurrentHashMap<UUID, Location>();
-
-	@EventHandler(priority = EventPriority.MONITOR)
-	public void serverListPingEvent(ServerListPingEvent event) {
-		BetterShardsPlugin.getMercuryManager().sendPlayerCount(event.getMaxPlayers());
-	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void asyncPluginBroadcastMessageEvent(AsyncPluginBroadcastMessageEvent event) {
