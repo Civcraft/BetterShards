@@ -18,12 +18,17 @@ import java.util.logging.Level;
 
 import net.minecraft.server.v1_10_R1.IDataManager;
 import net.minecraft.server.v1_10_R1.MinecraftServer;
+import net.minecraft.server.v1_10_R1.NBTTagCompound;
+import net.minecraft.server.v1_10_R1.NBTTagDouble;
+import net.minecraft.server.v1_10_R1.NBTTagFloat;
+import net.minecraft.server.v1_10_R1.NBTTagList;
 import net.minecraft.server.v1_10_R1.WorldNBTStorage;
 import net.minecraft.server.v1_10_R1.WorldServer;
 
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.v1_10_R1.CraftWorld;
@@ -110,7 +115,31 @@ public class BetterShardsPlugin extends ACivMod{
 	
 	@Override
 	public void onDisable(){
+		// We now want to grab every player who hasn't logged in yet but still needs their location set and we are 
+		// going to manually set it.
+		CustomWorldNBTStorage storage = CustomWorldNBTStorage.getWorldNBTStorage();
+		Map<UUID, Location> uuids = MercuryListener.getAllRemainingTeleports();
+		for (UUID uuid: uuids.keySet()) {
+			Location loc = uuids.get(uuid);
+			NBTTagCompound data = storage.getPlayerData(uuids.toString());
+			data.set("Pos", this.a(new double[] { loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()}));
+			storage.save(data, uuid);
+		}
 	}
+	
+	private NBTTagList a(double... adouble) {
+        NBTTagList nbttaglist = new NBTTagList();
+        double[] adouble1 = adouble;
+        int i = adouble.length;
+
+        for (int j = 0; j < i; ++j) {
+            double d0 = adouble1[j];
+
+            nbttaglist.add(new NBTTagDouble(d0));
+        }
+
+        return nbttaglist;
+    }
 	
 	/**
 	 * @return Returns the instance of the JavaPlugin.

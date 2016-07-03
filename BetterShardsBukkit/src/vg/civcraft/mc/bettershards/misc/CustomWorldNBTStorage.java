@@ -62,6 +62,26 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 									+ entityhuman.getName());
 		}
 	}
+	
+	public void save(NBTTagCompound nbttagcompound, UUID uuid) {
+		try {
+			//logInventory(nbttagcompound);
+			ByteArrayOutputStream output = new ByteArrayOutputStream();
+			NBTCompressedStreamTools.a(nbttagcompound, output);
+			// Now to run our custom mysql code
+			//BetterShardsPlugin.getInstance().getLogger()
+			//		.log(Level.INFO, "Save for " + uuid);
+			db.savePlayerData(uuid, output, getInvIdentifier(uuid), sect.get(uuid));
+
+		} catch (Exception localException) {
+			BetterShardsPlugin
+					.getInstance()
+					.getLogger()
+					.log(Level.SEVERE,
+							"Failed to save player data for "
+									+ uuid);
+		}
+	}
 
 	@Override
 	public NBTTagCompound load(EntityHuman entityhuman) {

@@ -158,9 +158,14 @@ public class MercuryListener implements Listener{
 	public static void stageTeleport(UUID uuid, Location loc){
 		uuids.put(uuid, loc);
 	}
+	
 	public static Location getTeleportLocation(UUID uuid) {
 		Location loc = uuids.get(uuid);
 		uuids.remove(uuid);
 		return loc;
+	}
+	
+	public static Map<UUID, Location> getAllRemainingTeleports() {
+		return uuids;
 	}
 }

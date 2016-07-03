@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.io.ByteStreams;
 
+import net.md_5.bungee.api.ReconnectHandler;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.scheduler.ScheduledTask;
 import net.md_5.bungee.config.Configuration;
@@ -26,6 +27,7 @@ public class BetterShardsBungee extends Plugin {
 	private static BetterShardsBungee plugin;
 	private ConfigurationProvider configManager;
 	private Configuration config;
+	private ReconnectHandler reconnectHandler;
 	
 	private static Map<String, Integer> serverMaxPlayerCount = new HashMap<String, Integer>();
 	
@@ -42,7 +44,8 @@ public class BetterShardsBungee extends Plugin {
 		QueueHandler.initialize();
 		getProxy().getPluginManager().registerListener(this, listener);
 		BungeeMercuryManager.disableLocalRandomSpawn();
-		getProxy().setReconnectHandler(new BetterShardsReconnectHandler());
+		reconnectHandler = new BetterShardsReconnectHandler();
+		getProxy().setReconnectHandler(reconnectHandler);
 	}
 	
 	@Override
@@ -114,5 +117,9 @@ public class BetterShardsBungee extends Plugin {
 	
 	public Configuration getConfig() {
 		return config;
+	}
+	
+	public ReconnectHandler getReconnectHandler() {
+		return reconnectHandler;
 	}
 }

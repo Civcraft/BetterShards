@@ -110,10 +110,16 @@ public class QueueHandler {
 			synchronized(lockingObject) {
 				if (!queue.containsKey(server))
 					queue.put(server, new ArrayList<UUID>());
-				queue.get(server).add(uuid);
-				int pos = queue.get(server).indexOf(uuid);
-				uuidToServerMap.put(uuid, server);
-				BungeeMercuryManager.addPlayerQueue(uuid, server, pos);
+				if (queue.get(server).contains(uuid)) {
+					int pos = queue.get(server).indexOf(uuid);
+					BungeeMercuryManager.addPlayerQueue(uuid, server, pos);
+				} 
+				else {
+					queue.get(server).add(uuid);
+					int pos = queue.get(server).indexOf(uuid);
+					uuidToServerMap.put(uuid, server);
+					BungeeMercuryManager.addPlayerQueue(uuid, server, pos);
+				}
 			}
 		}
 		else {

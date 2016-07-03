@@ -119,11 +119,12 @@ public class BungeeListener implements Listener, EventListener {
 		// Need to get the server they were trying to connect to.
 		UUID uuid = player.getUniqueId();
 		String name = QueueHandler.getServerName(uuid);
+		System.out.println(name + "  lrtergt");
 		if (name == null) // The player is not in a queue.
 			return;
 		QueueHandler.removePlayerQueue(uuid, name);
 		BungeeMercuryManager.playerRemoveQueue(uuid, name);
-		player.setReconnectServer(ProxyServer.getInstance().getServerInfo(name));
+		db.setServer(player, name);
 	}
 
 	@Override
