@@ -17,6 +17,7 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.LoginEvent;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
+import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
@@ -89,7 +90,8 @@ public class BungeeListener implements Listener, EventListener {
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void checkServerDown(ServerConnectEvent event) {
 		ServerInfo server = event.getTarget();
-		if (server != null && !ServerHandler.getAllServers().contains(server.getName())) {
+		if (server != null && !ServerHandler.getAllServers().contains(server.getName()) && 
+				!server.getName().equals(lobbyServer)) {
 			ProxiedPlayer p = event.getPlayer();
 			db.setServer(p, server.getName());
 			// Let's message the player and let them know what is happening.
@@ -107,8 +109,31 @@ public class BungeeListener implements Listener, EventListener {
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
+	public void checkServerDownLogin(PostLoginEvent event) {
+		UUID uuid = event.getPlayer().getUniqueId();
+		String name = db.getServerName(uuid);
+		if (!ServerHandler.getAllServers().contains(name) && !name.equals(lobbyServer)) {
+			ProxiedPlayer p = event.getPlayer();
+			db.setServer(p, name);
+			/* So we don't need to do what we did before in checkServerDown
+			 * because by setting the player reconnect server it triggers server connect event.
+			 * Any duplicate code would be duplicated.
+			 * Now let's send them to the lobby server.
+			 */
+			ServerInfo lobby = ProxyServer.getInstance().getServerInfo(lobbyServer);
+			p.setReconnectServer(lobby);
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void playerDisconnectEvent(PlayerDisconnectEvent event) {
 		handlePlayerQueueLeaving(event.getPlayer());
+		handlePlayerServerLeaving(event.getPlayer());
+	}
+	
+	private void handlePlayerServerLeaving(ProxiedPlayer player) {
+		UUID uuid = player.getUniqueId();
+		
 	}
 	
 	private void handlePlayerQueueLeaving(ProxiedPlayer player) {

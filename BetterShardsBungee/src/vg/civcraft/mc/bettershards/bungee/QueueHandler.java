@@ -55,7 +55,6 @@ public class QueueHandler {
 							currentSlots++;
 						}
 						for (int x = 0; x < uuids.size(); x++) {
-							System.out.println(uuids.get(x));
 							ProxiedPlayer p = ProxyServer.getInstance().getPlayer(uuids.get(x));
 							if (p == null)
 								continue; // Not on this Mercury server.

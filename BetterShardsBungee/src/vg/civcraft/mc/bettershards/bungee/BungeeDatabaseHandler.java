@@ -101,4 +101,21 @@ public class BungeeDatabaseHandler {
 		}
 		return null;
 	}
+	
+	public String getServerName(UUID uuid) {
+		if (!db.isConnected())
+			db.connect();
+		PreparedStatement getServer = db.prepareStatement(this.getServer);
+		try {
+			getServer.setString(1, uuid.toString());
+			ResultSet set = getServer.executeQuery();
+			if (!set.next())
+				return null;
+			return set.getString(1);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
 }

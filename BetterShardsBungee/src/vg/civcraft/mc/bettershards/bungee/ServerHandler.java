@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -15,7 +16,7 @@ import vg.civcraft.mc.mercury.MercuryAPI;
 
 public class ServerHandler {
 
-	private static Map<String, ArrayList<UUID>> serverDownList; // Server mapping to players.
+	private static Map<String, TreeSet<UUID>> serverDownList; // Server mapping to players.
 	private static List<String> servers; // Servers that are currently down.
 	private static List<String> excluded; // Servers that are excluded.
 	private static Object lockingObject = new Object();
@@ -23,7 +24,7 @@ public class ServerHandler {
 	private static boolean initialized = false;
 	
 	private ServerHandler() {
-		serverDownList = new HashMap<String, ArrayList<UUID>>();
+		serverDownList = new HashMap<String, TreeSet<UUID>>();
 		excluded = new ArrayList<String>();
 		servers = new ArrayList<String>();
 		ProxyServer.getInstance().getScheduler().schedule(BetterShardsBungee.getInstance(), new Runnable() {
@@ -66,7 +67,7 @@ public class ServerHandler {
 	public static void addPlayer(UUID uuid, String server) {
 		synchronized(lockingObject) {
 			if (!serverDownList.containsKey(server))
-				serverDownList.put(server, new ArrayList<UUID>());
+				serverDownList.put(server, new TreeSet<UUID>());
 			serverDownList.get(server).add(uuid);
 		}
 	}
