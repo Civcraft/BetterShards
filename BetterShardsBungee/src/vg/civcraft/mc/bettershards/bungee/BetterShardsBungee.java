@@ -42,6 +42,7 @@ public class BetterShardsBungee extends Plugin {
 		BungeeListener listener = new BungeeListener();
 		MercuryAPI.registerListener(new MercuryBungeeListener(), "BetterShards");
 		QueueHandler.initialize();
+		ServerHandler.initialize();
 		getProxy().getPluginManager().registerListener(this, listener);
 		BungeeMercuryManager.disableLocalRandomSpawn();
 		reconnectHandler = new BetterShardsReconnectHandler();

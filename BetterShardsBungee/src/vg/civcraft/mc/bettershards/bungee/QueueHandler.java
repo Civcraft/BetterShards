@@ -19,8 +19,9 @@ public class QueueHandler {
 	private static Map<String, ArrayList<UUID>> queue = new HashMap<String, ArrayList<UUID>>();
 	private static Map<UUID, String> uuidToServerMap = new HashMap<UUID, String>();
 	private static Object lockingObject = new Object();
+	private static boolean initialized = false;
 	
-	public QueueHandler() {
+	private QueueHandler() {
 		isPrimaryBungee = BetterShardsBungee.getInstance().getConfig().getBoolean("primary-bungee");
 		ProxyServer.getInstance().getScheduler().schedule(BetterShardsBungee.getInstance(), new Runnable() {
 
@@ -87,6 +88,8 @@ public class QueueHandler {
 	}
 	
 	public static void initialize() {
+		if (initialized)
+			return;
 		new QueueHandler();
 	}
 	
