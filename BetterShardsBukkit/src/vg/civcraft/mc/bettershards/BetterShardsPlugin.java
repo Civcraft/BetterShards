@@ -121,7 +121,7 @@ public class BetterShardsPlugin extends ACivMod{
 		Map<UUID, Location> uuids = MercuryListener.getAllRemainingTeleports();
 		for (UUID uuid: uuids.keySet()) {
 			Location loc = uuids.get(uuid);
-			NBTTagCompound data = storage.getPlayerData(uuids.toString());
+			NBTTagCompound data = storage.getPlayerData(uuid.toString());
 			data.set("Pos", this.a(new double[] { loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()}));
 			storage.save(data, uuid);
 		}
