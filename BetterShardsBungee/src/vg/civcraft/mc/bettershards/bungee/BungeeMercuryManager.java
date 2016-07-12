@@ -60,4 +60,12 @@ public class BungeeMercuryManager {
 			builder.append("|" + uuid.toString());
 		MercuryAPI.sendGlobalMessage("queue|sync|" + server + builder.toString(), "BetterShards");
 	}
+	
+	public static void attemptPrimaryClaim() {
+		MercuryAPI.sendGlobalMessage("primary|request", "BetterShards");
+	}
+	
+	public static void denyPrimaryClaim() {
+		MercuryAPI.sendGlobalMessage("primary|deny", "BetterShards");
+	}
 }

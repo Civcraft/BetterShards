@@ -123,4 +123,8 @@ public class BetterShardsBungee extends Plugin {
 	public ReconnectHandler getReconnectHandler() {
 		return reconnectHandler;
 	}
+	
+	public static void info(String message) {
+		plugin.getLogger().info(message);
+	}
 }
