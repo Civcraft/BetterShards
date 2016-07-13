@@ -93,7 +93,7 @@ public class BungeeListener implements Listener, EventListener {
 	public void checkServerDown(ServerConnectEvent event) {
 		ServerInfo server = event.getTarget();
 		if (server != null && !ServerHandler.getAllServers().contains(server.getName()) && 
-				!server.getName().equals(lobbyServer)) {
+				!server.getName().equals(lobbyServer) && !ServerHandler.isExclusded(server.getName())) {
 			ProxiedPlayer p = event.getPlayer();
 			db.setServer(p, server.getName());
 			// Let's message the player and let them know what is happening.

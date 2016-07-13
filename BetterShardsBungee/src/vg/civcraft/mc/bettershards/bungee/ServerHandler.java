@@ -34,8 +34,9 @@ public class ServerHandler {
 				synchronized(lockingObject) {
 					servers.clear();
 					for (String x: MercuryAPI.getAllConnectedServers()) {
-						if (excluded.contains(x))
+						if (excluded.contains(x)) {
 							continue;
+						}
 						servers.add(x);
 					}
 					for (String server: servers) {
@@ -73,7 +74,9 @@ public class ServerHandler {
 	}
 	
 	public static List<String> getAllServers() {
-		return servers;
+		synchronized(lockingObject) {
+			return servers;
+		}
 	}
 	
 	public static void setExcluded(List<String> s) {
@@ -84,4 +87,9 @@ public class ServerHandler {
 		}
 	}
 	
+	public static boolean isExclusded(String server) {
+		synchronized(lockingObject) {
+			return excluded.contains(server);
+		}
+	}
 }
