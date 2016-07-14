@@ -53,8 +53,9 @@ public class BungeeListener implements Listener, EventListener {
 		Map<String, BungeeDatabaseHandler.PriorityInfo> priorityServers = db.getPriorityServers();
 		int random = -1;
 		if (!priorityServers.isEmpty()) {
-			List<String> rndPriorityServers = Collections.shuffle(Arrays.asList(priorityServers.keySet().toArray(typeStringArray)), rand);
-			for (String rndServer : rndPriorityServers) {
+		    	List <String> rndmServer = new ArrayList<String>(priorityServers.keySet());
+			Collections.shuffle(rndmServer, rand);
+			for (String rndServer : rndmServer) {
 				int currentPopulation = MercuryAPI.getAllAccountsByServer(rndServer).size();
 				if (currentPopulation < priorityServers.get(rndServer).getPopulationCap()) {
 					random = servers.indexOf(rndServer);
