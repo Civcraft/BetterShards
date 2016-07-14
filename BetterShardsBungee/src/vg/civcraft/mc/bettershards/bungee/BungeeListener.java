@@ -151,11 +151,11 @@ public class BungeeListener implements Listener, EventListener {
 			return;
 		String[] content = message.split("\\|");
 		if (content[0].equals("removeServer")) {
+			List<String> excluded = new ArrayList<String>();
 			for (int x = 1; x < content.length; x++) {
-				List<String> excluded = new ArrayList<String>();
 				excluded.add(content[x]);
-				ServerHandler.setExcluded(excluded);
 			}
+			ServerHandler.setExcluded(excluded);
 		}
 		else if (content[0].equals("count")) {
 			BetterShardsBungee.setServerCount(origin, Integer.parseInt(content[1]));

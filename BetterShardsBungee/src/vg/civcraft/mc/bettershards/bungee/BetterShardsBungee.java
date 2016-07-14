@@ -7,18 +7,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.io.ByteStreams;
 
 import net.md_5.bungee.api.ReconnectHandler;
 import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.api.scheduler.ScheduledTask;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
 import vg.civcraft.mc.mercury.MercuryAPI;
-import vg.civcraft.mc.mercury.MercuryBungeeListener;
 
 public class BetterShardsBungee extends Plugin {
 
@@ -40,7 +36,7 @@ public class BetterShardsBungee extends Plugin {
 		loadDB();
 		MercuryAPI.addChannels("BetterShards");
 		BungeeListener listener = new BungeeListener();
-		MercuryAPI.registerListener(new MercuryBungeeListener(), "BetterShards");
+		MercuryAPI.registerListener(listener, "BetterShards");
 		QueueHandler.initialize();
 		ServerHandler.initialize();
 		getProxy().getPluginManager().registerListener(this, listener);
