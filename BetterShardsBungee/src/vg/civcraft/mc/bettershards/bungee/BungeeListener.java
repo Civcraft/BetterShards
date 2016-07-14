@@ -1,6 +1,8 @@
 package vg.civcraft.mc.bettershards.bungee;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,7 @@ public class BungeeListener implements Listener, EventListener {
 	private BetterShardsBungee plugin = BetterShardsBungee.getInstance();
 	private BungeeDatabaseHandler db;
 	private String lobbyServer;
+	private Random rand = new Random();
 	
 	public BungeeListener() {
 		db = BetterShardsBungee.getDBHandler();
@@ -46,10 +49,22 @@ public class BungeeListener implements Listener, EventListener {
 		// Here we are going to check if new player.
 		if (db.hasPlayerBefore(uuid))
 			return;
-			
-		Random rand = new Random();
 		List<String> servers = ServerHandler.getAllServers();
-		int random = rand.nextInt(servers.size());
+		Map<String, BungeeDatabaseHandler.PriorityInfo> priorityServers = db.getPriorityServers();
+		int random = -1;
+		if (!priorityServers.isEmpty()) {
+			List<String> rndPriorityServers = Collections.shuffle(Arrays.asList(priorityServers.keySet().toArray(typeStringArray)), rand);
+			for (String rndServer : rndPriorityServers) {
+				int currentPopulation = MercuryAPI.getAllAccountsByServer(rndServer).size();
+				if (currentPopulation < priorityServers.get(rndServer).getPopulationCap()) {
+					random = servers.indexOf(rndServer);
+					break;
+				}
+			}
+		}
+		if (random < 0) {
+			random = rand.nextInt(servers.size());
+		}
 		String server = servers.get(random);
 		ServerInfo sInfo = ProxyServer.getInstance().getServerInfo(server);
 		event.setTarget(sInfo);

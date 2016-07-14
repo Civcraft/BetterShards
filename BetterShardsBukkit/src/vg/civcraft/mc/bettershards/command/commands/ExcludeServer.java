@@ -32,7 +32,7 @@ public class ExcludeServer extends PlayerCommand {
 		String action = args[0];
 		String message = ChatColor.RED + "You must type either add, remove, or list to add, remove, or list a portal.";
 		if (args.length == 1 && action.equalsIgnoreCase("list")) {
-			List<String> servers = db.getAllExclude();
+			List<String> servers = db.getAllExclude(true);
 			return sendPlayerMessage(p, ChatColor.GREEN + "List of servers are: " + servers.toString(), true);
 		} else if (args.length == 1) {
 			message = ChatColor.RED + "You do not have the right amount of arguments.";

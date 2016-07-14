@@ -1,5 +1,7 @@
 package vg.civcraft.mc.bettershards.misc;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,13 +37,29 @@ public class RandomSpawn {
 	 * 
 	 * @param p Player who just died
 	 */
+	private static String[] typeStringArray = new String[0];
+
 	public void handleDeath(Player p) {
 		List<String> servers = getAllowedServers();
-		if (servers.size() == 0) {
-			 p.teleport(getLocation());
-			 return;
+		if (servers.isEmpty()) {
+			p.teleport(getLocation());
+			return;
 		}
-		int serverIndex = (int) (Math.random() * servers.size());
+		Map<String, DatabaseManager.PriorityInfo> priorityServers = dbm.getPriorityServers();
+		int serverIndex = -1;
+		if (!priorityServers.isEmpty()) {
+			List<String> rndPriorityServers = Collections.shuffle(Arrays.asList(priorityServers.keySet().toArray(typeStringArray)));
+			for (String rndServer : rndPriorityServers) {
+				int currentPopulation = MercuryAPI.getAllAccountsByServer(rndServer).size();
+				if (currentPopulation < priorityServers.get(rndServer).getPopulationCap()) {
+					serverIndex = servers.indexOf(rndServer);
+					break;
+				}
+			}
+		}
+		if (serverIndex < 0) {
+			serverIndex = (int) (Math.random() * servers.size());
+		}
 		if (servers.get(serverIndex).equalsIgnoreCase(MercuryAPI.serverName())) {
 			// same server
 			p.teleport(getLocation());

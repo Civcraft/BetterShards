@@ -7,7 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Map;
@@ -44,11 +46,35 @@ public class DatabaseManager{
 	private Database db;
 	
 	private Map<UUID, ByteArrayInputStream> invCache = new ConcurrentHashMap<UUID, ByteArrayInputStream>();
-	
+
+	private List<String> respawnExclusionCache = Collections.emptyList();
+	private List<String> respawnExclusionCacheImmutable = Collections.unmodifiableList(respawnExclusionCache);
+	private long respawnExclusionCacheExpires = 0;
+	private final long SPAWN_EXCLUSION_TIMEOUT = 5 * 60 * 1000;  // 5 minutes in ms
+
+	public class PriorityInfo {
+		private String server;
+		private int populationCap;
+
+		public PriorityInfo(String server, int populationCap) {
+			this.server = server;
+			this.populationCap = populationCap;
+		}
+
+		public String getServer() { return this.server; }
+		public String getPopulationCap() { return this.populationCap; }
+	}
+
+	private Map<String, PriorityInfo> respawnPriorityCache = Collections.emptyMap();
+	private Map<String, PriorityInfo> respawnPriorityCacheImmutable = Collections.unmodifiableMap(respawnPriorityCache);
+	private long respawnPriorityCacheExpires = 0;
+	private final long SPAWN_PRIORITY_TIMEOUT = 5 * 60 * 1000;  // 5 minutes in ms
+
 	private String addPlayerData, getPlayerData, removePlayerData;
 	private String addPortalLoc, getPortalLocByWorld, getPortalLoc, removePortalLoc;
 	private String addPortalData, getPortalData, removePortalData, updatePortalData;
 	private String addExclude, getAllExclude, removeExclude;
+	private String addPriority, getAllPriority, removePriority;
 	private String addBedLocation, getAllBedLocation, removeBedLocation;
 	private String version, updateVersion;
 	
@@ -102,6 +128,10 @@ public class DatabaseManager{
 		db.execute("create table if not exists excludedServers("
 				+ "name varchar(20) not null,"
 				+ "primary key name_id(name));");
+		db.execute("create table if not exists priorityServers("
+				+ "name varchar(20) not null,"
+				+ "cap int not null,"
+				+ "primary key name_id(name));");
 		db.execute("create table if not exists player_beds("
 				+ "uuid varchar(36) not null,"
 				+ "server varchar(36) not null,"
@@ -115,7 +145,7 @@ public class DatabaseManager{
 				+ "update_time varchar(24));");
 		int ver = checkVersion();
 		if (ver == 0) {
-			BetterShardsPlugin.getInstance().getLogger().info("Update to version 2 of the BetterShards.");
+			BetterShardsPlugin.getInstance().getLogger().info("Update to version 1 of the BetterShards.");
 			db.execute("alter table createPlayerData add config_sect text;");
 			ver = updateVersion(ver);
 		}
@@ -176,6 +206,10 @@ public class DatabaseManager{
 		removeExclude = "delete from excludedServers where name = ?;";
 		getAllExclude = "select * from excludedServers;";
 		
+		addPriority = "insert into priorityServers(name, cap) values(?,?);";
+		removePriority = "delete from priorityServers where name = ?;";
+		getAllPriority = "select name, cap from priorityServers;";
+
 		addBedLocation = "insert into player_beds (uuid, server, world_name, "
 				+ "x, y, z) values (?,?,?,?,?,?)";
 		getAllBedLocation = "select * from player_beds;";
@@ -523,6 +557,10 @@ public class DatabaseManager{
 	}
 
 	public void addExclude(String server) {
+		if (respawnExclusionCache.contains(server)) {
+			return;
+		}
+		respawnExclusionCache.add(server);
 		isConnected();
 		PreparedStatement addExclude = db.prepareStatement(this.addExclude);
 		try {
@@ -538,7 +576,21 @@ public class DatabaseManager{
 		}
 	}
 
-	public List <String> getAllExclude() {
+	public List<String> getAllExclude() {
+		return getAllExclude(false);
+	}
+
+	public List<String> getAllExclude(boolean forceRefresh) {
+		long currentTime = System.currentTimeMillis();
+		if (forceRefresh || respawnExclusionCacheExpires <= currentTime) {
+			respawnExclusionCacheExpires = currentTime + SPAWN_EXCLUSION_TIMEOUT;
+			respawnExclusionCache = retrieveAllExcludeFromDb();
+			respawnExclusionCacheImmutable = Collections.unmodifiableList(newExclusionList);
+		}
+		return respawnExclusionCacheImmutable;
+	}
+
+	public List <String> retrieveAllExcludeFromDb() {
 		isConnected();
 		PreparedStatement getAllExclude = db.prepareStatement(this.getAllExclude);
 		List <String> result = new LinkedList <String> ();
@@ -559,6 +611,9 @@ public class DatabaseManager{
 	}
 
 	public void removeExclude(String server) {
+		if (!respawnExclusionCache.remove(server)) {
+			return;
+		}
 		isConnected();
 		PreparedStatement removeExclude = db.prepareStatement(this.removeExclude);
 		try {
@@ -570,6 +625,81 @@ public class DatabaseManager{
 		} finally {
 			try {
 				removeExclude.close();
+			} catch (Exception ex) {}
+		}
+	}
+
+	public void addPriorityServer(String server, int populationCap) {
+		if (respawnPriorityCache.containsKey(server)) {
+			return;
+		}
+		respawnPriorityCache.put(server, new PriorityInfo(server, populationCap));
+		isConnected();
+		PreparedStatement addPriority = db.prepareStatement(this.addPriority);
+		try {
+			addPriority.setString(1, server);
+			addPriority.setInt(2, populationCap);
+			addPriority.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				addPriority.close();
+			} catch (Exception ex) {}
+		}
+	}
+
+	public Map<String, PriorityInfo> getPriorityServers() {
+		return getPriorityServers(false);
+	}
+
+	public Map<String, PriorityInfo> getPriorityServers(boolean forceRefresh) {
+		long currentTime = System.currentTimeMillis();
+		if (forceRefresh || respawnPriorityCacheExpires <= currentTime) {
+			respawnPriorityCacheExpires = currentTime + SPAWN_PRIORITY_TIMEOUT;
+			respawnPriorityCache = retrieveAllPriorityFromDb();
+			respawnPriorityCacheImmutable = Collections.unmodifiableMap(respawnPriorityCache);
+		}
+		return respawnPriorityCacheImmutable;
+	}
+
+	public Map<String, PriorityInfo> retrieveAllPriorityFromDb() {
+		isConnected();
+		PreparedStatement getAllPriority = db.prepareStatement(this.getAllPriority);
+		Map<String, PriorityInfo> result = new HashMap<>();
+		try {
+			ResultSet set = getAllPriority.executeQuery();
+			while (set.next()) {
+				String server = set.getString("name");
+				result.put(server, new PriorityInfo(server, set.getInt("cap")));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				getAllPriority.close();
+			} catch (Exception ex) {}
+		}
+		return result;
+	}
+
+	public void removePriorityServer(String server) {
+		if (respawnPriorityCache.remove(server) == null) {
+			return;
+		}
+		isConnected();
+		PreparedStatement removePriority = db.prepareStatement(this.removePriority);
+		try {
+			removePriority.setString(1, server);
+			removePriority.execute();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				removePriority.close();
 			} catch (Exception ex) {}
 		}
 	}
