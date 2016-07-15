@@ -124,6 +124,8 @@ public class BetterShardsPlugin extends ACivMod{
 			if (loc == null)
 				continue;
 			NBTTagCompound data = storage.getPlayerData(uuid.toString());
+			if (data == null)
+				continue;
 			data.set("Pos", this.a(new double[] { loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()}));
 			storage.save(data, uuid);
 		}

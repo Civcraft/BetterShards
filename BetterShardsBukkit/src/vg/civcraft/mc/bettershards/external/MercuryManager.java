@@ -58,7 +58,7 @@ public class MercuryManager {
 			sb.append("|");
 			sb.append(o.toString());
 		}
-		MercuryAPI.sendGlobalMessage(sb.toString(), "BetterShards");
+		MercuryAPI.sendMessage(p.getServerName(), sb.toString(), "BetterShards");
 	}
 
 	/**
