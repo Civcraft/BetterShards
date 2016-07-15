@@ -62,7 +62,7 @@ public class DatabaseManager{
 		}
 
 		public String getServer() { return this.server; }
-		public String getPopulationCap() { return this.populationCap; }
+		public int getPopulationCap() { return this.populationCap; }
 	}
 
 	private Map<String, PriorityInfo> respawnPriorityCache = Collections.emptyMap();
@@ -585,7 +585,7 @@ public class DatabaseManager{
 		if (forceRefresh || respawnExclusionCacheExpires <= currentTime) {
 			respawnExclusionCacheExpires = currentTime + SPAWN_EXCLUSION_TIMEOUT;
 			respawnExclusionCache = retrieveAllExcludeFromDb();
-			respawnExclusionCacheImmutable = Collections.unmodifiableList(newExclusionList);
+			respawnExclusionCacheImmutable = Collections.unmodifiableList(respawnExclusionCache);
 		}
 		return respawnExclusionCacheImmutable;
 	}

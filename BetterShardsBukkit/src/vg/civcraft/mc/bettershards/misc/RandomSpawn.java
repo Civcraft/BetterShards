@@ -1,9 +1,11 @@
 package vg.civcraft.mc.bettershards.misc;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -48,7 +50,8 @@ public class RandomSpawn {
 		Map<String, DatabaseManager.PriorityInfo> priorityServers = dbm.getPriorityServers();
 		int serverIndex = -1;
 		if (!priorityServers.isEmpty()) {
-			List<String> rndPriorityServers = Collections.shuffle(Arrays.asList(priorityServers.keySet().toArray(typeStringArray)));
+			List<String> rndPriorityServers = new ArrayList <String> (priorityServers.keySet());
+			Collections.shuffle(rndPriorityServers);
 			for (String rndServer : rndPriorityServers) {
 				int currentPopulation = MercuryAPI.getAllAccountsByServer(rndServer).size();
 				if (currentPopulation < priorityServers.get(rndServer).getPopulationCap()) {
