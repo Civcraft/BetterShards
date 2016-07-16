@@ -109,6 +109,7 @@ public class RandomSpawn {
 	 */
 	public List<String> getAllowedServers() {
 		List<String> servers = new LinkedList<String>();
+		servers.add(MercuryAPI.serverName());
 		for (String s : MercuryAPI.getAllConnectedServers()) {
 			servers.add(s);
 		}
