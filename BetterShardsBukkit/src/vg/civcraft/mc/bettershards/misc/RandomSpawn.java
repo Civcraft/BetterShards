@@ -54,6 +54,8 @@ public class RandomSpawn {
 			Collections.shuffle(rndPriorityServers);
 			for (String rndServer : rndPriorityServers) {
 				int currentPopulation = MercuryAPI.getAllAccountsByServer(rndServer).size();
+				if (rndServer.equals(MercuryAPI.serverName()))
+					currentPopulation--;
 				if (currentPopulation < priorityServers.get(rndServer).getPopulationCap()) {
 					serverIndex = servers.indexOf(rndServer);
 					break;
