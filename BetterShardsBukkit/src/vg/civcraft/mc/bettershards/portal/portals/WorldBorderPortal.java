@@ -5,6 +5,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.misc.LocationWrapper;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
@@ -110,8 +111,20 @@ public class WorldBorderPortal extends Portal {
 		double x = (wbRange-2.0) * Math.cos(theta);
 		double z = (wbRange-2.0) * Math.sin(theta);
 		// TODO strengthen this
-		Block y = mapCenter.getWorld().getHighestBlockAt((int) x, (int) z);
-		Block eyes = y.getRelative(0,1,0);
+		Block upper = mapCenter.getWorld().getHighestBlockAt((int) x, (int) z);
+		Block eyes = upper.getRelative(0,1,0);
+		World w = eyes.getWorld();
+		if (eyes.getY() > 254) {
+		    for(int y = 254; y > 0; y++) {
+			if (w.getBlockAt(x, y, z).getType().isSolid()
+				&& w.getBlockAt(x, y + 1, z).getType() == Material.AIR
+				&& w.getBlockAt(x, y + 2, z).getType() == Material.AIR) {
+			return new Location(w, x, y + 1, z); //+1 because player position is in lower body half
+			}
+		    }
+		    //no valid spot at all, so randomspawn
+		    return BetterShardsPlugin.getRandomSpawn().getLocation();
+		}
 		return eyes.getLocation();
 	}
 	
