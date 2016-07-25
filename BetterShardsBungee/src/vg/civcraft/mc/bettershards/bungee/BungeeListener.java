@@ -64,6 +64,8 @@ public class BungeeListener implements Listener, EventListener {
 			}
 		}
 		if (random < 0) {
+			if (servers.size() == 0) // No servers are up to do anything.
+				return;
 			random = rand.nextInt(servers.size());
 		}
 		String server = servers.get(random);
@@ -76,10 +78,12 @@ public class BungeeListener implements Listener, EventListener {
 	public void checkServerFull(ServerConnectEvent event) {
 		if (lobbyServer.equals(""))
 			return;
+		ProxiedPlayer p = event.getPlayer();
+		if (p.hasPermission("bettershards.admin") || p.hasPermission("bettershards.bypass"))
+			return;
 		ServerInfo info = event.getTarget();
 		int count = BetterShardsBungee.getServerCount(info.getName());
 		int current = MercuryAPI.getAllAccountsByServer(info.getName()).size() + QueueHandler.getPlayerOrder(info.getName()).size();
-		ProxiedPlayer p = event.getPlayer();
 		if (current >= count && !QueueHandler.isAllowedPassThrough(p.getUniqueId())) {
 			// Now we deal with redirecting the player.
 			db.setServer(p, info.getName());
