@@ -120,7 +120,7 @@ public class RandomSpawn {
 		}
 		return servers;
 	}
-
+	
 	/**
 	 * Gets a random spawn location on this server in the world which was
 	 * specified as spawn world in the config
@@ -128,6 +128,19 @@ public class RandomSpawn {
 	 * @return random spawn location
 	 */
 	public Location getLocation() {
+	    return getLocation(0);
+	}
+
+	/**
+	 * Attempts to find a valid spawn location recursively. This method will not spawn in caves initially, 
+	 * but once it has failed to find a valid spawning spot 10 times, it might
+	 * 
+	 * @param depth How often a valid spawning spot was attempted to be found recursively
+	 * @return valid spawning spot
+	 */
+	private Location getLocation(int depth) {
+	    
+	    	int currentDepth = depth + 1;
 		int x = (int) (spawnRange * Math.random());
 		x = x * (Math.random() > 0.5 ? 1 : -1);
 		int z = (int) (spawnRange * Math.random());
@@ -136,7 +149,7 @@ public class RandomSpawn {
 		if (Math.sqrt((double) ((x * x) + (z * z))) > spawnRange) {
 			// the location is outside the circle, even though x and z are in
 			// range, so we try again
-			return getLocation();
+			return getLocation(currentDepth);
 		}
 		int y = 253;
 
@@ -148,12 +161,14 @@ public class RandomSpawn {
 					return new Location(w, x, y + 1, z); //+1 because player position is in lower body half
 				}
 				else {
-					return getLocation();
+				    if (currentDepth <= 10) {
+					return getLocation(currentDepth);
+				    }
 				}
 			}
 			y--;
 		}
-		return getLocation();
+		return getLocation(currentDepth);
 	}
 
 }
