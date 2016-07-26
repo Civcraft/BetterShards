@@ -1,5 +1,6 @@
 package vg.civcraft.mc.bettershards.portal.portals;
 
+import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -75,5 +76,39 @@ public class CircularPortal extends Portal {
 		} catch (PlayerStillDeadException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void showParticles(Player p, Location loc) {
+	    //- 16 so players see particles even if they are slightly out of range
+	    if (getXZDistance(loc) - PARTICLE_SIGHT_RANGE < range) {
+		//ensure player is in y range
+		int upperBound = Math.max(first.getBlockY(), second.getBlockY());
+		int lowerBound = Math.min(first.getBlockY(), second.getBlockY());
+		if (upperBound + PARTICLE_SIGHT_RANGE  >= loc.getBlockY() && lowerBound - PARTICLE_SIGHT_RANGE <= loc.getBlockY()) {
+		    int y;
+		    if (loc.getY() >= upperBound) {
+			//player is above portal
+			y = upperBound;
+		    }
+		    else {
+			if (loc.getY() <= lowerBound) {
+			    //player is below
+			    y = lowerBound;
+			}
+			else {
+			    //player is inside portal? weird, but lets not worry here
+			    y = loc.getBlockY();
+			}
+		    }
+		    Location center = new Location(loc.getWorld(), loc.getBlockX(), y, loc.getBlockZ());
+		    for(int x = - PARTICLE_RANGE; x <= PARTICLE_RANGE; x++) {
+			for(int z = - PARTICLE_RANGE; z <= PARTICLE_RANGE; z++) {
+				p.spigot().playEffect(center, Effect.FLYING_GLYPH, 0, 0, x, 0, z, 1, 3, PARTICLE_SIGHT_RANGE);
+			}
+		    }
+		}
+	    }
+	    
 	}
 }

@@ -1,6 +1,8 @@
 package vg.civcraft.mc.bettershards.portal.portals;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
@@ -20,6 +22,7 @@ public class WorldBorderPortal extends Portal {
 	private double fAngle;
 	private double sAngle;
 	private double arcLength;
+	private double particleIncrement;
 
 	/**
 	 * So without complication everything needlessly, note that all border begin/ends
@@ -44,6 +47,11 @@ public class WorldBorderPortal extends Portal {
 		this.arcLength = (fAngle == sAngle) ? 2 * Math.PI : 
 				(fAngle > sAngle) ? 2 * Math.PI - fAngle + sAngle :
 				sAngle - fAngle;
+		//(circumference  in blocks) * (percentage of circumference the portal takes up)
+		//= (wbRange * 2 * PI) * (arcLength / (PI * 2))
+		//= wbRange * arcLength
+		double blocksInPortal = arcLength * wbRange;
+		this.particleIncrement = 1.0 / blocksInPortal;
 	}
 	
 	public LocationWrapper getFirst() {
@@ -103,15 +111,28 @@ public class WorldBorderPortal extends Portal {
 	/**
 	 * Takes an arc position %, and computes a Location that falls within the arc that
 	 * percentage along the arc.
-	 * If a value is received > 1.0 or < 0.0, null is returned.
+	 * If a value is received > 1.0 or < 0.0, null is returned. Y for the returned location will be 0
 	 */
-	public Location calculateSpawnLocation(double arcPosition) {
-		if (arcPosition > 1.0 || arcPosition < 0.0) return null;
+	
+	public Location convertArcPositionToLocation(double arcPosition) {
+	    return convertArcPositionToLocation(arcPosition, 0);
+	}
+	
+	
+	public Location convertArcPositionToLocation(double arcPosition, int y) {
+	    if (arcPosition > 1.0 || arcPosition < 0.0) return null;
 		double theta = fAngle + arcLength * arcPosition;
-		double x = (wbRange-2.0) * Math.cos(theta);
-		double z = (wbRange-2.0) * Math.sin(theta);
+		int x = (int) ((wbRange-2.0) * Math.cos(theta));
+		int z = (int) ((wbRange-2.0) * Math.sin(theta));
 		// TODO strengthen this
-		Block upper = mapCenter.getWorld().getHighestBlockAt((int) x, (int) z);
+		return new Location(mapCenter.getWorld(), x, y , z);
+	}
+	
+	public Location calculateSpawnLocation(double arcPosition) {
+		Location loc = convertArcPositionToLocation(arcPosition);
+		int x = loc.getBlockX();
+		int z = loc.getBlockZ();
+		Block upper = mapCenter.getWorld().getHighestBlockAt(x, z);
 		Block eyes = upper.getRelative(0,1,0);
 		World w = eyes.getWorld();
 		if (eyes.getY() > 254) {
@@ -143,5 +164,16 @@ public class WorldBorderPortal extends Portal {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void showParticles(Player p, Location loc) {
+	    if (getXZDistance(loc) >= wbRange - PARTICLE_SIGHT_RANGE && getArcPosition(loc) >= 0.0) {
+		double angle = getAdjustedAngle(loc) - (PARTICLE_RANGE * particleIncrement); 
+		for(int i = 0;i <= PARTICLE_RANGE * 2 + 1; i++) {
+		    
+		}
+	    }
+	    
 	}
 }
