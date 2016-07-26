@@ -1,5 +1,8 @@
 package vg.civcraft.mc.bettershards.portal.portals;
 
+import java.util.List;
+
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -94,5 +97,13 @@ public class CuboidPortal extends Portal {
 		} catch (PlayerStillDeadException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public List<Location> getLocationsInPortal(Chunk chunk) {
+		if (!isOnCurrentServer())
+			return null;
+		// TODO: this needs work on.
+		return null;
 	}
 }

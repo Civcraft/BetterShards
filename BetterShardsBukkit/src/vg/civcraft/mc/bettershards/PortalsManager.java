@@ -38,6 +38,10 @@ public class PortalsManager {
 	
 	public void createPortal(Portal portal){
 		portals.put(portal.getName(), portal);
+		if (portal.isOnCurrentServer()) {
+			// We now want to load the particle effect for this object.
+			ParticlesManager.addPortal(portal);
+		}
 		db.addPortal(portal);
 		db.addPortalData(portal, null); // At this point it won't have a connection
 	}
@@ -95,6 +99,10 @@ public class PortalsManager {
 		List<Portal> portals = db.getAllPortalsByWorld(worlds.toArray(new World[worlds.size()]));
 		for (Portal p: portals) {
 			this.portals.put(p.getName(), p);
+			if (p.isOnCurrentServer()) {
+				// We now want to load the particle effect for this object.
+				ParticlesManager.addPortal(p);
+			}
 		}
 	}
 	

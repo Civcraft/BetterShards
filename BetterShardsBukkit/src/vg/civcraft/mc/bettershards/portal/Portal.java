@@ -1,11 +1,15 @@
 package vg.civcraft.mc.bettershards.portal;
 
+import java.util.List;
+
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
+import vg.civcraft.mc.bettershards.ParticlesManager;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 
 public abstract class Portal {
@@ -83,5 +87,7 @@ public abstract class Portal {
 	public abstract boolean inPortal(Location loc);
 	
 	public abstract void teleport(Player p);
+	
+	public abstract List<Location> getLocationsInPortal(Chunk chunk);
 
 }

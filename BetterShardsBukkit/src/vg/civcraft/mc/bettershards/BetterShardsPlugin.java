@@ -85,6 +85,7 @@ public class BetterShardsPlugin extends ACivMod{
 	public void onEnable(){
 		super.onEnable();
 		plugin = this;
+		ParticlesManager.initialize();
 		config = GetConfig();
 		servName = MercuryConfigManager.getServerName();
 		mercuryManager = new MercuryManager();

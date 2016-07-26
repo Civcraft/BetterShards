@@ -1,5 +1,9 @@
 package vg.civcraft.mc.bettershards.portal.portals;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -75,5 +79,37 @@ public class CircularPortal extends Portal {
 		} catch (PlayerStillDeadException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public List<Location> getLocationsInPortal(Chunk chunk) {
+		if (!isOnCurrentServer())
+			return null;
+		List<Location> locs = new ArrayList<Location>();
+		int chx = chunk.getX();
+		int chz = chunk.getZ();
+		
+		int fchx = first.getChunk().getX();
+		int fchz = first.getChunk().getZ();
+		
+		int schx = second.getChunk().getX();
+		int schz = second.getChunk().getZ();
+		
+		if (!((fchx >= chx && chx <= schx) || (schx >= chx && chx <= fchx)))
+			return null; // No x similarities.
+		if (!((fchz >= chz && chz <= schz) || (schz >= chz && chz <= fchz)))
+			return null; // No z similarities.
+
+		double y1 = first.getY();
+		double y2 = second.getY();
+		for (int x = center.getBlockX() - (int)range; x < center.getBlockX() + (int)range; x++) {
+			for (int y = center.getBlockY() - (int)range; 
+					(y >= y1 && y <= y2) || (y <= y1 && y >= y2); y++) {
+				for (int z = center.getBlockZ() - (int)range; z < center.getBlockZ() + (int)range; z++) {
+					locs.add(new Location(center.getWorld(), x, y, z));
+				}
+			}
+		}
+		return locs.size() == 0 ? null : locs;
 	}
 }

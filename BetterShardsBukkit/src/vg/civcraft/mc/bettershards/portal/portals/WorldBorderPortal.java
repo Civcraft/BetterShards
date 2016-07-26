@@ -1,5 +1,10 @@
 package vg.civcraft.mc.bettershards.portal.portals;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -57,10 +62,22 @@ public class WorldBorderPortal extends Portal {
 		return getXZDistance(loc) > wbRange && 
 				getArcPosition(loc) >= 0.0;
 	}
+	
+	public boolean inPortal(double x, double z) {
+		System.out.println(" dsfsdf" + getArcPosition(x, z) + " " + x + " " + z);
+		return getXZDistance(x, z) > wbRange && 
+				getArcPosition(x, z) >= 0.0;
+	}
 
 	private double getXZDistance(Location loc) {
 		double x = loc.getX() - mapCenter.getX();
 		double z = loc.getZ() - mapCenter.getZ();
+		return Math.sqrt(x * x + z * z);
+	}
+	
+	private double getXZDistance(double locX, double locZ) {
+		double x = locX - mapCenter.getX();
+		double z = locZ - mapCenter.getZ();
 		return Math.sqrt(x * x + z * z);
 	}
 
@@ -70,6 +87,12 @@ public class WorldBorderPortal extends Portal {
 	private double getAdjustedAngle(Location loc) {
 		double x = loc.getX() - mapCenter.getX();
 		double z = loc.getZ() - mapCenter.getZ();
+		return Math.atan2(z,x);
+	}
+	
+	private double getAdjustedAngle(double locX, double locZ) {
+		double x = locX - mapCenter.getX();
+		double z = locZ - mapCenter.getZ();
 		return Math.atan2(z,x);
 	}
 	
@@ -86,6 +109,21 @@ public class WorldBorderPortal extends Portal {
 	 */
 	public double getArcPosition(Location loc) {
 		double locAngle = getAdjustedAngle(loc);
+		if (fAngle == sAngle) {
+			return (Math.PI + locAngle) / arcLength;
+		} else if ((fAngle > sAngle && (locAngle >= fAngle || locAngle <= sAngle)) || 
+				(fAngle < sAngle && locAngle >= fAngle && locAngle <= sAngle)) {
+			if (fAngle > sAngle && locAngle <= sAngle) {
+				locAngle += 2.0*Math.PI;
+			}
+			return (locAngle - fAngle) / arcLength;
+		}
+			
+		return -1.0;
+	}
+	
+	public double getArcPosition(double x, double z) {
+		double locAngle = getAdjustedAngle(x, z);
 		if (fAngle == sAngle) {
 			return (Math.PI + locAngle) / arcLength;
 		} else if ((fAngle > sAngle && (locAngle >= fAngle || locAngle <= sAngle)) || 
@@ -130,5 +168,31 @@ public class WorldBorderPortal extends Portal {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public List<Location> getLocationsInPortal(Chunk chunk) {
+		if (!isOnCurrentServer())
+			return null;
+		List<Location> locs = new ArrayList<Location>();
+		int chx = chunk.getX();
+		int chz = chunk.getZ();
+		
+		int chunkRange = (int) wbRange / 16;
+		
+		if (Math.pow(chx, 2) + Math.pow(chz, 2) < Math.pow(chunkRange, 2))
+			return null;
+		boolean b = true, a =true;
+		for (int x = chx*16; x < (chx+1)*16; x++) {
+			for (int z = chz*16; z < (chz+1)*16; z++) {
+				if (inPortal(x, z)) {
+					locs.add(new Location(Bukkit.getWorld(first.getActualWorld()), x, 0, z));
+					// Here we add just the default location at y = 0 to try not be too memory intensive.
+					// It is up to the particlemanager to determine how to display the particles.
+				}
+			}
+		}
+		
+		return locs.size() == 0 ? null : locs;
 	}
 }

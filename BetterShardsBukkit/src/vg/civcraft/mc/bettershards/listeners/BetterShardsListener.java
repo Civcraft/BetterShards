@@ -30,11 +30,14 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.event.server.ServerListPingEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.material.Bed;
 import org.bukkit.util.Vector;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
+import vg.civcraft.mc.bettershards.ParticlesManager;
 import vg.civcraft.mc.bettershards.PortalsManager;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
@@ -331,5 +334,15 @@ public class BetterShardsListener implements Listener{
 		if(plugin.isPlayerInTransit(player.getUniqueId())) {
 			event.setCancelled(true);
 		}
+	}
+	
+	@EventHandler
+	public void chunkLoadEvent(ChunkLoadEvent event) {
+		ParticlesManager.passChunkLoadEvent(event);
+	}
+	
+	@EventHandler
+	public void chunkUnloadEvent(ChunkUnloadEvent event) {
+		ParticlesManager.passChunkUnLoadEvent(event);
 	}
 }
