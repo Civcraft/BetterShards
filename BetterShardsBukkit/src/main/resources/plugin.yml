@@ -2,8 +2,8 @@ name: ${project.name}
 main: vg.civcraft.mc.bettershards.BetterShardsPlugin
 version: ${project.version}
 author: Rourke750
-depend: [Mercury]
-softdepend: [NameLayer]
+depend: [Mercury, CivModCore]
+softdepend: [NameLayer, CombatTagPlus]
 commands:
  bsc:
   permission: bettershards.*
