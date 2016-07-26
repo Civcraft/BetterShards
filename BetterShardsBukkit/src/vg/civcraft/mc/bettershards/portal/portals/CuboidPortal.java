@@ -42,13 +42,7 @@ public class CuboidPortal extends Portal {
 		return secondBound <= checkValue;
 	}
 
-	// *------------------------------------------------------------------------------------------------------------*
-	// | The following chooseSpawn method contains code made by NuclearW |
-	// | based on his SpawnArea plugin: |
-	// |
-	// http://forums.bukkit.org/threads/tp-spawnarea-v0-1-spawns-targetPlayers-in-a-set-area-randomly-1060.20408/
-	// |
-	// *------------------------------------------------------------------------------------------------------------*
+
 	public Location findSpawnLocation() {
 		int x = 0, y= 0, z = 0;
 		int tries = 0;
@@ -94,5 +88,10 @@ public class CuboidPortal extends Portal {
 		} catch (PlayerStillDeadException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void showParticles(Player p) {
+	    //TODO
 	}
 }

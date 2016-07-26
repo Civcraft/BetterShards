@@ -79,7 +79,8 @@ public class CircularPortal extends Portal {
 	}
 
 	@Override
-	public void showParticles(Player p, Location loc) {
+	public void showParticles(Player p) {
+	    Location loc = p.getLocation();
 	    //- 16 so players see particles even if they are slightly out of range
 	    if (getXZDistance(loc) - PARTICLE_SIGHT_RANGE < range) {
 		//ensure player is in y range
@@ -109,6 +110,5 @@ public class CircularPortal extends Portal {
 		    }
 		}
 	    }
-	    
 	}
 }

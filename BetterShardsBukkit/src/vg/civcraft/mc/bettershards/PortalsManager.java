@@ -28,6 +28,7 @@ public class PortalsManager {
 		super();
 		portals = new HashMap<String, Portal>();
 		mercManager = BetterShardsPlugin.getMercuryManager();
+		registerParticleRunnable();
 	}
 	
 	public void loadPortalsManager() {
@@ -150,5 +151,19 @@ public class PortalsManager {
 			}
 			
 		}, 500, 1000);
+	}
+	
+	private void registerParticleRunnable() {
+	    Bukkit.getScheduler().scheduleSyncRepeatingTask(BetterShardsPlugin.getInstance(), new Runnable() {
+	        
+	        @Override
+	        public void run() {
+	    	for(Portal portal : portals.values()) {
+	    	    for(Player p : Bukkit.getOnlinePlayers()) {
+	    		portal.showParticles(p);
+	    	    }
+	    	}
+	        }
+	    }, 20L, 20L);
 	}
 }

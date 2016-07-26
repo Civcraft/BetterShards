@@ -194,9 +194,7 @@ public class BetterShardsListener implements Listener{
         // We know he does not need to teleport back.
         if (pm.canTransferPlayer(player)) {
         	p.teleport(player);
-        	return;
         }
-        
 	}
 	
 	@CivConfig(name = "allow_portals_build", def = "false", type = CivConfigType.Bool)

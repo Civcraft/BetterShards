@@ -1,5 +1,6 @@
 package vg.civcraft.mc.bettershards.portal.portals;
 
+import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -130,6 +131,9 @@ public class WorldBorderPortal extends Portal {
 	
 	public Location calculateSpawnLocation(double arcPosition) {
 		Location loc = convertArcPositionToLocation(arcPosition);
+		if (loc == null) {
+		    return null;
+		}
 		int x = loc.getBlockX();
 		int z = loc.getBlockZ();
 		Block upper = mapCenter.getWorld().getHighestBlockAt(x, z);
@@ -167,11 +171,26 @@ public class WorldBorderPortal extends Portal {
 	}
 
 	@Override
-	public void showParticles(Player p, Location loc) {
+	public void showParticles(Player p) {
+	    Location loc = p.getLocation();
 	    if (getXZDistance(loc) >= wbRange - PARTICLE_SIGHT_RANGE && getArcPosition(loc) >= 0.0) {
-		double angle = getAdjustedAngle(loc) - (PARTICLE_RANGE * particleIncrement); 
+		double angle = getArcPosition(loc) - (PARTICLE_RANGE * particleIncrement); 
 		for(int i = 0;i <= PARTICLE_RANGE * 2 + 1; i++) {
-		    
+		    if (angle < 0.0) {
+			angle += particleIncrement;
+			continue;
+		    }
+		    if (angle > 1.0) {
+			break;
+		    }
+		    for(int y = loc.getBlockY() - PARTICLE_RANGE; y <= loc.getBlockY() + PARTICLE_RANGE; y++) {
+			Location particeLoc = convertArcPositionToLocation(angle, y);
+			if (particeLoc == null) {
+			    continue;
+			}
+			p.spigot().playEffect(particeLoc, Effect.FLYING_GLYPH, 0, 0, 0, 0, 0, 1, 3, PARTICLE_SIGHT_RANGE);
+		    }
+		    angle += particleIncrement;
 		}
 	    }
 	    

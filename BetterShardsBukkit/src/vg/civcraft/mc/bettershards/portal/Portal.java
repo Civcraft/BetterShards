@@ -86,6 +86,6 @@ public abstract class Portal {
 	
 	public abstract void teleport(Player p);
 	
-	public abstract void showParticles(Player p, Location loc);
+	public abstract void showParticles(Player p);
 
 }
