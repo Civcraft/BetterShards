@@ -17,6 +17,8 @@ public abstract class Portal {
 	protected DatabaseManager db;
 	private boolean isDirty = false;
 	public final int specialId;
+	protected static final int PARTICLE_RANGE = 4;
+	protected static final int PARTICLE_SIGHT_RANGE = 16;
 
 	public Portal(String name, final String con, boolean isOnCurrentServer, int specialId) {
 		Bukkit.getScheduler().scheduleSyncDelayedTask(BetterShardsPlugin.getInstance(), new Runnable() {
@@ -83,5 +85,7 @@ public abstract class Portal {
 	public abstract boolean inPortal(Location loc);
 	
 	public abstract void teleport(Player p);
+	
+	public abstract void showParticles(Player p);
 
 }

@@ -192,8 +192,9 @@ public class BetterShardsListener implements Listener{
         }
         // We need this check incase the player just teleported inside the field.
         // We know he does not need to teleport back.
-        if (pm.canTransferPlayer(player))
+        if (pm.canTransferPlayer(player)) {
         	p.teleport(player);
+        }
 	}
 	
 	@CivConfig(name = "allow_portals_build", def = "false", type = CivConfigType.Bool)
