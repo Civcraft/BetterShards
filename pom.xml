@@ -1,77 +1,31 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
 	<groupId>vg.civcraft.mc.bettershards</groupId>
-	<artifactId>BetterShards-parent</artifactId>
+	<artifactId>BetterShardsParent</artifactId>
 	<packaging>pom</packaging>
-	<version>1.0.0</version>
-	<name>BetterShards Parent</name>
+	<version>1.4.25</version>
 	<url>https://github.com/Civcraft/BetterShards/</url>
-	
-	<profiles>
-		<profile>
-			<id>all</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
-			<modules>
-				<module>BetterShardsBungee</module>
-				<module>BetterShardsBukkit</module>
-				<module>BetterShards</module>
-			</modules>
-		</profile>
-	</profiles>
 
 	<properties>
-		<maven.compiler.source>1.7</maven.compiler.source>
-		<maven.compiler.target>1.7</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
-	
-	<repositories>
+
+	<modules>
+		<module>BetterShardsBungee</module>
+		<module>BetterShardsBukkit</module>
+	</modules>
+
+	<distributionManagement>
 		<repository>
-            <id>codecrafter47-repo</id>
-            <url>http://nexus.codecrafter47.dyndns.eu/content/repositories/public/</url>
-        </repository>
-		<repository>
-			<id>Jenkins-repo</id>
-			<url>http://build.civcraft.co/plugin/repository/everything/</url>
+			<id>civcraft-repo</id>
+			<url>http://build.civcraft.co/job/BetterShards-master/</url>
 		</repository>
-		<repository>
-			<id>spigot-repo</id>
-			<url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
-		</repository>
-		<repository>
-			<id>spigot-repo2</id>
-			<url>https://hub.spigotmc.org/nexus/content/repositories/snapshots</url>
-		</repository>
-		<repository>
-			<id>bukkit</id>
-			<url>http://repo.bukkit.org/content/groups/public/</url>
-		</repository>
-		<repository>
-			<id>md_5-repo</id>
-			<url>http://repo.md-5.net/content/repositories/public/</url>
-		</repository>
-		<repository>
-            <id>bungeecord-repo</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </repository>
-		<repository>
-			<id>minelink-releases</id>
-			<url>http://repo.minelink.net/content/repositories/releases/</url>
-		</repository>
-	</repositories>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<configuration>
-					<skip>true</skip>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+	</distributionManagement>
+
 </project>
