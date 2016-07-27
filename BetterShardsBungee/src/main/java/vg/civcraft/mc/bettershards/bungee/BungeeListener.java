@@ -1,19 +1,14 @@
 package vg.civcraft.mc.bettershards.bungee;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -30,7 +25,6 @@ import vg.civcraft.mc.mercury.events.EventManager;
 
 public class BungeeListener implements Listener, EventListener {
 	
-	private BetterShardsBungee plugin = BetterShardsBungee.getInstance();
 	private BungeeDatabaseHandler db;
 	private String lobbyServer;
 	private Random rand = new Random();

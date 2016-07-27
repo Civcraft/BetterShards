@@ -62,11 +62,12 @@ public class BetterShardsBungee extends Plugin {
 	public void loadConfiguration() {
 		if (!getDataFolder().exists())
 			getDataFolder().mkdir();
+		
 		configManager = ConfigurationProvider.getProvider(YamlConfiguration.class);
 		if (!configFile.exists()) {
 			try {
                 configFile.createNewFile();
-                try (InputStream is = getResourceAsStream("bungee" + File.separator + "config.yml");
+                try (InputStream is = getResourceAsStream("config.yml");
                 		OutputStream os = new FileOutputStream(configFile)) {
                 	ByteStreams.copy(is, os);
                 }
