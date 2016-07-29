@@ -6,28 +6,54 @@
 	<parent>
 		<groupId>vg.civcraft.mc.bettershards</groupId>
 		<artifactId>BetterShardsParent</artifactId>
-		<version>1.4.26</version>
+		<version>1.4.27</version>
 	</parent>
 
 	<artifactId>BetterShardsBungee</artifactId>
-	<packaging>jar</packaging>
 	<name>BetterShards</name>
+	<packaging>jar</packaging>
 
-    <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-    </build>
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.4.3</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<filters>
+						<filter>
+							<artifact>vg.civcraft.mc.bettershards:BetterShardsBukkit</artifact>
+							<includes>
+								<include>**</include>
+							</includes> 
+						</filter>
+					</filters>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 	<dependencies>
 		<dependency>
-			<groupId>org.spigotmc</groupId>
-			<artifactId>Spigot</artifactId>
-			<version>1.10</version>
+			<groupId>net.md-5</groupId>
+			<artifactId>bungeecord-protocol</artifactId>
+			<version>1.10-SNAPSHOT</version>
 			<scope>provided</scope>
+			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>net.md-5</groupId>
@@ -46,7 +72,6 @@
 			<artifactId>BetterShardsBukkit</artifactId>
 			<groupId>vg.civcraft.mc.bettershards</groupId>
 			<version>1.4.25</version>
-			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 
