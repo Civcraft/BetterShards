@@ -225,8 +225,14 @@ public class BetterShardsPlugin extends ACivMod{
 		if(currentServer == null){
 			return false;
 		}
+		
+		if(currentServer.equals(MercuryAPI.serverName())){
+			teleportPlayerToServer(Bukkit.getPlayer(playerUUID), server, reason);
+			return true;
+		}
+		
 		MercuryAPI.sendMessage(currentServer, "teleport|connect|" + playerUUID + "|" + server + "|" + reason, "BetterShards");
-		return false;
+		return true;
 	}
 	
 	public DatabaseManager getDatabaseManager() {
