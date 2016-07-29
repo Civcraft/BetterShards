@@ -34,12 +34,10 @@
 					</execution>
 				</executions>
 				<configuration>
+					<minimizeJar>true</minimizeJar>
 					<filters>
 						<filter>
 							<artifact>vg.civcraft.mc.bettershards:BetterShardsBukkit</artifact>
-							<includes>
-								<include>**</include>
-							</includes> 
 						</filter>
 					</filters>
 				</configuration>
