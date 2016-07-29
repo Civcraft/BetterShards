@@ -12,7 +12,6 @@ import java.util.logging.Level;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import vg.civcraft.mc.bettershards.database.Database;
 
 public class BungeeDatabaseHandler {
 	public class PriorityInfo {

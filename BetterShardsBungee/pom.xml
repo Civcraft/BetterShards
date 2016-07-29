@@ -6,20 +6,28 @@
 	<parent>
 		<groupId>vg.civcraft.mc.bettershards</groupId>
 		<artifactId>BetterShardsParent</artifactId>
-		<version>1.4.25</version>
+		<version>1.4.26</version>
 	</parent>
 
 	<artifactId>BetterShardsBungee</artifactId>
 	<packaging>jar</packaging>
-	<name>BetterShardsBungee</name>
+	<name>BetterShards</name>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 
 	<dependencies>
 		<dependency>
-			<groupId>net.md-5</groupId>
-			<artifactId>bungeecord-protocol</artifactId>
-			<version>1.10-SNAPSHOT</version>
+			<groupId>org.spigotmc</groupId>
+			<artifactId>Spigot</artifactId>
+			<version>1.10</version>
 			<scope>provided</scope>
-			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>net.md-5</groupId>
@@ -27,13 +35,6 @@
 			<version>1.10-SNAPSHOT</version>
 			<scope>provided</scope>
 			<type>jar</type>
-		</dependency>
-		<dependency>
-			<groupId>net.md-5</groupId>
-			<artifactId>bungeecord-proxy</artifactId>
-			<version>1.10-SNAPSHOT</version>
-			<type>jar</type>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>vg.civcraft.mc.mercury</groupId>

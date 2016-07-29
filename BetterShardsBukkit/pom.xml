@@ -6,18 +6,28 @@
 	<parent>
 		<groupId>vg.civcraft.mc.bettershards</groupId>
 		<artifactId>BetterShardsParent</artifactId>
-		<version>1.4.25</version>
+		<version>1.4.26</version>
 	</parent>
 
 	<artifactId>BetterShardsBukkit</artifactId>
 	<packaging>jar</packaging>
+	<name>BetterShards</name>
 	<url>https://github.com/Civcraft/BetterShards</url>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.spigotmc</groupId>
-			<artifactId>spigot</artifactId>
-			<version>1.10.2-R0.1-SNAPSHOT</version>
+			<artifactId>Spigot</artifactId>
+			<version>1.10</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
