@@ -241,9 +241,11 @@ public class BetterShardsListener implements Listener{
 		final Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
 		final BedLocation bed = plugin.getBed(uuid);
-		if (bed == null) {
+		//if the player has no bed or an invalid bed location, we just want to randomspawn
+		//him. This needs to be delayed by 1 tick, because the respawn event has to complete first
+		if (bed == null || (bed.getServer() != null && bed.getServer().equals(MercuryAPI.serverName()) 
+			&& Bukkit.getWorld(bed.getTeleportInfo().getWorld()) == null)) {
 			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-
 				@Override
 				public void run() {
 					rs.handleDeath(p);
@@ -252,26 +254,21 @@ public class BetterShardsListener implements Listener{
 			});
 			return;
 		}
-		
+		final TeleportInfo teleportInfo = bed.getTeleportInfo();
+		if(bed.getServer() != null && bed.getServer().equals(MercuryAPI.serverName())){ //Player's bed is on the current server
+			event.setRespawnLocation(new Location(Bukkit.getWorld(teleportInfo.getWorld()), teleportInfo.getX(), teleportInfo.getY(), teleportInfo.getZ()));
+			return;
+		}
+		//bed is on a different server, so we send the player there and send the according mercury message
 		Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 
 			@Override
 			public void run() {
-				TeleportInfo teleportInfo = bed.getTeleportInfo();
-				if(bed.getServer() == MercuryAPI.serverName()){ //Player's bed is on the current server
-					if(Bukkit.getWorld(teleportInfo.getWorld()) == null){
-						rs.handleDeath(p);
-						return;
-					}
-					p.teleport(new Location(Bukkit.getWorld(teleportInfo.getWorld()), teleportInfo.getX(), teleportInfo.getY(), teleportInfo.getZ()));
-					return;
-				}
-				
+				//just a badly named method, this only sends a mercury message
 				mercManager.teleportPlayer(bed.getServer(), bed.getUUID(), teleportInfo);
 				try {
 					BetterShardsAPI.connectPlayer(p, bed.getServer(), PlayerChangeServerReason.BED);
 				} catch (PlayerStillDeadException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -295,6 +292,9 @@ public class BetterShardsListener implements Listener{
 			if (bed.getTeleportInfo().equals(loc)) {
 				toBeRemoved.add(bed);
 			}
+		}
+		if (toBeRemoved.size() == 0) {
+		    BetterShardsPlugin.getInstance().warning("Bed was broken at " + b.getLocation() + " but no bed was found in storage?");
 		}
 		for (BedLocation bed: toBeRemoved) {
 			BetterShardsAPI.removeBedLocation(bed);
