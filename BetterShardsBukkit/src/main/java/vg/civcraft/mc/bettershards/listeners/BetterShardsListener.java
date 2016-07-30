@@ -101,8 +101,10 @@ public class BetterShardsListener implements Listener{
 		    event.getPlayer().teleport(w.getSpawnLocation());
 		    return;
 		}
-		if (!event.getPlayer().hasPlayedBefore())
+		if (!event.getPlayer().hasPlayedBefore()) {
 			rs.handleFirstJoin(event.getPlayer());
+			return;
+		}
 		Location loc = MercuryListener.getTeleportLocation(event.getPlayer().getUniqueId());
 		if (loc == null)
 			return;
