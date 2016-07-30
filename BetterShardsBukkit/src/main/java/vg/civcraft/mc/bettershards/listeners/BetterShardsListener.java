@@ -18,6 +18,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
@@ -26,6 +27,7 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
@@ -332,11 +334,58 @@ public class BetterShardsListener implements Listener{
 		event.getPlayer().sendMessage(ChatColor.GREEN + "You set your bed location.");
 	}
 	
-	@EventHandler
+	// Start of methods to try and stop interaction when transferring.
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void playerDropItem(PlayerDropItemEvent event) {
 		Player player = event.getPlayer();
 		if(plugin.isPlayerInTransit(player.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void playerDamageEvent(EntityDamageEvent event) {
+		if (!(event.getEntity() instanceof Player))
+			return;
+		Player p = (Player) event.getEntity();
+		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+			event.setCancelled(true);
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void playerMoveEventWhenInTransit(PlayerMoveEvent event) {
+		Location from = event.getFrom();
+        Location to = event.getTo();
+
+        if (from.getBlockX() == to.getBlockX()
+                && from.getBlockY() == to.getBlockY()
+                && from.getBlockZ() == to.getBlockZ()
+                && from.getWorld().equals(to.getWorld())) {
+            // Player didn't move by at least one block.
+            return;
+        }
+		Player p = (Player) event.getPlayer();
+		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+			event.setCancelled(true);
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void playerPickupEvent(PlayerPickupItemEvent event) {
+		Player p = (Player) event.getPlayer();
+		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+			event.setCancelled(true);
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void playerInteractEvent(PlayerInteractEvent event) {
+		Player p = (Player) event.getPlayer();
+		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+			event.setCancelled(true);
+		}
+	}
+	// End of methods.
 }
