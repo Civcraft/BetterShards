@@ -10,6 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -95,8 +96,11 @@ public class BetterShardsListener implements Listener{
 	@CivConfig(name = "lobby", def = "false", type = CivConfigType.Bool)
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void playerJoinEvent(PlayerJoinEvent event){
-		if (config.get("lobby").getBool())
-			return;
+		if (config.get("lobby").getBool()) {
+		    World w = BetterShardsPlugin.getRandomSpawn().getWorld();
+		    event.getPlayer().teleport(w.getSpawnLocation());
+		    return;
+		}
 		if (!event.getPlayer().hasPlayedBefore())
 			rs.handleFirstJoin(event.getPlayer());
 		Location loc = MercuryListener.getTeleportLocation(event.getPlayer().getUniqueId());

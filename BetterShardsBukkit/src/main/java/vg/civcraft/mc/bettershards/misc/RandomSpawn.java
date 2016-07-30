@@ -189,5 +189,9 @@ public class RandomSpawn {
 	public static Location centerLocation(Location loc) {
 	    return new Location(loc.getWorld(), loc.getX() + 0.5, loc.getY(), loc.getZ() + 0.5);
 	}
+	
+	public World getWorld() {
+	    return w;
+	}
 
 }
