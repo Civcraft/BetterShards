@@ -285,6 +285,7 @@ public class DatabaseManager{
 	 * @param uuid The uuid of the player
 	 */
 	public void playerQuitServer(UUID uuid) {
+	    	
 		invCache.remove(uuid);
 	}
 	
