@@ -150,7 +150,9 @@ public class WorldBorderPortal extends Portal {
 			return RandomSpawn.centerLocation(new Location(w, x, y + 1, z)); //+1 because player position is in lower body half
 			}
 		    }
-		    //no valid spot at all, so randomspawn
+		  //no valid spot at all, so randomspawn
+		    BetterShardsPlugin.getInstance().warning("Found no valid portal spawning spot  at x=" + loc.getBlockX() 
+			    + " z=" + loc.getBlockZ() + ". Randomspawning player");
 		    return BetterShardsPlugin.getRandomSpawn().getLocation();
 		}
 		return RandomSpawn.centerLocation(eyes.getLocation());
