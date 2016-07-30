@@ -142,7 +142,7 @@ public class WorldBorderPortal extends Portal {
 		Block upper = mapCenter.getWorld().getHighestBlockAt(x, z);
 		Block eyes = upper.getRelative(0,1,0);
 		World w = eyes.getWorld();
-		if (eyes.getY() >= 254) {
+		if (eyes.getY() >= 254 || eyes.getY() <= 1) {
 		    for(int y = 254; y > 0; y--) {
 			if (w.getBlockAt(x, y, z).getType().isSolid()
 				&& w.getBlockAt(x, y + 1, z).getType() == Material.AIR

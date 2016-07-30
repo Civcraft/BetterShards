@@ -34,6 +34,7 @@ public class RandomSpawn {
 		for(String ign : ignoreMats) {
 		    try {
 			Material m = Material.valueOf(ign);
+			BetterShardsPlugin.getInstance().info("Ignoring " + m.toString() + " for random spawning");
 			ignoreMaterials.add(m);
 		    }
 		    catch (IllegalArgumentException e) {
