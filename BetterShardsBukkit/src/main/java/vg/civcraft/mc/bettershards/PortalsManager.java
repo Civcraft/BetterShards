@@ -159,6 +159,9 @@ public class PortalsManager {
 	        @Override
 	        public void run() {
 	    	for(Portal portal : portals.values()) {
+	    	    if (!portal.isOnCurrentServer()) {
+	    		continue;
+	    	    }
 	    	    for(Player p : Bukkit.getOnlinePlayers()) {
 	    		portal.showParticles(p);
 	    	    }
