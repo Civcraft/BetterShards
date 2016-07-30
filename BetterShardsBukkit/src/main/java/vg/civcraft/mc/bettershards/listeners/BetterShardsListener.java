@@ -18,6 +18,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
@@ -382,6 +383,22 @@ public class BetterShardsListener implements Listener{
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void playerInteractEvent(PlayerInteractEvent event) {
+		Player p = (Player) event.getPlayer();
+		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+			event.setCancelled(true);
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void blockBreakEvent(BlockBreakEvent event) {
+		Player p = (Player) event.getPlayer();
+		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+			event.setCancelled(true);
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void blockPlaceEvent(BlockPlaceEvent event) {
 		Player p = (Player) event.getPlayer();
 		if (plugin.isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
