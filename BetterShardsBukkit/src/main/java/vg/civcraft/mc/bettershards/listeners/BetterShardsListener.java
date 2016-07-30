@@ -256,6 +256,7 @@ public class BetterShardsListener implements Listener{
 				if(bed.getServer() == MercuryAPI.serverName()){ //Player's bed is on the current server
 					if(Bukkit.getWorld(teleportInfo.getWorld()) == null){
 						rs.handleDeath(p);
+						return;
 					}
 					p.teleport(new Location(Bukkit.getWorld(teleportInfo.getWorld()), teleportInfo.getX(), teleportInfo.getY(), teleportInfo.getZ()));
 					return;

@@ -22,13 +22,24 @@ public class RandomSpawn {
 	private DatabaseManager dbm;
 	private int spawnRange;
 	private World w;
-	private boolean disableFirstJoin = false;;
+	private boolean disableFirstJoin = false;
+	private List <Material> ignoreMaterials;
 
-	public RandomSpawn(Integer spawnRange, String worldName) {
+	public RandomSpawn(Integer spawnRange, String worldName, List <String> ignoreMats) {
 		dbm = BetterShardsPlugin.getInstance().getDatabaseManager();
 		this.spawnRange = spawnRange;
 		this.w = BetterShardsPlugin.getInstance().getServer()
 				.getWorld(worldName);
+		this.ignoreMaterials = new ArrayList<Material>();
+		for(String ign : ignoreMats) {
+		    try {
+			Material m = Material.valueOf(ign);
+			ignoreMaterials.add(m);
+		    }
+		    catch (IllegalArgumentException e) {
+			BetterShardsPlugin.getInstance().warning("The randomspawn ignore material specified as " + ign + " is not valid. It was ignored");
+		    }
+		}
 	}
 
 	/**
@@ -38,7 +49,6 @@ public class RandomSpawn {
 	 * 
 	 * @param p Player who just died
 	 */
-	private static String[] typeStringArray = new String[0];
 
 	public void handleDeath(Player p) {
 		List<String> servers = getAllowedServers();
@@ -154,10 +164,10 @@ public class RandomSpawn {
 
 		while (y >= 0) {
 			if (w.getBlockAt(x, y, z).getType() != Material.AIR) {
-				if (w.getBlockAt(x, y, z).getType().isSolid()
+				if (w.getBlockAt(x, y, z).getType().isSolid() && !ignoreMaterials.contains(w.getBlockAt(x, y, z).getType())
 						&& w.getBlockAt(x, y + 1, z).getType() == Material.AIR
 						&& w.getBlockAt(x, y + 2, z).getType() == Material.AIR) {
-					return new Location(w, x, y + 1, z); //+1 because player position is in lower body half
+					return centerLocation(new Location(w, x, y + 1, z)); //+1 because player position is in lower body half
 				}
 				else {
 				    if (currentDepth <= 10) {
@@ -168,6 +178,16 @@ public class RandomSpawn {
 			y--;
 		}
 		return getLocation(currentDepth);
+	}
+	
+	/**
+	 * When using flat block coordinates to spawn players, they will always spawn right on the edge of a block or possibly inside an adjacent block
+	 * To fix this, this method will increase x and z by 0.5 to center the spawn point on the chosen block
+	 * @param loc Location to adjust
+	 * @return New adjusted location
+	 */
+	public static Location centerLocation(Location loc) {
+	    return new Location(loc.getWorld(), loc.getX() + 0.5, loc.getY(), loc.getZ());
 	}
 
 }

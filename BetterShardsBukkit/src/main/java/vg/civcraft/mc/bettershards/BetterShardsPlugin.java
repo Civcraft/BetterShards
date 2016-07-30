@@ -75,7 +75,8 @@ public class BetterShardsPlugin extends ACivMod{
 	private List<UUID> transit = new ArrayList<UUID>();
 	@CivConfigs({
 		@CivConfig(name = "randomspawn.range", def = "1000", type = CivConfigType.Int),
-		@CivConfig(name = "randomspawn.spawnworld", def = "world", type = CivConfigType.String)
+		@CivConfig(name = "randomspawn.spawnworld", def = "world", type = CivConfigType.String),
+		@CivConfig(name = "randomspawn.ignoreMaterials", type = CivConfigType.String_List)
 	})
 	@Override
 	public void onEnable(){
@@ -91,7 +92,7 @@ public class BetterShardsPlugin extends ACivMod{
 		pm.loadPortalsManager();
 		setWorldNBTStorage();
 		combatManager = new CombatTagManager(getServer());
-		randomSpawn = new RandomSpawn(config.get("randomspawn.range").getInt(), config.get("randomspawn.spawnworld").getString());
+		randomSpawn = new RandomSpawn(config.get("randomspawn.range").getInt(), config.get("randomspawn.spawnworld").getString(), config.get("randomspawn.ignoreMaterials").getStringList());
 		registerListeners();
 		uploadExistingPlayers();
 		new BetterShardsAPI();
