@@ -2,6 +2,7 @@ package vg.civcraft.mc.bettershards.bungee;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -19,12 +20,14 @@ public class ServerHandler {
 	private static Map<String, TreeSet<UUID>> serverDownList; // Server mapping to players.
 	private static List<String> servers; // Servers that are currently down.
 	private static List<String> excluded; // Servers that are excluded.
+	private Map<String, TreeSet<UUID>> toBeRemoved; // List where in the next round if scanning.
 	private static Object lockingObject = new Object();
 	
 	private static boolean initialized = false;
 	
 	private ServerHandler() {
 		serverDownList = new HashMap<String, TreeSet<UUID>>();
+		toBeRemoved = new HashMap<String, TreeSet<UUID>>();
 		excluded = new ArrayList<String>();
 		servers = new ArrayList<String>();
 		ProxyServer.getInstance().getScheduler().schedule(BetterShardsBungee.getInstance(), new Runnable() {
@@ -39,18 +42,47 @@ public class ServerHandler {
 						}
 						servers.add(x);
 					}
+					Iterator<String> i = toBeRemoved.keySet().iterator();
+					while (i.hasNext()) {
+						// iterating through all the servers.
+						String server = i.next();
+						Iterator<UUID> uuids = toBeRemoved.get(server).iterator();
+						while (uuids.hasNext()) {
+							UUID uuid = uuids.next();
+							ProxiedPlayer p = ProxyServer.getInstance().getPlayer(uuid);
+							if (p == null || !p.getServer().getInfo().getName().equals(
+									BetterShardsBungee.getInstance().getConfig().
+									getString("lobby-server", ""))) {
+								// So the player is no longer in the lobby and can be
+								// safely removed.
+								uuids.remove();
+								if (serverDownList.containsKey(server)) {
+									serverDownList.get(server).remove(uuid);
+								}
+							}
+							// If not then they will get caught the next round.
+						}
+						if (toBeRemoved.get(server).isEmpty()) {
+							// Remove the record if empty.
+							toBeRemoved.remove(server);
+							i.remove();
+						}
+					}
 					for (String server: servers) {
 						if (serverDownList.containsKey(server)) {
 							TextComponent message = new TextComponent("The server is back up! Reconnecting now...");
 							message.setColor(ChatColor.GREEN);
+							if (!toBeRemoved.containsKey(server)) {
+								toBeRemoved.put(server, new TreeSet<UUID>());
+							}
 							for (UUID uuid: serverDownList.get(server)) {
 								ProxiedPlayer p = ProxyServer.getInstance().getPlayer(uuid);
 								if (p == null) // If they aren't here then we don't need to worry.
 									continue; // Once they log on they will correctly be redirected.
 								p.sendMessage(message);
 								p.connect(ProxyServer.getInstance().getServerInfo(server));
+								toBeRemoved.get(server).add(uuid);
 							}
-							serverDownList.remove(server);
 						}
 					}
 				}

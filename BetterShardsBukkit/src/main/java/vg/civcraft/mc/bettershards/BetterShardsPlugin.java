@@ -114,6 +114,7 @@ public class BetterShardsPlugin extends ACivMod{
 	public void onDisable(){
 		// We now want to grab every player who hasn't logged in yet but still needs their location set and we are 
 		// going to manually set it.
+		/*
 		CustomWorldNBTStorage storage = CustomWorldNBTStorage.getWorldNBTStorage();
 		Map<UUID, Location> uuids = MercuryListener.getAllRemainingTeleports();
 		for (UUID uuid: uuids.keySet()) {
@@ -126,6 +127,7 @@ public class BetterShardsPlugin extends ACivMod{
 			data.set("Pos", this.a(new double[] { loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()}));
 			storage.save(data, uuid);
 		}
+		*/
 	}
 	
 	private NBTTagList a(double... adouble) {

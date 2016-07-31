@@ -3,6 +3,7 @@ package vg.civcraft.mc.bettershards.bungee;
 import net.md_5.bungee.api.ReconnectHandler;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
+import vg.civcraft.mc.mercury.MercuryAPI;
 
 public class BetterShardsReconnectHandler implements ReconnectHandler{
     
@@ -29,6 +30,10 @@ public class BetterShardsReconnectHandler implements ReconnectHandler{
 
 	@Override
 	public void setServer(ProxiedPlayer player) {
+		if (player.getServer().getInfo().getName().equals(
+				BetterShardsBungee.getInstance().getConfig().getString("lobby-server", ""))) {
+			return;
+		}
 		db.setServer(player, player.getServer().getInfo().getName());
 	}
 

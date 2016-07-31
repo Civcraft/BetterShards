@@ -135,6 +135,7 @@ public class BetterShardsListener implements Listener{
 	public void playerQuitEvent(PlayerQuitEvent event) {
 		Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
+		db.playerQuitServer(uuid);
 		st.save(p, st.getInvIdentifier(uuid));
 		if (plugin.isPlayerInTransit(uuid))
 			return;
