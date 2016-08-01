@@ -17,7 +17,6 @@ import java.util.logging.Level;
 
 import net.minecraft.server.v1_10_R1.IDataManager;
 import net.minecraft.server.v1_10_R1.MinecraftServer;
-import net.minecraft.server.v1_10_R1.NBTTagCompound;
 import net.minecraft.server.v1_10_R1.NBTTagDouble;
 import net.minecraft.server.v1_10_R1.NBTTagList;
 import net.minecraft.server.v1_10_R1.WorldNBTStorage;
@@ -25,11 +24,9 @@ import net.minecraft.server.v1_10_R1.WorldServer;
 
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.v1_10_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_10_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import com.google.common.io.ByteArrayDataOutput;
@@ -112,6 +109,9 @@ public class BetterShardsPlugin extends ACivMod{
 	
 	@Override
 	public void onDisable(){
+		if (db != null){
+			db.cleanup(); // releases all locks.
+		}
 		// We now want to grab every player who hasn't logged in yet but still needs their location set and we are 
 		// going to manually set it.
 		/*
@@ -214,7 +214,8 @@ public class BetterShardsPlugin extends ACivMod{
 			throw new PlayerStillDeadException();
 		}
 		addPlayerToTransit(p.getUniqueId(), server); // So the player isn't tried to be sent twice.
-		CustomWorldNBTStorage.getWorldNBTStorage().save(((CraftPlayer) p).getHandle());
+		CustomWorldNBTStorage st = CustomWorldNBTStorage.getWorldNBTStorage();
+		st.save(p, st.getInvIdentifier(p.getUniqueId()), true);
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
 		out.writeUTF("Connect");
 		out.writeUTF(server);
@@ -364,7 +365,7 @@ public class BetterShardsPlugin extends ACivMod{
 					// Now to run our custom mysql code
 					UUID uuid = UUID.fromString(name);
 					CustomWorldNBTStorage storage = CustomWorldNBTStorage.getWorldNBTStorage();
-					db.savePlayerData(uuid, output, storage.getInvIdentifier(uuid), new YamlConfiguration());
+					db.savePlayerDataAsync(uuid, output, storage.getInvIdentifier(uuid), new YamlConfiguration());
 					file.delete();
 					stream.close();
 				} catch (Exception localException) {

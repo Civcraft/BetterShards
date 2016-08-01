@@ -1,8 +1,11 @@
 package vg.civcraft.mc.bettershards.listeners;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.Collection;
 
@@ -20,9 +23,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerChatTabCompleteEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -33,7 +34,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
-import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.material.Bed;
 import org.bukkit.util.Vector;
 
@@ -88,10 +88,19 @@ public class BetterShardsListener implements Listener{
 	public void playerPreLoginCacheInv(AsyncPlayerPreLoginEvent event) {
 		UUID uuid = event.getUniqueId();
 		if (st == null){ // Small race condition if someone logs on as soon as the server starts.
-			plugin.getLogger().log(Level.INFO, "Player logged on before async process was ready, skipping.");
+			event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, "Please try to log in again in a moment, server is not ready to accept log-ins.");
+			plugin.getLogger().log(Level.INFO, "Player {0} logged on before async process was ready, skipping.", uuid);
 			return;
 		}
-		db.loadPlayerData(uuid, st.getInvIdentifier(uuid)); 
+		Future<ByteArrayInputStream> soondata = db.loadPlayerDataAsync(uuid, st.getInvIdentifier(uuid)); // wedon't use the data, but know that it caches behind the scenes.
+		
+		try {
+			soondata.get(); // I want to _INTENTIONALLY_ delay accepting the user's login until I know for sure I've got the data loaded asynchronously.
+		} catch (InterruptedException | ExecutionException e) {
+			plugin.getLogger().log(Level.SEVERE, "Failed to pre-load the player's data: {0}", uuid);
+			e.printStackTrace();
+		}
+		
 		// We do this so it fetches the cache, then when called for real
 		// by our CustomWorldNBTStorage class it doesn't have to wait and server won't lock.
 	}
@@ -136,9 +145,7 @@ public class BetterShardsListener implements Listener{
 		Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
 		db.playerQuitServer(uuid);
-		st.save(p, st.getInvIdentifier(uuid));
-		if (plugin.isPlayerInTransit(uuid))
-			return;
+		st.save(p, st.getInvIdentifier(uuid), true);
 	}
 	
 	//without this method players are able to detect who is in their shard as 
@@ -177,7 +184,7 @@ public class BetterShardsListener implements Listener{
 
 		Collection<Player> online = (Collection<Player>) Bukkit.getOnlinePlayers();
 		for (Player p : online) {
-			st.save(p, st.getInvIdentifier(p.getUniqueId()));
+			st.save(p, st.getInvIdentifier(p.getUniqueId()),false);
 		}
 	}
 	
@@ -329,7 +336,7 @@ public class BetterShardsListener implements Listener{
 		UUID uuid = event.getPlayer().getUniqueId();
 		String server = MercuryAPI.serverName();
 		Location loc = getRealFace(event.getClickedBlock()).getLocation();
-		TeleportInfo info = new TeleportInfo(loc.getWorld().getName(), MercuryAPI.serverName(), loc.getBlockX(),
+		TeleportInfo info = new TeleportInfo(loc.getWorld().getName(), server, loc.getBlockX(),
 				loc.getBlockY(), loc.getBlockZ());
 		BedLocation bed = new BedLocation(uuid, info);
 		BetterShardsAPI.addBedLocation(uuid, bed);
