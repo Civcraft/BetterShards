@@ -159,7 +159,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 		//		+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
 	}
 	
-	public void save(Player p, InventoryIdentifier iden) {
+	public void save(Player p, InventoryIdentifier iden, boolean async) {
 		UUID uuid = p.getUniqueId();
 		CraftPlayer cPlayer = (CraftPlayer) p;
 		NBTTagCompound nbttagcompound = new NBTTagCompound();
@@ -173,7 +173,11 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		db.savePlayerData(uuid, output, iden, sect.get(uuid));
+		if (async){
+			db.savePlayerDataAsync(uuid, output, iden, sect.get(uuid));
+		} else {
+			db.savePlayerData(uuid, output, iden, sect.get(uuid));
+		}
 		//BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s (%s) "
 		//		+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
 	}

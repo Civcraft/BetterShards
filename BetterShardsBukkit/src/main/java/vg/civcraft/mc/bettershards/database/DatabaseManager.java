@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,6 +16,13 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -22,6 +30,7 @@ import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.scheduler.BukkitTask;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
@@ -70,7 +79,8 @@ public class DatabaseManager{
 	private long respawnPriorityCacheExpires = 0;
 	private final long SPAWN_PRIORITY_TIMEOUT = 5 * 60 * 1000;  // 5 minutes in ms
 
-	private String addPlayerData, getPlayerData, removePlayerData;
+	private String addPlayerData, insertPlayerData, getPlayerData, removePlayerData;
+	private String getLock, checkLock, releaseLock, cleanupLocks;
 	private String addPortalLoc, getPortalLocByWorld, getPortalLoc, removePortalLoc;
 	private String addPortalData, getPortalData, removePortalData, updatePortalData;
 	private String addExclude, getAllExclude, removeExclude;
@@ -78,12 +88,36 @@ public class DatabaseManager{
 	private String addBedLocation, getAllBedLocation, removeBedLocation;
 	private String version, updateVersion;
 	
+	private BukkitTask lockCleanup;
+	
+
 	public DatabaseManager(){
 		config = plugin.GetConfig();
 		if (!isValidConnection())
 			return;
 		loadPreparedStatements();
 		executeDatabaseStatements();
+		setupCleanup();
+	}
+	
+	@CivConfigs({
+		@CivConfig(name = "locks.cleanup", def = "true", type = CivConfigType.Bool)
+	})
+	private void setupCleanup() {
+		if (config.get("locks.cleanup").getBool()){  // no forever locks
+			this.lockCleanup = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, new Runnable() {
+
+				@Override
+				public void run() {
+					db.execute(cleanupLocks);
+				}
+				
+			}, 20l, 6000l);
+		}
+	}
+	
+	public void cleanup() {
+		lockCleanup.cancel();
 	}
 	
 	@CivConfigs({
@@ -149,6 +183,14 @@ public class DatabaseManager{
 			db.execute("alter table createPlayerData add config_sect text;");
 			ver = updateVersion(ver);
 		}
+		if (ver == 1) {
+			BetterShardsPlugin.getInstance().getLogger().info("Update to version 2 of the BetterShards db.");;
+			db.execute("CREATE TABLE IF NOT EXISTS playerDataLock("
+					+ "uuid VARCHAR(36) NOT NULL,"
+					+ "inv_id INT NOT NULL,"
+					+ "last_upd TIMESTAMP NOT NULL DEFAULT NOW(),"
+					+ "PRIMARY KEY (uuid, inv_id));");
+		}
 	}
 	
 	private int checkVersion() {
@@ -187,8 +229,14 @@ public class DatabaseManager{
 	
 	private void loadPreparedStatements(){
 		addPlayerData = "insert into createPlayerData(uuid, entity, server, config_sect) values(?,?,?,?);";
+		insertPlayerData = "INSERT INTO createPlayerData(uuid, server, entity, config_sect) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE entity = ?, config_sect = ?;";
 		getPlayerData = "select * from createPlayerData where uuid = ? and server = ?;";
 		removePlayerData = "delete from createPlayerData where uuid = ? and server = ?;";
+		
+		getLock = "INSERT INTO playerDataLock(uuid, inv_id) VALUES (?, ?);";
+		checkLock = "SELECT lock_time FROM playerDataLock WHERE uuid = ? AND inv_id = ?;";
+		releaseLock = "DELETE FROM playerDataLock WHERE uuid = ?, inv_id = ?;";
+		cleanupLocks = "DELETE FROM playerDataLock WHERE lock_time <= TIMESTAMPADD(MINUTE, -5, NOW());";
 		
 		addPortalLoc = "insert into createPortalLocData(x1, y1, z1, x2, y2, z2, world, id)"
 				+ "values (?,?,?,?,?,?,?,?);";
@@ -312,34 +360,193 @@ public class DatabaseManager{
 		}
 	}
 	
+	public boolean getPlayerLock(UUID uuid, InventoryIdentifier id) {
+		try {
+			PreparedStatement getLock = db.prepareStatement(this.getLock);
+			getLock.setString(1, uuid.toString());
+			getLock.setInt(2, id.ordinal());
+			getLock.executeUpdate();
+			return true;
+		} catch (SQLException nolockforyou) {
+			// TODO ideally only return false for known duplicate key failure error; otherwise raise holy hell.
+			return false;
+		}
+	}
+	
+	public boolean releasePlayerLock(UUID uuid, InventoryIdentifier id) {
+		try {
+			PreparedStatement releaseLock = db.prepareStatement(this.releaseLock);
+			releaseLock.setString(1, uuid.toString());
+			releaseLock.setInt(2, id.ordinal());
+			return releaseLock.executeUpdate() > 0;
+		} catch (SQLException nolockforyou) {
+			plugin.getLogger().log(Level.INFO, "Unable to release lock for {0}, please investigate", uuid);
+			return false;
+		}
+	}
+	
+	public boolean isPlayerLocked(UUID uuid, InventoryIdentifier id){
+		try (PreparedStatement checkLock = db.prepareStatement(this.checkLock)) {
+			checkLock.setString(1, uuid.toString());
+			checkLock.setInt(2, id.ordinal());
+			ResultSet rs = checkLock.executeQuery();
+			return rs.first();
+		} catch (SQLException se) {
+			plugin.getLogger().log(Level.INFO, "Couldn't check on lock for {0}, please investigate", uuid);
+			return true;
+		}
+	}
+	
+	/**
+	 * Saves player data synchronously. Use for operations where that is okay, e.g. server shutdown but not for
+	 * ordinary operations (scheduled saves, quit saves). Use {@link #savePlayerDataAsync(UUID, ByteArrayOutputStream, InventoryIdentifier, ConfigurationSection)} instead.
+	 * 
+	 * @param uuid
+	 * @param output
+	 * @param id
+	 * @param section
+	 */
 	public void savePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
 			ConfigurationSection section) {
 		isConnected();
 		invCache.remove(uuid); // So if it is loaded again it is recaught.
-		PreparedStatement addPlayerData = db.prepareStatement(this.addPlayerData);
-		removePlayerData(uuid, id); // So player data won't throw mysql error.
+		
+		/*
+		 * Some notes. 
+		 * 
+		 * For code that has a great many race conditions spread across multiple servers, you need something to play traffic cop.
+		 * 
+		 * Now usually, just change transaction isolation and you're good to go w/ automatic row-locks.
+		 * 
+		 * In our case, we explicitly want to _prevent_ read of the data if a save is _pending_. So we externalize our lock using
+		 * an ultralightweight fast-failure locking mechanism.
+		 * 
+		 * It also helps up detect and prevent the "usual" badboys of simultaneous saves from multiple shards; a condition
+		 * that should never occur but _if_ we externalize the lock, we can find it.
+		 */
+		if (!getPlayerLock(uuid, id)) { // someone beat us to it?
+			plugin.getLogger().log(Level.SEVERE, "Unable to grab rowlock for save of {0}, some other server is saving at the same time as me.", uuid);
+			return;
+		}
+
+		doSavePlayerData(uuid, output, id, section);
+	}
+	
+	/**
+	 * Used by Sync and Async calls.
+	 * @param uuid
+	 * @param output
+	 * @param id
+	 * @param section
+	 */
+	private void doSavePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
+			ConfigurationSection section) {
+		PreparedStatement insertPlayerDataPS = null;
 		try {
-			addPlayerData.setString(1, uuid.toString());
-			addPlayerData.setBytes(2, output.toByteArray());
-			addPlayerData.setInt(3, id.ordinal());
+			insertPlayerDataPS = db.prepareStatement(insertPlayerData);
+			if (insertPlayerDataPS == null) {
+				plugin.getLogger().log(Level.SEVERE,"Database is gone, unable to prepare data save statement for {0}", uuid);
+				return;
+			}
+			insertPlayerDataPS.setString(1, uuid.toString());
+			insertPlayerDataPS.setInt(2, id.ordinal());
+
+			if (output == null) {
+				insertPlayerDataPS.setNull(3, Types.BLOB);
+				insertPlayerDataPS.setNull(5, Types.BLOB);
+			} else {
+				byte[] outputBytes = output.toByteArray();
+				insertPlayerDataPS.setBytes(3, outputBytes);
+				insertPlayerDataPS.setBytes(5,  outputBytes);
+			}
 			YamlConfiguration yaml = (YamlConfiguration) section;
-			addPlayerData.setString(4, yaml != null ? yaml.saveToString() : null);
-			addPlayerData.execute();
+			if (yaml == null) {
+				insertPlayerDataPS.setNull(4, Types.VARCHAR);
+				insertPlayerDataPS.setNull(6, Types.VARCHAR);
+			} else {
+				String ymlStr = yaml.saveToString();
+				insertPlayerDataPS.setString(4, ymlStr);
+				insertPlayerDataPS.setString(6, ymlStr);
+			}
+			insertPlayerDataPS.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			try {
-				addPlayerData.close();
+				insertPlayerDataPS.close();
 			} catch (Exception ex) {}
+			if (!releasePlayerLock(uuid, id)) {
+				plugin.getLogger().log(Level.INFO, "Unable to release lock for {0}, lock is already released", uuid);
+			}
 		}
 	}
-	
-	public ByteArrayInputStream loadPlayerData(UUID uuid, InventoryIdentifier id){
+
+	/**
+	 * Defers the actual saving; establishes a software lock prior to save and fails fast if it can't.
+	 * 
+	 * This method is the preferred route to save!
+	 * 
+	 * @param uuid
+	 * @param output
+	 * @param id
+	 * @param section
+	 */
+	public void savePlayerDataAsync(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
+			ConfigurationSection section) {
+		invCache.remove(uuid); // So if it is loaded again it is recaught.
 		isConnected();
+		
+		/*
+		 * Some notes. 
+		 * 
+		 * For code that has a great many race conditions spread across multiple servers, you need something to play traffic cop.
+		 * 
+		 * Now usually, just change transaction isolation and you're good to go w/ automatic row-locks.
+		 * 
+		 * In our case, we explicitly want to _prevent_ read of the data if a save is _pending_. So we externalize our lock using
+		 * an ultralightweight fast-failure locking mechanism.
+		 * 
+		 * It also helps up detect and prevent the "usual" badboys of simultaneous saves from multiple shards; a condition
+		 * that should never occur but _if_ we externalize the lock, we can find it.
+		 */
+		if (!getPlayerLock(uuid, id)) { // someone beat us to it?
+			plugin.getLogger().log(Level.SEVERE, "Unable to grab rowlock for save of {0}, some other server or process is saving at the same time as me.", uuid);
+			return;
+		}
+
+		// So, we get the lock synchronously, then do our save asynch. When done, we end.
+		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+			public void run() {
+				doSavePlayerData(uuid, output, id, section);
+			}
+		});
+	}
+
+	/**
+	 * This loadPlayerData ignores any data locks. PLEASE USE WITH CARE. Calls to this method might return old data!
+	 * 
+	 * @param uuid
+	 * @param id
+	 * @return
+	 */
+	public ByteArrayInputStream loadPlayerData(UUID uuid, InventoryIdentifier id){
 		// Here we had it caches before hand so no need to load it again.
 		if (invCache.containsKey(uuid))
 			return invCache.get(uuid);
+		ByteArrayInputStream bais = doLoadPlayerData(uuid, id);
+		invCache.put(uuid, bais);
+		return bais;
+	}
+	
+	/**
+	 * Internal method does the real loading for both sync and async
+	 * 
+	 * @param uuid
+	 * @param id
+	 * @return
+	 */
+	private ByteArrayInputStream doLoadPlayerData(UUID uuid, InventoryIdentifier id){
+		isConnected();
 		PreparedStatement getPlayerData = db.prepareStatement(this.getPlayerData);
 		try {
 			getPlayerData.setString(1, uuid.toString());
@@ -354,10 +561,10 @@ public class DatabaseManager{
 			CustomWorldNBTStorage.getWorldNBTStorage().loadConfigurationSectionForPlayer(uuid, sect);
 			return new ByteArrayInputStream(set.getBytes("entity"));			
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			plugin.getLogger().log(Level.SEVERE, "Error retrieving player data from database for {0}", uuid);
 			e.printStackTrace();
 		} catch (InvalidConfigurationException e) {
-			// TODO Auto-generated catch block
+			plugin.getLogger().log(Level.WARNING, "Configuration is invalid for {0}", uuid);
 			e.printStackTrace();
 		} finally {
 			try {
@@ -366,6 +573,65 @@ public class DatabaseManager{
 		}
 		return new ByteArrayInputStream(new byte[0]);
 	}
+	
+	/**
+	 * Asynchronously gets the player data. Gets a little exotic but the basis is simply. Returns a Future object that holds the eventual result of the command.
+	 * 
+	 * Use .get on the Future to wait for it to load and return the result. 
+	 * 
+	 * EXTERNAL PLUGINS SHOULD USE THIS EXCLUSIVELY
+	 * 
+	 * @param uuid
+	 * @param id
+	 * @return
+	 */
+	public Future<ByteArrayInputStream> loadPlayerDataAsync(UUID uuid, InventoryIdentifier id) {
+		if (invCache.containsKey(uuid)) {
+			return new Future<ByteArrayInputStream>() {
+				ByteArrayInputStream bais = invCache.get(uuid);
+
+				@Override
+				public boolean cancel(boolean arg0) {return false;}
+
+				@Override
+				public ByteArrayInputStream get() throws InterruptedException, ExecutionException {return bais;}
+
+				@Override
+				public ByteArrayInputStream get(long arg0, TimeUnit arg1) throws InterruptedException,ExecutionException, TimeoutException {
+					return bais;
+				}
+
+				@Override
+				public boolean isCancelled() {return false;}
+
+				@Override
+				public boolean isDone() {return true;}
+			};
+		}
+		
+		FutureTask<ByteArrayInputStream> todo = new FutureTask<ByteArrayInputStream>(
+				new Callable<ByteArrayInputStream>(){
+
+					@Override
+					public ByteArrayInputStream call() throws Exception {
+						while (isPlayerLocked(uuid, id)) {
+							Thread.sleep(10l);
+						} 
+						/* This leaves an opening for race conditions, but with a very small interval size (< 10ms) which is
+						 * far superior to previous.
+						 */ 
+						ByteArrayInputStream bais = doLoadPlayerData(uuid, id);
+						invCache.put(uuid, bais);
+						return bais;
+					}
+				}	
+			);
+		
+		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, todo);
+		
+		return todo;
+	}
+	
 	
 	/**
 	 * Can only be from worlds that are valid on this server.
