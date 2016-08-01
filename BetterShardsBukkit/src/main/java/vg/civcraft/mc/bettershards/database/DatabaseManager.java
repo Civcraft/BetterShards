@@ -234,9 +234,9 @@ public class DatabaseManager{
 		removePlayerData = "delete from createPlayerData where uuid = ? and server = ?;";
 		
 		getLock = "INSERT INTO playerDataLock(uuid, inv_id) VALUES (?, ?);";
-		checkLock = "SELECT lock_time FROM playerDataLock WHERE uuid = ? AND inv_id = ?;";
+		checkLock = "SELECT last_upd FROM playerDataLock WHERE uuid = ? AND inv_id = ?;";
 		releaseLock = "DELETE FROM playerDataLock WHERE uuid = ?, inv_id = ?;";
-		cleanupLocks = "DELETE FROM playerDataLock WHERE lock_time <= TIMESTAMPADD(MINUTE, -5, NOW());";
+		cleanupLocks = "DELETE FROM playerDataLock WHERE last_upd <= TIMESTAMPADD(MINUTE, -5, NOW());";
 		
 		addPortalLoc = "insert into createPortalLocData(x1, y1, z1, x2, y2, z2, world, id)"
 				+ "values (?,?,?,?,?,?,?,?);";
