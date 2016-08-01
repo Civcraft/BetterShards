@@ -101,7 +101,8 @@ public class DatabaseManager{
 	}
 	
 	@CivConfigs({
-		@CivConfig(name = "locks.cleanup", def = "true", type = CivConfigType.Bool)
+		@CivConfig(name = "locks.cleanup", def = "true", type = CivConfigType.Bool),
+		@CivConfig(name = "locks.interval", def = "1200", type = CivConfigType.Long)
 	})
 	private void setupCleanup() {
 		if (config.get("locks.cleanup").getBool()){  // no forever locks
@@ -112,7 +113,7 @@ public class DatabaseManager{
 					db.execute(cleanupLocks);
 				}
 				
-			}, 20l, 6000l);
+			}, 20l, config.get("locks.interval").getLong());
 		}
 	}
 	
@@ -184,7 +185,7 @@ public class DatabaseManager{
 			ver = updateVersion(ver);
 		}
 		if (ver == 1) {
-			BetterShardsPlugin.getInstance().getLogger().info("Update to version 2 of the BetterShards db.");;
+			BetterShardsPlugin.getInstance().getLogger().info("Update to version 2 of the BetterShards db.");
 			db.execute("CREATE TABLE IF NOT EXISTS playerDataLock("
 					+ "uuid VARCHAR(36) NOT NULL,"
 					+ "inv_id INT NOT NULL,"
@@ -228,6 +229,9 @@ public class DatabaseManager{
 		return db.isConnected();
 	}
 	
+	@CivConfigs({
+		@CivConfig(name = "locks.cleanup_minutes", def = "1", type = CivConfigType.Int),
+	})
 	private void loadPreparedStatements(){
 		addPlayerData = "insert into createPlayerData(uuid, entity, server, config_sect) values(?,?,?,?);";
 		insertPlayerData = "INSERT INTO createPlayerData(uuid, server, entity, config_sect) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE entity = ?, config_sect = ?;";
@@ -237,7 +241,7 @@ public class DatabaseManager{
 		getLock = "INSERT INTO playerDataLock(uuid, inv_id) VALUES (?, ?);";
 		checkLock = "SELECT last_upd FROM playerDataLock WHERE uuid = ? AND inv_id = ?;";
 		releaseLock = "DELETE FROM playerDataLock WHERE uuid = ? AND inv_id = ?;";
-		cleanupLocks = "DELETE FROM playerDataLock WHERE last_upd <= TIMESTAMPADD(MINUTE, -5, NOW());";
+		cleanupLocks = "DELETE FROM playerDataLock WHERE last_upd <= TIMESTAMPADD(MINUTE, -" + config.get("locks.cleanup_minutes").getInt() + ", NOW());";
 		
 		addPortalLoc = "insert into createPortalLocData(x1, y1, z1, x2, y2, z2, world, id)"
 				+ "values (?,?,?,?,?,?,?,?);";
@@ -361,6 +365,9 @@ public class DatabaseManager{
 		}
 	}
 	
+	@CivConfigs({
+		@CivConfig(name="locks.show_culprit", def="false", type = CivConfigType.Bool)
+	})
 	public boolean getPlayerLock(UUID uuid, InventoryIdentifier id) {
 		try {
 			PreparedStatement getLock = db.prepareStatement(this.getLock);
@@ -370,6 +377,9 @@ public class DatabaseManager{
 			return true;
 		} catch (SQLException nolockforyou) {
 			// TODO ideally only return false for known duplicate key failure error; otherwise raise holy hell.
+			if (config.get("locks.show_culprit").getBool()) {
+				nolockforyou.printStackTrace(); // Who is responsible for this expected travesty
+			}
 			return false;
 		}
 	}
@@ -620,8 +630,14 @@ public class DatabaseManager{
 
 					@Override
 					public ByteArrayInputStream call() throws Exception {
+						long sleepSoFar = (long) (Math.random() * 10.0);
+						// basic spinlock.
 						while (isPlayerLocked(uuid, id)) {
-							Thread.sleep(10l);
+							Thread.sleep( sleepSoFar );
+							if (sleepSoFar > 1000l) { // let's not get crazy!
+								sleepSoFar = 1000l;
+							}
+							sleepSoFar += (long) (Math.random() * 10.0); // but let's keep the random, to prevent synchronization of multiple spinlocks.
 						} 
 						/* This leaves an opening for race conditions, but with a very small interval size (< 10ms) which is
 						 * far superior to previous.
