@@ -1,5 +1,6 @@
 package vg.civcraft.mc.bettershards.command;
 
+import vg.civcraft.mc.bettershards.command.commands.BetterTeleportServer;
 import vg.civcraft.mc.bettershards.command.commands.CreatePortal;
 import vg.civcraft.mc.bettershards.command.commands.DeletePortal;
 import vg.civcraft.mc.bettershards.command.commands.ExcludeServer;
@@ -13,6 +14,7 @@ public class BetterCommandHandler extends CommandHandler{
 
 	@Override
 	public void registerCommands() {
+		addCommands(new BetterTeleportServer("BetterTeleportServer"));
 		addCommands(new CreatePortal("CreatePortal"));
 		addCommands(new DeletePortal("DeletePortal"));
 		addCommands(new ExcludeServer("ExcludeServer"));
