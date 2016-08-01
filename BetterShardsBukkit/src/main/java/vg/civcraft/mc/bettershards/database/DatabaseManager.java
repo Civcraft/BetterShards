@@ -79,7 +79,7 @@ public class DatabaseManager{
 	private long respawnPriorityCacheExpires = 0;
 	private final long SPAWN_PRIORITY_TIMEOUT = 5 * 60 * 1000;  // 5 minutes in ms
 
-	private String addPlayerData, insertPlayerData, getPlayerData, removePlayerData;
+	private String insertPlayerData, getPlayerData, removePlayerData;
 	private String getLock, checkLock, releaseLock, cleanupLocks;
 	private String addPortalLoc, getPortalLocByWorld, getPortalLoc, removePortalLoc;
 	private String addPortalData, getPortalData, removePortalData, updatePortalData;
@@ -233,7 +233,6 @@ public class DatabaseManager{
 		@CivConfig(name = "locks.cleanup_minutes", def = "1", type = CivConfigType.Int),
 	})
 	private void loadPreparedStatements(){
-		addPlayerData = "insert into createPlayerData(uuid, entity, server, config_sect) values(?,?,?,?);";
 		insertPlayerData = "INSERT INTO createPlayerData(uuid, server, entity, config_sect) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE entity = ?, config_sect = ?;";
 		getPlayerData = "select * from createPlayerData where uuid = ? and server = ?;";
 		removePlayerData = "delete from createPlayerData where uuid = ? and server = ?;";
@@ -507,8 +506,8 @@ public class DatabaseManager{
 	 * @param id
 	 * @param section
 	 */
-	public void savePlayerDataAsync(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
-			ConfigurationSection section) {
+	public void savePlayerDataAsync(final UUID uuid, final ByteArrayOutputStream output, 
+			final InventoryIdentifier id, final ConfigurationSection section) {
 		invCache.remove(uuid); // So if it is loaded again it is recaught.
 		isConnected();
 		
@@ -601,7 +600,7 @@ public class DatabaseManager{
 	 * @param id
 	 * @return
 	 */
-	public Future<ByteArrayInputStream> loadPlayerDataAsync(UUID uuid, InventoryIdentifier id) {
+	public Future<ByteArrayInputStream> loadPlayerDataAsync(final UUID uuid, final InventoryIdentifier id) {
 		if (invCache.containsKey(uuid)) {
 			return new Future<ByteArrayInputStream>() {
 				ByteArrayInputStream bais = invCache.get(uuid);

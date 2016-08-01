@@ -64,7 +64,6 @@ public class ServerHandler {
 						}
 						if (toBeRemoved.get(server).isEmpty()) {
 							// Remove the record if empty.
-							toBeRemoved.remove(server);
 							i.remove();
 						}
 					}
