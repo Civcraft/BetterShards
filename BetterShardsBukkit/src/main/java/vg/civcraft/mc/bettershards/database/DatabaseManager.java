@@ -190,6 +190,7 @@ public class DatabaseManager{
 					+ "inv_id INT NOT NULL,"
 					+ "last_upd TIMESTAMP NOT NULL DEFAULT NOW(),"
 					+ "PRIMARY KEY (uuid, inv_id));");
+			ver = updateVersion(ver);
 		}
 	}
 	
@@ -235,7 +236,7 @@ public class DatabaseManager{
 		
 		getLock = "INSERT INTO playerDataLock(uuid, inv_id) VALUES (?, ?);";
 		checkLock = "SELECT last_upd FROM playerDataLock WHERE uuid = ? AND inv_id = ?;";
-		releaseLock = "DELETE FROM playerDataLock WHERE uuid = ?, inv_id = ?;";
+		releaseLock = "DELETE FROM playerDataLock WHERE uuid = ? AND inv_id = ?;";
 		cleanupLocks = "DELETE FROM playerDataLock WHERE last_upd <= TIMESTAMPADD(MINUTE, -5, NOW());";
 		
 		addPortalLoc = "insert into createPortalLocData(x1, y1, z1, x2, y2, z2, world, id)"
@@ -381,6 +382,7 @@ public class DatabaseManager{
 			return releaseLock.executeUpdate() > 0;
 		} catch (SQLException nolockforyou) {
 			plugin.getLogger().log(Level.INFO, "Unable to release lock for {0}, please investigate", uuid);
+			nolockforyou.printStackTrace();
 			return false;
 		}
 	}
@@ -393,6 +395,7 @@ public class DatabaseManager{
 			return rs.first();
 		} catch (SQLException se) {
 			plugin.getLogger().log(Level.INFO, "Couldn't check on lock for {0}, please investigate", uuid);
+			se.printStackTrace();
 			return true;
 		}
 	}
@@ -471,11 +474,14 @@ public class DatabaseManager{
 			insertPlayerDataPS.execute();
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} catch (Exception ididntthinkofthis) {
+			ididntthinkofthis.printStackTrace();
 		} finally {
 			try {
 				insertPlayerDataPS.close();
 			} catch (Exception ex) {}
-			if (!releasePlayerLock(uuid, id)) {
+			
+			if (!releasePlayerLock(uuid, id)) { // Both calling methods require release always, so we'll just do it here.
 				plugin.getLogger().log(Level.INFO, "Unable to release lock for {0}, lock is already released", uuid);
 			}
 		}
