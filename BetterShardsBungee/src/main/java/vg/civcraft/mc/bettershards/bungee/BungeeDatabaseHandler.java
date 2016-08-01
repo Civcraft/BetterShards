@@ -32,6 +32,8 @@ public class BungeeDatabaseHandler {
 	private Map<String, PriorityInfo> respawnPriorityCacheImmutable = Collections.unmodifiableMap(respawnPriorityCache);
 	private long respawnPriorityCacheExpires = 0;
 	private final long SPAWN_PRIORITY_TIMEOUT = 5 * 60 * 1000;  // 5 minutes in ms
+	
+	private Map<UUID, ServerInfo> playerServerCache = new HashMap<UUID, ServerInfo>();
 
 	private Database db;
 	
@@ -52,14 +54,12 @@ public class BungeeDatabaseHandler {
 		createTables();
 	}
 	
-	private String hasPlayedBefore;
 	private String setServer, getServer;
 	private String getAllPriority;
 	
 	private void setStatements() {
-		hasPlayedBefore = "select count(*) as count from BetterShardsBungeeConnection where uuid = ?;";
 		setServer = "insert into BetterShardsBungeeConnection (uuid, server) values (?, ?) "
-				+ "on duplicate key update server = ?;";
+				+ "on duplicate key update server = values(server);";
 		getServer = "select server from BetterShardsBungeeConnection where uuid = ?;";
 		getAllPriority = "select name, cap from priorityServers;";
 	}
@@ -71,35 +71,27 @@ public class BungeeDatabaseHandler {
 				+ "primary key uuidKey (uuid));");
 	}
 	
-	public boolean hasPlayerBefore(UUID uuid) {
-		if (!db.isConnected())
-			db.connect();
-		PreparedStatement hasPlayedBefore = db.prepareStatement(this.hasPlayedBefore);
-		try {
-			hasPlayedBefore.setString(1, uuid.toString());
-			ResultSet set = hasPlayedBefore.executeQuery();
-			if (!set.next())
-				return false;
-			return set.getInt("count") > 0;
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return false;
-	}
-	
-	public void setServer(ProxiedPlayer p, String server) {
+	public void setServer(ProxiedPlayer p, ServerInfo server) {
 		if (!db.isConnected())
 			db.connect();
 		PreparedStatement setServer = db.prepareStatement(this.setServer);
 		try {
 			setServer.setString(1, p.getUniqueId().toString());
-			setServer.setString(2, server);
-			setServer.setString(3, server);
+			setServer.setString(2, server.getName());
 			setServer.execute();
+			playerServerCache.put(p.getUniqueId(), server);
+			BungeeMercuryManager.sendPlayerServerUpdate(p.getUniqueId(), server.getName());
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+	
+	public void setServer(ProxiedPlayer p, ServerInfo server, boolean saveToDB) {
+		if(saveToDB){
+			setServer(p, server);
+		} else {
+			playerServerCache.put(p.getUniqueId(), server);
 		}
 	}
 	
@@ -108,6 +100,9 @@ public class BungeeDatabaseHandler {
 	}
 	
 	public ServerInfo getServer(UUID uuid) {
+		if(playerServerCache.containsKey(uuid)){
+			return playerServerCache.get(uuid);
+		}
 		if (!db.isConnected())
 			db.connect();
 		PreparedStatement getServer = db.prepareStatement(this.getServer);
@@ -117,23 +112,6 @@ public class BungeeDatabaseHandler {
 			if (!set.next())
 				return null;
 			return ProxyServer.getInstance().getServerInfo(set.getString(1));
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
-	public String getServerName(UUID uuid) {
-		if (!db.isConnected())
-			db.connect();
-		PreparedStatement getServer = db.prepareStatement(this.getServer);
-		try {
-			getServer.setString(1, uuid.toString());
-			ResultSet set = getServer.executeQuery();
-			if (!set.next())
-				return null;
-			return set.getString(1);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

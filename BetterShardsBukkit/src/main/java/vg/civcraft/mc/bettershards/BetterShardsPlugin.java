@@ -95,7 +95,6 @@ public class BetterShardsPlugin extends ACivMod{
 		new BetterShardsAPI();
 		handle = new BetterCommandHandler();
 		handle.registerCommands();
-		
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
 
 			@Override

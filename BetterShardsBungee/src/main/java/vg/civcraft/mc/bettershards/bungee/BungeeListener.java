@@ -14,8 +14,8 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.LoginEvent;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
-import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.event.ServerConnectEvent;
+import net.md_5.bungee.api.event.ServerKickEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
@@ -41,9 +41,13 @@ public class BungeeListener implements Listener, EventListener {
 		ProxiedPlayer p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
 		// Here we are going to check if new player.
-		if (db.hasPlayerBefore(uuid))
+		if (db.getServer(uuid) != null){
+			if(event.getTarget().getName().equalsIgnoreCase(lobbyServer)){
+				BetterShardsBungee.getInstance().getLobbyHandler().onConnectToLobby(event.getPlayer());
+			}
 			return;
-		List<String> servers = ServerHandler.getAllServers();
+		}
+		List<String> servers = new ArrayList<String>(MercuryAPI.getAllConnectedServers());
 		Map<String, BungeeDatabaseHandler.PriorityInfo> priorityServers = db.getPriorityServers();
 		int random = -1;
 		if (!priorityServers.isEmpty()) {
@@ -80,7 +84,7 @@ public class BungeeListener implements Listener, EventListener {
 		int current = MercuryAPI.getAllAccountsByServer(info.getName()).size() + QueueHandler.getPlayerOrder(info.getName()).size();
 		if (current >= count && !QueueHandler.isAllowedPassThrough(p.getUniqueId())) {
 			// Now we deal with redirecting the player.
-			db.setServer(p, info.getName());
+			p.setReconnectServer(info);
 			// Let's message the player and let them know what is happening.
 			TextComponent message = new TextComponent("The server you are trying to connect to is full, you are being transfered"
 					+ " to the lobby until the server has room. You will automatically be transfered when space is available.");
@@ -103,44 +107,30 @@ public class BungeeListener implements Listener, EventListener {
 		QueueHandler.removePlayerQueue(uuid, name);
 	}
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void checkServerDown(ServerConnectEvent event) {
-		ServerInfo server = event.getTarget();
-		if (server != null && !ServerHandler.getAllServers().contains(server.getName()) && 
-				!server.getName().equals(lobbyServer) && !ServerHandler.isExclusded(server.getName())) {
-			ProxiedPlayer p = event.getPlayer();
-			db.setServer(p, server.getName());
-			// Let's message the player and let them know what is happening.
-			TextComponent message = new TextComponent("The server you are trying to connect to is down, you are being transfered"
-					+ " to the lobby until the server comes back online. You will automatically be transfered"
-					+ " when the server comes back online.");
-			message.setColor(ChatColor.GREEN);
-			// Let's add the player to our watch list.
-			ServerHandler.addPlayer(p.getUniqueId(), server.getName());
-			p.sendMessage(message);
-			// Now let's send them to the lobby server.
-			ServerInfo lobby = ProxyServer.getInstance().getServerInfo(lobbyServer);
-			event.setTarget(lobby);
+	/**
+	 * The purpose of this listener is to ensure players are moved to the lobby when a server goes down. 
+	 */
+	@EventHandler
+	public void checkServerDown(ServerKickEvent event){
+		ServerInfo kickedFrom = event.getKickedFrom();
+		ProxiedPlayer player = event.getPlayer();
+		if(kickedFrom == null || kickedFrom.getName().equalsIgnoreCase(lobbyServer)){
+			ServerInfo savedServer = ProxyServer.getInstance().getReconnectHandler().getServer(player);
+			if(savedServer == null){
+				ProxyServer.getInstance().getLogger().warning(player.getName() + " was kicked from " + kickedFrom + " and doesnt have a server saved in the DB.");
+				return;
+			}
+			kickedFrom = savedServer;
 		}
-	}
-	
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void checkServerDownLogin(PostLoginEvent event) {
-		UUID uuid = event.getPlayer().getUniqueId();
-		String name = db.getServerName(uuid);
-		if (name == null)
+
+		if(kickedFrom.getName().equalsIgnoreCase(lobbyServer)){
+			ProxyServer.getInstance().getLogger().warning(player.getName() + " has the lobby saved as their server.");
 			return;
-		if (!ServerHandler.getAllServers().contains(name) && !name.equals(lobbyServer)) {
-			ProxiedPlayer p = event.getPlayer();
-			db.setServer(p, name);
-			/* So we don't need to do what we did before in checkServerDown
-			 * because by setting the player reconnect server it triggers server connect event.
-			 * Any duplicate code would be duplicated.
-			 * Now let's send them to the lobby server.
-			 */
-			ServerInfo lobby = ProxyServer.getInstance().getServerInfo(lobbyServer);
-			p.setReconnectServer(lobby);
 		}
+		
+		player.setReconnectServer(kickedFrom);
+		event.setCancelled(true);
+		event.setCancelServer(ProxyServer.getInstance().getServerInfo(lobbyServer));
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -156,7 +146,7 @@ public class BungeeListener implements Listener, EventListener {
 			return;
 		QueueHandler.removePlayerQueue(uuid, name);
 		BungeeMercuryManager.playerRemoveQueue(uuid, name);
-		db.setServer(player, name);
+		player.setReconnectServer(ProxyServer.getInstance().getServerInfo(name));
 	}
 
 	@Override
@@ -164,14 +154,14 @@ public class BungeeListener implements Listener, EventListener {
 		if (!channel.equals("BetterShards"))
 			return;
 		String[] content = message.split("\\|");
-		if (content[0].equals("removeServer")) {
+/*		if (content[0].equals("removeServer")) {
 			List<String> excluded = new ArrayList<String>();
 			for (int x = 1; x < content.length; x++) {
 				excluded.add(content[x]);
 			}
 			ServerHandler.setExcluded(excluded);
 		}
-		else if (content[0].equals("count")) {
+		else */if (content[0].equals("count")) {
 			BetterShardsBungee.setServerCount(origin, Integer.parseInt(content[1]));
 		}
 		else if (content[0].equals("queue")) {
@@ -225,6 +215,10 @@ public class BungeeListener implements Listener, EventListener {
 			else if (dataType.equals("request")) {
 				QueueHandler.requestPrimary();
 			}
+		} else if (content[0].equals("server")) {
+			UUID playerUUID = UUID.fromString(content[1]);
+			String serverName = content[2];
+			db.setServer(ProxyServer.getInstance().getPlayer(playerUUID), ProxyServer.getInstance().getServerInfo(serverName), false);
 		}
 	}
 	
