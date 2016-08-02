@@ -31,14 +31,14 @@ public class LobbyHandler {
 					
 					if (server == null) {
 						proxy.getLogger().warning("Couldn't find a server to send " + player.getName() + " from the lobby.");
-						return;
+						continue;
 					}
 					
 					if (server.getName().equalsIgnoreCase(lobby.getName())) {
 						proxy.getLogger().warning("The server saved for " + player.getName()
 								+ " is the lobby. Value from getReconnectServer(): " + player.getReconnectServer()
 								+ " Value from the ReconnectHandler: " + proxy.getReconnectHandler().getServer(player));
-						return;
+						continue;
 					}
 					
 					server.ping(new Callback<ServerPing>() {

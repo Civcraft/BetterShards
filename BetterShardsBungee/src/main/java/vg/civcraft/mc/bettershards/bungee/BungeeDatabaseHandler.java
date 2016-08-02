@@ -59,7 +59,7 @@ public class BungeeDatabaseHandler {
 	
 	private void setStatements() {
 		setServer = "insert into BetterShardsBungeeConnection (uuid, server) values (?, ?) "
-				+ "on duplicate key update server = values(server);";
+				+ "on duplicate key update server = VALUES(server);";
 		getServer = "select server from BetterShardsBungeeConnection where uuid = ?;";
 		getAllPriority = "select name, cap from priorityServers;";
 	}
@@ -111,7 +111,7 @@ public class BungeeDatabaseHandler {
 			ResultSet set = getServer.executeQuery();
 			if (!set.next())
 				return null;
-			return ProxyServer.getInstance().getServerInfo(set.getString(1));
+			return playerServerCache.put(uuid, ProxyServer.getInstance().getServerInfo(set.getString(1)));
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

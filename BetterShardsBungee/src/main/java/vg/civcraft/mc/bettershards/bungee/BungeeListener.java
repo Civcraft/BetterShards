@@ -28,6 +28,7 @@ public class BungeeListener implements Listener, EventListener {
 	private BungeeDatabaseHandler db;
 	private String lobbyServer;
 	private Random rand = new Random();
+	private List<String> execludedServers = new ArrayList<String>();
 	
 	public BungeeListener() {
 		db = BetterShardsBungee.getDBHandler();
@@ -48,6 +49,7 @@ public class BungeeListener implements Listener, EventListener {
 			return;
 		}
 		List<String> servers = new ArrayList<String>(MercuryAPI.getAllConnectedServers());
+		servers.removeAll(execludedServers);
 		Map<String, BungeeDatabaseHandler.PriorityInfo> priorityServers = db.getPriorityServers();
 		int random = -1;
 		if (!priorityServers.isEmpty()) {
@@ -154,14 +156,14 @@ public class BungeeListener implements Listener, EventListener {
 		if (!channel.equals("BetterShards"))
 			return;
 		String[] content = message.split("\\|");
-/*		if (content[0].equals("removeServer")) {
+		if (content[0].equals("removeServer")) {
 			List<String> excluded = new ArrayList<String>();
 			for (int x = 1; x < content.length; x++) {
 				excluded.add(content[x]);
 			}
-			ServerHandler.setExcluded(excluded);
+			execludedServers.addAll(excluded);
 		}
-		else */if (content[0].equals("count")) {
+		else if (content[0].equals("count")) {
 			BetterShardsBungee.setServerCount(origin, Integer.parseInt(content[1]));
 		}
 		else if (content[0].equals("queue")) {
