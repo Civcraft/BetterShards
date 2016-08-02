@@ -111,7 +111,9 @@ public class BungeeDatabaseHandler {
 			ResultSet set = getServer.executeQuery();
 			if (!set.next())
 				return null;
-			return playerServerCache.put(uuid, ProxyServer.getInstance().getServerInfo(set.getString(1)));
+			ServerInfo server = ProxyServer.getInstance().getServerInfo(set.getString(1));
+			playerServerCache.put(uuid, server);
+			return server;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
