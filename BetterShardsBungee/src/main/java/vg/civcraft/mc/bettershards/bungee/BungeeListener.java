@@ -35,6 +35,10 @@ public class BungeeListener implements Listener, EventListener {
 		lobbyServer = BetterShardsBungee.getInstance().getConfig().getString("lobby-server", "");
 		
 		EventManager.registerListener(this);
+		
+		// Populate the exclude list as this is created.
+		List<String> excluded = db.retrieveAllExcludeFromDb();
+		execludedServers.addAll(excluded);
 	}
 	
 	@EventHandler()
@@ -156,14 +160,7 @@ public class BungeeListener implements Listener, EventListener {
 		if (!channel.equals("BetterShards"))
 			return;
 		String[] content = message.split("\\|");
-		if (content[0].equals("removeServer")) {
-			List<String> excluded = new ArrayList<String>();
-			for (int x = 1; x < content.length; x++) {
-				excluded.add(content[x]);
-			}
-			execludedServers.addAll(excluded);
-		}
-		else if (content[0].equals("count")) {
+		if (content[0].equals("count")) {
 			BetterShardsBungee.setServerCount(origin, Integer.parseInt(content[1]));
 		}
 		else if (content[0].equals("queue")) {
@@ -217,6 +214,9 @@ public class BungeeListener implements Listener, EventListener {
 			else if (dataType.equals("request")) {
 				QueueHandler.requestPrimary();
 			}
+		} else if (content[0].equals("removeServer")) {
+			List<String> excluded = db.retrieveAllExcludeFromDb();
+			execludedServers.addAll(excluded);
 		} else if (content[0].equals("server")) {
 			UUID playerUUID = UUID.fromString(content[1]);
 			String serverName = content[2];

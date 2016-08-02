@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>vg.civcraft.mc.bettershards</groupId>
 		<artifactId>BetterShardsParent</artifactId>
-		<version>1.4.35</version>
+		<version>1.4.36</version>
 	</parent>
 
 	<artifactId>BetterShardsBungee</artifactId>

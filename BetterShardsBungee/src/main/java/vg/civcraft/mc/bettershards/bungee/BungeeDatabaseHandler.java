@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -56,12 +58,14 @@ public class BungeeDatabaseHandler {
 	
 	private String setServer, getServer;
 	private String getAllPriority;
+	private String getAllExclude;
 	
 	private void setStatements() {
 		setServer = "insert into BetterShardsBungeeConnection (uuid, server) values (?, ?) "
 				+ "on duplicate key update server = VALUES(server);";
 		getServer = "select server from BetterShardsBungeeConnection where uuid = ?;";
 		getAllPriority = "select name, cap from priorityServers;";
+		getAllExclude = "select * from excludedServers;";
 	}
 	
 	private void createTables() {
@@ -152,6 +156,27 @@ public class BungeeDatabaseHandler {
 		} finally {
 			try {
 				getAllPriority.close();
+			} catch (Exception ex) {}
+		}
+		return result;
+	}
+	
+	public List <String> retrieveAllExcludeFromDb() {
+		if (!db.isConnected())
+			db.connect();
+		PreparedStatement getAllExclude = db.prepareStatement(this.getAllExclude);
+		List <String> result = new LinkedList <String> ();
+		try {
+			ResultSet set = getAllExclude.executeQuery();
+			while (set.next()) {
+				result.add(set.getString("name"));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				getAllExclude.close();
 			} catch (Exception ex) {}
 		}
 		return result;

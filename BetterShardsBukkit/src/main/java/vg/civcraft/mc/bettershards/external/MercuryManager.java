@@ -98,8 +98,8 @@ public class MercuryManager {
 		MercuryAPI.sendGlobalMessage("bed|remove|" + bed.getUUID().toString(), "BetterShards");
 	}
 
-	public void sendBungeeUpdateMessage(String allExclude) {
-		MercuryAPI.sendGlobalMessage("removeServer|" + allExclude, "BetterShards");
+	public void sendBungeeUpdateMessage() {
+		MercuryAPI.sendGlobalMessage("removeServer", "BetterShards");
 	}
 	
 	public void sendPortalJoin(Portal main, Portal con) {
