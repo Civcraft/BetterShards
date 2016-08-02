@@ -14,6 +14,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
+import vg.civcraft.mc.bettershards.bungee.commands.ShardCommand;
 import vg.civcraft.mc.mercury.MercuryAPI;
 
 public class BetterShardsBungee extends Plugin {
@@ -44,6 +45,9 @@ public class BetterShardsBungee extends Plugin {
 		QueueHandler.initialize();
 		getProxy().getPluginManager().registerListener(this, listener);
 		BungeeMercuryManager.disableLocalRandomSpawn();
+		
+		// Register commands
+		this.getProxy().getPluginManager().registerCommand(this, new ShardCommand());
 	}
 	
 	@Override
