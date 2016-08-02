@@ -68,4 +68,8 @@ public class BungeeMercuryManager {
 	public static void denyPrimaryClaim() {
 		MercuryAPI.sendGlobalMessage("primary|deny", "BetterShards");
 	}
+	
+	public static void sendPlayerServerUpdate(UUID uuid, String server){
+		MercuryAPI.sendGlobalMessage(String.format("server|%s|%s", uuid.toString(), server), "BetterShards");
+	}
 }

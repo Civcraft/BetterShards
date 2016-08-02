@@ -24,6 +24,7 @@ public class BetterShardsBungee extends Plugin {
 	private ConfigurationProvider configManager;
 	private Configuration config;
 	private ReconnectHandler reconnectHandler;
+	private LobbyHandler lobbyHandler;
 	
 	private static Map<String, Integer> serverMaxPlayerCount = new HashMap<String, Integer>();
 	
@@ -35,14 +36,14 @@ public class BetterShardsBungee extends Plugin {
 		// Lets connect to the db.
 		loadDB();
 		MercuryAPI.addChannels("BetterShards");
-		BungeeListener listener = new BungeeListener();
-		MercuryAPI.registerListener(listener, "BetterShards");
-		QueueHandler.initialize();
-		ServerHandler.initialize();
-		getProxy().getPluginManager().registerListener(this, listener);
-		BungeeMercuryManager.disableLocalRandomSpawn();
 		reconnectHandler = new BetterShardsReconnectHandler();
 		getProxy().setReconnectHandler(reconnectHandler);
+		BungeeListener listener = new BungeeListener();
+		MercuryAPI.registerListener(listener, "BetterShards");
+		lobbyHandler = new LobbyHandler();
+		QueueHandler.initialize();
+		getProxy().getPluginManager().registerListener(this, listener);
+		BungeeMercuryManager.disableLocalRandomSpawn();
 	}
 	
 	@Override
@@ -119,6 +120,10 @@ public class BetterShardsBungee extends Plugin {
 	
 	public ReconnectHandler getReconnectHandler() {
 		return reconnectHandler;
+	}
+	
+	public LobbyHandler getLobbyHandler() {
+		return lobbyHandler;
 	}
 	
 	public static void info(String message) {
