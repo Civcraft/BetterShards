@@ -18,7 +18,7 @@ public class ExcludeServer extends PlayerCommand {
 		super(name);
 		setIdentifier("bse");
 		setDescription("Used to exclude or remove exclusion of a server on first join.");
-		setUsage("/bse <add/remove/list/reload> <server>");
+		setUsage("/bse <add/remove/list> <server>");
 		setArguments(1, 2);
 	}
 
@@ -34,10 +34,6 @@ public class ExcludeServer extends PlayerCommand {
 		if (args.length == 1 && action.equalsIgnoreCase("list")) {
 			List<String> servers = db.getAllExclude(true);
 			return sendPlayerMessage(p, ChatColor.GREEN + "List of servers are: " + servers.toString(), true);
-		} else if (args.length == 1 && action.equalsIgnoreCase("reload")) {
-			BetterShardsPlugin.getMercuryManager().sendBungeeUpdateMessage();
-			return sendPlayerMessage(p, ChatColor.GREEN + "Mercury update message has been "
-					+ "sent.", true);
 		} else if (args.length == 1) {
 			message = ChatColor.RED + "You do not have the right amount of arguments.";
 		} else {
@@ -51,6 +47,8 @@ public class ExcludeServer extends PlayerCommand {
 				message = ChatColor.GREEN + "The server has been removed drom exclude, please wait shortly as "
 						+ "updates to this list take a little time.";
 			}
+			// Reloads bungee list.
+			BetterShardsPlugin.getMercuryManager().sendBungeeUpdateMessage();
 		}
 		return sendPlayerMessage(p, message, true);
 	}

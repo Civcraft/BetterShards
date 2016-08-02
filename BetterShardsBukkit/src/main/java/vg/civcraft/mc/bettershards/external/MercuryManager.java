@@ -99,6 +99,8 @@ public class MercuryManager {
 	}
 
 	public void sendBungeeUpdateMessage() {
+		// Remove Server is just the message being sent.
+		// Bungee ends up calling the db to get all the update tables.
 		MercuryAPI.sendGlobalMessage("removeServer", "BetterShards");
 	}
 	
