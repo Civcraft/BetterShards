@@ -38,9 +38,6 @@
 					<filters>
 						<filter>
 							<artifact>vg.civcraft.mc.bettershards:BetterShardsBukkit</artifact>
-							<includes>
-								<include>vg.civcraft.mc.bettershards.database.Database</include>
-							</includes>
 						</filter>
 					</filters>
 				</configuration>
