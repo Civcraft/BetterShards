@@ -1,6 +1,7 @@
 package vg.civcraft.mc.bettershards.listeners;
 
 import java.lang.reflect.Field;
+import java.util.logging.Level;
 
 import net.minecraft.server.v1_10_R1.EntityPlayer;
 import net.minecraft.server.v1_10_R1.FoodMetaData;
@@ -9,16 +10,15 @@ import net.minecraft.server.v1_10_R1.NBTTagList;
 import net.minelink.ctplus.compat.api.NpcIdentity;
 import net.minelink.ctplus.compat.v1_10_R1.NpcPlayer;
 import net.minelink.ctplus.event.NpcDespawnEvent;
-import net.minelink.ctplus.event.NpcDespawnReason;
 
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_10_R1.entity.CraftPlayer;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
 
@@ -34,8 +34,6 @@ public class CombatTagListener implements Listener{
 	
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void combatTagPlusEntityDespawn(NpcDespawnEvent event) {
-		if (!event.getDespawnReason().equals(NpcDespawnReason.DEATH))
-			return;
 		Player player = event.getNpc().getEntity();
 		EntityPlayer entity = ((CraftPlayer) player).getHandle();
 
@@ -48,8 +46,12 @@ public class CombatTagListener implements Listener{
         Player p = Bukkit.getPlayer(identity.getId());
         if (p != null && p.isOnline()) return;
         
-        NBTTagCompound playerNbt = storage.getPlayerData(identity.getId().toString());
-     // foodTickTimer is now private in 1.8.3
+        NBTTagCompound playerNbt = storage.getPlayerData(identity.getId());
+        if (playerNbt == null) {
+        	BetterShardsPlugin.getInstance().getLogger().log(Level.WARNING, 
+        			"Unable to load data for {0} during NPC despawn", identity.getId());
+        }
+        // foodTickTimer is now private in 1.8.3
         Field foodTickTimerField;
         int foodTickTimer;
 
@@ -72,7 +74,8 @@ public class CombatTagListener implements Listener{
         playerNbt.setFloat("foodExhaustionLevel", entity.getFoodData().exhaustionLevel);
         playerNbt.setShort("Fire", (short) entity.fireTicks);
         playerNbt.set("Inventory", npcPlayer.inventory.a(new NBTTagList()));
-        storage.save(identity.getId(), playerNbt, InventoryIdentifier.MAIN_INV);
+        
+        storage.save(identity.getId(), playerNbt, InventoryIdentifier.MAIN_INV, true);
 	}
 
 }

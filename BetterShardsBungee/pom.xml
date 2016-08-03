@@ -6,12 +6,12 @@
 	<parent>
 		<groupId>vg.civcraft.mc.bettershards</groupId>
 		<artifactId>BetterShardsParent</artifactId>
-		<version>1.4.37</version>
+		<version>1.4.38</version>
 	</parent>
 
 	<artifactId>BetterShardsBungee</artifactId>
-	<name>BetterShards</name>
 	<packaging>jar</packaging>
+	<name>BetterShards</name>
 
 	<build>
 		<resources>
