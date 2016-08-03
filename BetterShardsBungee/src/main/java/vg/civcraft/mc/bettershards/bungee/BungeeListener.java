@@ -28,7 +28,7 @@ public class BungeeListener implements Listener, EventListener {
 	private BungeeDatabaseHandler db;
 	private String lobbyServer;
 	private Random rand = new Random();
-	private List<String> execludedServers = new ArrayList<String>();
+	private static List<String> execludedServers = new ArrayList<String>();
 	
 	public BungeeListener() {
 		db = BetterShardsBungee.getDBHandler();
@@ -232,5 +232,9 @@ public class BungeeListener implements Listener, EventListener {
 					+ "onto the lobby server without being redirected there.", event.getConnection().getName(),
 					event.getConnection().getUniqueId().toString()));
 		}
+	}
+	
+	public static List<String> getAllExcludedServers() {
+		return execludedServers;
 	}
 }
