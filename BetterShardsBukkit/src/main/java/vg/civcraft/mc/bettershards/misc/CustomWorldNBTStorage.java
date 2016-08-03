@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -26,12 +27,12 @@ import net.minecraft.server.v1_10_R1.ServerNBTManager;
 
 public class CustomWorldNBTStorage extends ServerNBTManager {
 
-	private DatabaseManager db = BetterShardsPlugin.getInstance()
-			.getDatabaseManager();
+	private DatabaseManager db = BetterShardsPlugin.getInstance().getDatabaseManager();
 	
 	private static CustomWorldNBTStorage storage;
 	private Map<UUID, InventoryIdentifier> invs = new HashMap<UUID, InventoryIdentifier>(); 
 	private Map<UUID, ConfigurationSection> sect = new HashMap<UUID, ConfigurationSection>();
+	private Logger logger = BetterShardsPlugin.getInstance().getLogger();
 
 	public CustomWorldNBTStorage(File file, String s, boolean flag) {
 		super(file, s, flag, new DataConverterManager(0));
@@ -41,45 +42,35 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	@Override
 	public void save(EntityHuman entityhuman) {
 		try {
+			UUID uuid = entityhuman.getUniqueID();
+			logger.log(Level.INFO, "EntityHuman]* Save player data for {0}", uuid);
+			
 			NBTTagCompound nbttagcompound = new NBTTagCompound();
 
 			entityhuman.e(nbttagcompound);
 			//logInventory(nbttagcompound);
 			ByteArrayOutputStream output = new ByteArrayOutputStream();
 			NBTCompressedStreamTools.a(nbttagcompound, output);
-			// Now to run our custom mysql code
-			UUID uuid = entityhuman.getUniqueID();
-			//BetterShardsPlugin.getInstance().getLogger()
-			//		.log(Level.INFO, "Save for " + uuid);
-			db.savePlayerData(uuid, output, getInvIdentifier(uuid), sect.get(uuid));
 
+			// Now to run our custom mysql code
+			db.savePlayerData(uuid, output, getInvIdentifier(uuid), sect.get(uuid));
 		} catch (Exception localException) {
-			BetterShardsPlugin
-					.getInstance()
-					.getLogger()
-					.log(Level.SEVERE,
-							"Failed to save player data for "
-									+ entityhuman.getName());
+			logger.log(Level.SEVERE, "EntityHuman]* Failed to save player data for {0}", entityhuman.getName());
 		}
 	}
 	
 	public void save(NBTTagCompound nbttagcompound, UUID uuid) {
 		try {
+			logger.log(Level.INFO, "NBTTagCompound,UUID] Save player data for {0}", uuid);
+
 			//logInventory(nbttagcompound);
 			ByteArrayOutputStream output = new ByteArrayOutputStream();
 			NBTCompressedStreamTools.a(nbttagcompound, output);
-			// Now to run our custom mysql code
-			//BetterShardsPlugin.getInstance().getLogger()
-			//		.log(Level.INFO, "Save for " + uuid);
-			db.savePlayerData(uuid, output, getInvIdentifier(uuid), sect.get(uuid));
 
+			// Now to run our custom mysql code
+			db.savePlayerData(uuid, output, getInvIdentifier(uuid), sect.get(uuid));
 		} catch (Exception localException) {
-			BetterShardsPlugin
-					.getInstance()
-					.getLogger()
-					.log(Level.SEVERE,
-							"Failed to save player data for "
-									+ uuid);
+			logger.log(Level.SEVERE, "NBTTagCompound,UUID] Failed to save player data for {0}", uuid);
 		}
 	}
 
@@ -88,26 +79,19 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 		NBTTagCompound nbttagcompound = null;
 		try {
 			UUID uuid = entityhuman.getUniqueID();
-			BetterShardsPlugin.getInstance().getLogger()
-					.log(Level.INFO, "Load for " + uuid);
+			logger.log(Level.INFO, "EntityHuman]* Load for {0}", uuid);
 
 			ByteArrayInputStream input = db.loadPlayerData(uuid, getInvIdentifier(uuid));
 
 			nbttagcompound = NBTCompressedStreamTools.a(input);
-
 		} catch (Exception localException) {
-			BetterShardsPlugin
-					.getInstance()
-					.getLogger()
-					.log(Level.SEVERE,
-							"Failed to load player data for "
-									+ entityhuman.getName());
+			logger.log(Level.SEVERE, "EntityHuman]* Failed to load player data for {0}", entityhuman.getName());
 		}
+		
 		if (nbttagcompound != null) {
 			//logInventory(nbttagcompound);
 			if ((entityhuman instanceof EntityPlayer)) {
-				CraftPlayer player = (CraftPlayer) entityhuman
-						.getBukkitEntity();
+				CraftPlayer player = (CraftPlayer) entityhuman.getBukkitEntity();
 
 				long modified = player.getLastPlayed();
 				if (modified < player.getFirstPlayed()) {
@@ -116,8 +100,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			}
 			entityhuman.f(nbttagcompound);
 		} else {
-			BetterShardsPlugin.getInstance().getLogger().log(Level.INFO,
-				"No player data found for " + entityhuman.getName());
+			logger.log(Level.INFO, "EntityHuman]* No player data found for {0}", entityhuman.getName());
 		}
 		return nbttagcompound;
 	}
@@ -126,74 +109,114 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	public NBTTagCompound getPlayerData(String s) {
 		try {
 			UUID uuid = UUID.fromString(s);
-			//BetterShardsPlugin.getInstance().getLogger()
-			//		.log(Level.INFO, "Get/Load for " + uuid);
+			logger.log(Level.INFO, "String]* get / load for " + uuid);
+			
 			ByteArrayInputStream input = db.loadPlayerData(uuid, getInvIdentifier(uuid));
 			NBTTagCompound nbttagcompound = NBTCompressedStreamTools.a(input);
 			//logInventory(nbttagcompound);
+			
 			return nbttagcompound;
 		} catch (Exception localException) {
-			BetterShardsPlugin
-					.getInstance()
-					.getLogger()
-					.log(Level.SEVERE,
-							"Failed to load player data for " + s);
+			logger.log(Level.SEVERE, "String]* Failed to get / load player data for {0}", s);
+		}
+		return null;
+	}
+
+	public NBTTagCompound getPlayerData(UUID uuid) {
+		try {
+			logger.log(Level.INFO, "UUID] Get / Load player data for {0}", uuid);
+			
+			ByteArrayInputStream input = db.loadPlayerDataAsync(uuid, getInvIdentifier(uuid)).get();
+			NBTTagCompound nbttagcompound = NBTCompressedStreamTools.a(input);
+			//logInventory(nbttagcompound);
+			
+			return nbttagcompound;
+		} catch (Exception localException) {
+			logger.log(Level.SEVERE, "UUID] Failed to get / load player data for {0}", uuid);
 		}
 		return null;
 	}
 	
 	public void load(Player p, InventoryIdentifier iden) {
 		UUID uuid = p.getUniqueId();
+		logger.log(Level.INFO, "Player,InvIdent] Load player data for {0}", uuid);
+		
 		CraftPlayer cPlayer = (CraftPlayer) p;
+		
 		NBTTagCompound nbttagcompound = null;
 		ByteArrayInputStream input = db.loadPlayerData(uuid, iden);
-		try {
-			nbttagcompound = NBTCompressedStreamTools.a(input);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if (input != null) {
+			try {
+				nbttagcompound = NBTCompressedStreamTools.a(input);
+			} catch (IOException e) {
+				logger.log(Level.SEVERE, "Player,InvIdent] Failed to load player data for {0}", uuid);
+				e.printStackTrace();
+			}
 		}
 		//logInventory(nbttagcompound);
-		cPlayer.getHandle().f(nbttagcompound);
-		//BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Loaded %s (%s) "
-		//		+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
+		if (nbttagcompound == null) {
+			logger.log(Level.SEVERE, "Player,InvIdent] (Load) No player data for {0}", uuid);
+		}
+		cPlayer.getHandle().f(nbttagcompound); // why clear the inventory b/c load failed?
+	}
+	
+	public void save(Player p, InventoryIdentifier iden) {
+		save(p, iden, false);
 	}
 	
 	public void save(Player p, InventoryIdentifier iden, boolean async) {
 		UUID uuid = p.getUniqueId();
+		logger.log(Level.INFO, "Player,InvIdent,bool] Save player data for {0}", uuid);
+		
 		CraftPlayer cPlayer = (CraftPlayer) p;
+		
 		NBTTagCompound nbttagcompound = new NBTTagCompound();
-
 		cPlayer.getHandle().e(nbttagcompound);
 		//logInventory(nbttagcompound);
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		try {
 			NBTCompressedStreamTools.a(nbttagcompound, output);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			logger.log(Level.SEVERE, "Player,InvIdent,bool] Failed to save player data for {0}", uuid);
 			e.printStackTrace();
 		}
+		
+		if (nbttagcompound == null || output == null) {
+			logger.log(Level.SEVERE, "Player,InvIdent,bool] (Save) No player data for {0}", uuid);
+		}
+		
 		if (async){
 			db.savePlayerDataAsync(uuid, output, iden, sect.get(uuid));
 		} else {
 			db.savePlayerData(uuid, output, iden, sect.get(uuid));
 		}
-		//BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s (%s) "
-		//		+ "inventory from non default way.", p.getName(), p.getUniqueId().toString()));
 	}
 	
 	public void save(UUID uuid, NBTTagCompound nbttagcompound, InventoryIdentifier iden) {
+		save(uuid, nbttagcompound, iden, false);
+	}
+	
+	public void save(UUID uuid, NBTTagCompound nbttagcompound, InventoryIdentifier iden, boolean async) {
+		logger.log(Level.INFO, "UUID,NBTTagCompound,InvIdent,bool] Save player data for {0}", uuid);
+		
 		//logInventory(nbttagcompound);
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		try {
 			NBTCompressedStreamTools.a(nbttagcompound, output);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			logger.log(Level.SEVERE, "UUID,NBTTagCompound,InvIdent,bool] Failed to save player data for {0}", uuid);
 			e.printStackTrace();
 		}
-		db.savePlayerData(uuid, output, iden, sect.get(uuid));
-		//BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Saved %s "
-		//		+ "inventory from non default way.", uuid.toString()));
+
+		if (nbttagcompound == null || output == null) {
+			logger.log(Level.SEVERE, "UUID,NBTTagCompound,InvIdent,bool] (Save) No player data for {0}", uuid);
+		}
+		
+		if (async) {
+			db.savePlayerDataAsync(uuid, output, iden, sect.get(uuid));
+		} else {
+			db.savePlayerData(uuid, output, iden, sect.get(uuid));
+		}
 	}
 
 	public static CustomWorldNBTStorage getWorldNBTStorage() {
@@ -247,6 +270,6 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	}
 
 	private void logInventory(NBTTagCompound nbt) {
-		BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, String.format("Data as saved: %s ", nbt.toString()));
+		logger.log(Level.INFO, "Data as saved: {0} ", nbt.toString());
 	}
 }

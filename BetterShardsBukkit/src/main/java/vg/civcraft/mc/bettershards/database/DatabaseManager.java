@@ -511,19 +511,6 @@ public class DatabaseManager{
 		invCache.remove(uuid); // So if it is loaded again it is recaught.
 		isConnected();
 		
-		/*
-		 * Some notes. 
-		 * 
-		 * For code that has a great many race conditions spread across multiple servers, you need something to play traffic cop.
-		 * 
-		 * Now usually, just change transaction isolation and you're good to go w/ automatic row-locks.
-		 * 
-		 * In our case, we explicitly want to _prevent_ read of the data if a save is _pending_. So we externalize our lock using
-		 * an ultralightweight fast-failure locking mechanism.
-		 * 
-		 * It also helps up detect and prevent the "usual" badboys of simultaneous saves from multiple shards; a condition
-		 * that should never occur but _if_ we externalize the lock, we can find it.
-		 */
 		if (!getPlayerLock(uuid, id)) { // someone beat us to it?
 			plugin.getLogger().log(Level.SEVERE, "Unable to grab rowlock for save of {0}, some other server or process is saving at the same time as me.", uuid);
 			return;

@@ -75,6 +75,11 @@ public class BungeeDatabaseHandler {
 				+ "primary key uuidKey (uuid));");
 	}
 	
+	public boolean hasPlayerBefore(UUID uuid) {
+		 ServerInfo test = getServer(uuid);
+		 return test != null;
+	}
+	
 	public void setServer(ProxiedPlayer p, ServerInfo server) {
 		if (!db.isConnected())
 			db.connect();
