@@ -589,14 +589,17 @@ public class DatabaseManager{
 	 */
 	public Future<ByteArrayInputStream> loadPlayerDataAsync(final UUID uuid, final InventoryIdentifier id) {
 		if (invCache.containsKey(uuid)) {
+			final ByteArrayInputStream baisPIT = invCache.get(uuid);
 			return new Future<ByteArrayInputStream>() {
-				ByteArrayInputStream bais = invCache.get(uuid);
+				ByteArrayInputStream bais = baisPIT;
 
 				@Override
 				public boolean cancel(boolean arg0) {return false;}
 
 				@Override
-				public ByteArrayInputStream get() throws InterruptedException, ExecutionException {return bais;}
+				public ByteArrayInputStream get() throws InterruptedException, ExecutionException {
+					return bais;
+				}
 
 				@Override
 				public ByteArrayInputStream get(long arg0, TimeUnit arg1) throws InterruptedException,ExecutionException, TimeoutException {
@@ -616,6 +619,7 @@ public class DatabaseManager{
 
 					@Override
 					public ByteArrayInputStream call() throws Exception {
+						plugin.getLogger().log(Level.INFO, "Getting player data async for {0}, uuid");
 						long sleepSoFar = (long) (Math.random() * 10.0);
 						// basic spinlock.
 						while (isPlayerLocked(uuid, id)) {

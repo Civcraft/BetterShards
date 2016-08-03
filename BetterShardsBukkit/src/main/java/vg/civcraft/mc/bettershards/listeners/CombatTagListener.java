@@ -1,6 +1,7 @@
 package vg.civcraft.mc.bettershards.listeners;
 
 import java.lang.reflect.Field;
+import java.util.logging.Level;
 
 import net.minecraft.server.v1_10_R1.EntityPlayer;
 import net.minecraft.server.v1_10_R1.FoodMetaData;
@@ -17,6 +18,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
 
@@ -45,6 +47,10 @@ public class CombatTagListener implements Listener{
         if (p != null && p.isOnline()) return;
         
         NBTTagCompound playerNbt = storage.getPlayerData(identity.getId());
+        if (playerNbt == null) {
+        	BetterShardsPlugin.getInstance().getLogger().log(Level.WARNING, 
+        			"Unable to load data for {0} during NPC despawn", identity.getId());
+        }
         // foodTickTimer is now private in 1.8.3
         Field foodTickTimerField;
         int foodTickTimer;

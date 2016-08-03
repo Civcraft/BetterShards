@@ -133,6 +133,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			return nbttagcompound;
 		} catch (Exception localException) {
 			logger.log(Level.SEVERE, "UUID] Failed to get / load player data for {0}", uuid);
+			logger.log(Level.SEVERE, "UUID] Failed to get / load player data execption:", localException);
 		}
 		return null;
 	}

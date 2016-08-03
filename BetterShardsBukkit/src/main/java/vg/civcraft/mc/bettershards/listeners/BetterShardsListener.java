@@ -87,6 +87,11 @@ public class BetterShardsListener implements Listener{
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void playerPreLoginCacheInv(AsyncPlayerPreLoginEvent event) {
 		UUID uuid = event.getUniqueId();
+		if (uuid != null) {
+			plugin.getLogger().log(Level.SEVERE, "Preparing to pre-load the player's data: {0}", uuid);
+		} else { 
+			return;
+		}
 		if (st == null){ // Small race condition if someone logs on as soon as the server starts.
 			event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, "Please try to log in again in a moment, server is not ready to accept log-ins.");
 			plugin.getLogger().log(Level.INFO, "Player {0} logged on before async process was ready, skipping.", uuid);
