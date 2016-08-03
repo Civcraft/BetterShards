@@ -88,7 +88,7 @@ public class BetterShardsListener implements Listener{
 	public void playerPreLoginCacheInv(AsyncPlayerPreLoginEvent event) {
 		UUID uuid = event.getUniqueId();
 		if (uuid != null) {
-			plugin.getLogger().log(Level.SEVERE, "Preparing to pre-load the player's data: {0}", uuid);
+			plugin.getLogger().log(Level.INFO, "Preparing to pre-load player data: {0}", uuid);
 		} else { 
 			return;
 		}
@@ -100,9 +100,15 @@ public class BetterShardsListener implements Listener{
 		Future<ByteArrayInputStream> soondata = db.loadPlayerDataAsync(uuid, st.getInvIdentifier(uuid)); // wedon't use the data, but know that it caches behind the scenes.
 		
 		try {
-			soondata.get(); // I want to _INTENTIONALLY_ delay accepting the user's login until I know for sure I've got the data loaded asynchronously.
+			ByteArrayInputStream after = soondata.get(); // I want to _INTENTIONALLY_ delay accepting the user's login until I know for sure I've got the data loaded asynchronously.
+			if (after == null) {
+				plugin.getLogger().log(Level.INFO, "Pre-load for player data {0} came back empty. New player? Error?", uuid);
+			} else {
+				plugin.getLogger().log(Level.INFO, "Pre-load for player data {0} complete.", uuid);
+			}
+			
 		} catch (InterruptedException | ExecutionException e) {
-			plugin.getLogger().log(Level.SEVERE, "Failed to pre-load the player's data: {0}", uuid);
+			plugin.getLogger().log(Level.SEVERE, "Failed to pre-load player data: {0}", uuid);
 			e.printStackTrace();
 		}
 		

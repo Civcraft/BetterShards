@@ -403,7 +403,7 @@ public class DatabaseManager{
 			ResultSet rs = checkLock.executeQuery();
 			return rs.first();
 		} catch (SQLException se) {
-			plugin.getLogger().log(Level.INFO, "Couldn't check on lock for {0}, please investigate", uuid);
+			plugin.getLogger().log(Level.INFO, "Could not check on lock for {0}, please investigate", uuid);
 			se.printStackTrace();
 			return true;
 		}
@@ -453,6 +453,7 @@ public class DatabaseManager{
 	 */
 	private void doSavePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
 			ConfigurationSection section) {
+		plugin.getLogger().log(Level.INFO, "doSave player data {0}", uuid);
 		PreparedStatement insertPlayerDataPS = null;
 		try {
 			insertPlayerDataPS = db.prepareStatement(insertPlayerData);
@@ -533,8 +534,12 @@ public class DatabaseManager{
 	 */
 	public ByteArrayInputStream loadPlayerData(UUID uuid, InventoryIdentifier id){
 		// Here we had it caches before hand so no need to load it again.
-		if (invCache.containsKey(uuid))
+		if (invCache.containsKey(uuid)) {
+			plugin.getLogger().log(Level.INFO, "Getting player data sync from cache for {0}", uuid);
 			return invCache.get(uuid);
+		}
+			
+		plugin.getLogger().log(Level.INFO, "Getting player data sync for {0}", uuid);
 		ByteArrayInputStream bais = doLoadPlayerData(uuid, id);
 		invCache.put(uuid, bais);
 		return bais;
@@ -589,6 +594,7 @@ public class DatabaseManager{
 	 */
 	public Future<ByteArrayInputStream> loadPlayerDataAsync(final UUID uuid, final InventoryIdentifier id) {
 		if (invCache.containsKey(uuid)) {
+			plugin.getLogger().log(Level.INFO, "Getting player data async from cache for {0}", uuid);
 			final ByteArrayInputStream baisPIT = invCache.get(uuid);
 			return new Future<ByteArrayInputStream>() {
 				ByteArrayInputStream bais = baisPIT;
@@ -619,7 +625,7 @@ public class DatabaseManager{
 
 					@Override
 					public ByteArrayInputStream call() throws Exception {
-						plugin.getLogger().log(Level.INFO, "Getting player data async for {0}, uuid");
+						plugin.getLogger().log(Level.INFO, "Getting player data async for {0}", uuid);
 						long sleepSoFar = (long) (Math.random() * 10.0);
 						// basic spinlock.
 						while (isPlayerLocked(uuid, id)) {
@@ -634,6 +640,7 @@ public class DatabaseManager{
 						 */ 
 						ByteArrayInputStream bais = doLoadPlayerData(uuid, id);
 						invCache.put(uuid, bais);
+						plugin.getLogger().log(Level.INFO, "Done getting player data async for {0}", uuid);
 						return bais;
 					}
 				}	
