@@ -34,7 +34,7 @@ public class BetterShardsReconnectHandler implements ReconnectHandler{
 			return;
 		}
 		BetterShardsBungee.getInstance().getLogger().info("Setting the server of " + player.getName() + " to " + serverToSet.getName());
-		db.setServer(player, serverToSet);
+		db.setServer(player.getUniqueId(), serverToSet);
 	}
 
 }
