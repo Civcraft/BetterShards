@@ -134,7 +134,7 @@ public class BungeeListener implements Listener, EventListener {
 			return;
 		}
 		
-		player.setReconnectServer(kickedFrom);
+		//player.setReconnectServer(kickedFrom);
 		event.setCancelled(true);
 		event.setCancelServer(ProxyServer.getInstance().getServerInfo(lobbyServer));
 	}
