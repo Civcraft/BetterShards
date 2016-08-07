@@ -1,6 +1,7 @@
 package vg.civcraft.mc.bettershards.portal.portals;
 
-import java.util.Random;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -27,6 +28,7 @@ public class WorldBorderPortal extends Portal {
 	private double sAngle;
 	private double arcLength;
 	private double particleIncrement;
+	private static List <Material> ignoreMaterials;
 
 	/**
 	 * So without complication everything needlessly, note that all border begin/ends
@@ -56,6 +58,20 @@ public class WorldBorderPortal extends Portal {
 		//= wbRange * arcLength
 		double blocksInPortal = arcLength * wbRange;
 		this.particleIncrement = 1.0 / blocksInPortal;
+		List <String> ignoreMats = BetterShardsPlugin.getInstance().GetConfig().get("randomspawn.ignoreMaterials").getStringList();
+		if (ignoreMaterials == null) {
+			ignoreMaterials = new ArrayList<Material>();
+			for(String ign : ignoreMats) {
+			    try {
+					Material m = Material.valueOf(ign);
+					BetterShardsPlugin.getInstance().info("Ignoring " + m.toString() + " for portal spawning");
+					ignoreMaterials.add(m);
+			    }
+			    catch (IllegalArgumentException e) {
+			    	BetterShardsPlugin.getInstance().warning("The portal spawn ignore material specified as " + ign + " is not valid. It was ignored");
+			    }
+			}
+		}
 	}
 	
 	public LocationWrapper getFirst() {
@@ -144,16 +160,21 @@ public class WorldBorderPortal extends Portal {
 		World w = eyes.getWorld();
 		if (eyes.getY() >= 254 || eyes.getY() <= 1) {
 		    for(int y = 254; y > 0; y--) {
-			if (w.getBlockAt(x, y, z).getType().isSolid()
-				&& w.getBlockAt(x, y + 1, z).getType() == Material.AIR
-				&& w.getBlockAt(x, y + 2, z).getType() == Material.AIR) {
-			return RandomSpawn.centerLocation(new Location(w, x, y + 1, z)); //+1 because player position is in lower body half
-			}
+				if (w.getBlockAt(x, y, z).getType().isSolid() && !ignoreMaterials.contains(w.getBlockAt(x, y, z).getType())
+					&& w.getBlockAt(x, y + 1, z).getType() == Material.AIR
+					&& w.getBlockAt(x, y + 2, z).getType() == Material.AIR) {
+					return RandomSpawn.centerLocation(new Location(w, x, y + 1, z)); //+1 because player position is in lower body half
+				}
 		    }
-		  //no valid spot at all, so randomspawn
+		  //no valid spot at all, so create one
 		    BetterShardsPlugin.getInstance().warning("Found no valid portal spawning spot  at x=" + loc.getBlockX() 
-			    + " z=" + loc.getBlockZ() + ". Randomspawning player");
-		    return BetterShardsPlugin.getRandomSpawn().getLocation();
+			    + " z=" + loc.getBlockZ() + ". Creating one instead");
+		    if (!w.getBlockAt(x, 0, z).getType().isSolid()) {
+		    	w.getBlockAt(x, 0, z).setType(Material.STONE);
+		    }
+		    w.getBlockAt(x, 1, z).setType(Material.AIR);
+		    w.getBlockAt(x, 2, z).setType(Material.AIR);
+		    return RandomSpawn.centerLocation(new Location(w, x, 1, z));
 		}
 		return RandomSpawn.centerLocation(eyes.getLocation());
 	}
