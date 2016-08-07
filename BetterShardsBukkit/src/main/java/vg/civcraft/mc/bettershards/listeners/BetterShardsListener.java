@@ -349,6 +349,8 @@ public class BetterShardsListener implements Listener{
 		Location loc = getRealFace(event.getClickedBlock()).getLocation();
 		TeleportInfo info = new TeleportInfo(loc.getWorld().getName(), server, loc.getBlockX(),
 				loc.getBlockY(), loc.getBlockZ());
+		plugin.getLogger().log(Level.INFO, "Player {0} bed location set to {1}", 
+				new Object[] { uuid, info });
 		BedLocation bed = new BedLocation(uuid, info);
 		BetterShardsAPI.addBedLocation(uuid, bed);
 		event.getPlayer().sendMessage(ChatColor.GREEN + "You set your bed location.");

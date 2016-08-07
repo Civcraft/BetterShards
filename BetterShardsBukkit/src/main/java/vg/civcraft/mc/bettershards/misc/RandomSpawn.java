@@ -33,12 +33,11 @@ public class RandomSpawn {
 		this.ignoreMaterials = new ArrayList<Material>();
 		for(String ign : ignoreMats) {
 		    try {
-			Material m = Material.valueOf(ign);
-			BetterShardsPlugin.getInstance().info("Ignoring " + m.toString() + " for random spawning");
-			ignoreMaterials.add(m);
-		    }
-		    catch (IllegalArgumentException e) {
-			BetterShardsPlugin.getInstance().warning("The randomspawn ignore material specified as " + ign + " is not valid. It was ignored");
+		    	Material m = Material.valueOf(ign);
+		    	BetterShardsPlugin.getInstance().info("Ignoring " + m.toString() + " for random spawning");
+		    	ignoreMaterials.add(m);
+		    } catch (IllegalArgumentException e) {
+		    	BetterShardsPlugin.getInstance().warning("The randomspawn ignore material specified as " + ign + " is not valid. It was ignored");
 		    }
 		}
 	}
@@ -150,7 +149,7 @@ public class RandomSpawn {
 	 */
 	private Location getLocation(int depth) {
 	    
-	    	int currentDepth = depth + 1;
+		int currentDepth = depth + 1;
 		int x = (int) (spawnRange * Math.random());
 		x = x * (Math.random() > 0.5 ? 1 : -1);
 		int z = (int) (spawnRange * Math.random());

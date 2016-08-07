@@ -420,6 +420,7 @@ public class DatabaseManager{
 	 */
 	public void savePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
 			ConfigurationSection section) {
+		plugin.getLogger().log(Level.INFO, "savePlayer Sync player data {0}", uuid);
 		isConnected();
 		invCache.remove(uuid); // So if it is loaded again it is recaught.
 		
@@ -493,6 +494,8 @@ public class DatabaseManager{
 			
 			if (!releasePlayerLock(uuid, id)) { // Both calling methods require release always, so we'll just do it here.
 				plugin.getLogger().log(Level.INFO, "Unable to release lock for {0}, lock is already released", uuid);
+			} else {
+				plugin.getLogger().log(Level.INFO, "DONE doSave player data {0}", uuid);
 			}
 		}
 	}
@@ -509,6 +512,7 @@ public class DatabaseManager{
 	 */
 	public void savePlayerDataAsync(final UUID uuid, final ByteArrayOutputStream output, 
 			final InventoryIdentifier id, final ConfigurationSection section) {
+		plugin.getLogger().log(Level.INFO, "savePlayer Async player data {0}", uuid);
 		invCache.remove(uuid); // So if it is loaded again it is recaught.
 		isConnected();
 		
@@ -539,9 +543,10 @@ public class DatabaseManager{
 			return invCache.get(uuid);
 		}
 			
-		plugin.getLogger().log(Level.INFO, "Getting player data sync for {0}", uuid);
+		plugin.getLogger().log(Level.INFO, "IGNORING LOCKS: Getting player data sync for {0}", uuid);
 		ByteArrayInputStream bais = doLoadPlayerData(uuid, id);
 		invCache.put(uuid, bais);
+		plugin.getLogger().log(Level.INFO, "IGNORING LOCKS: Done getting player data sync for {0}", uuid);
 		return bais;
 	}
 	
