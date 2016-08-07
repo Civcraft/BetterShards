@@ -134,7 +134,7 @@ public class BungeeListener implements Listener, EventListener {
 			return;
 		}
 		
-		player.setReconnectServer(kickedFrom);
+		//player.setReconnectServer(kickedFrom);
 		event.setCancelled(true);
 		event.setCancelServer(ProxyServer.getInstance().getServerInfo(lobbyServer));
 	}
@@ -220,7 +220,7 @@ public class BungeeListener implements Listener, EventListener {
 		} else if (content[0].equals("server")) {
 			UUID playerUUID = UUID.fromString(content[1]);
 			String serverName = content[2];
-			db.setServer(ProxyServer.getInstance().getPlayer(playerUUID), ProxyServer.getInstance().getServerInfo(serverName), false);
+			db.setServer(playerUUID, ProxyServer.getInstance().getServerInfo(serverName), false);
 		}
 	}
 	

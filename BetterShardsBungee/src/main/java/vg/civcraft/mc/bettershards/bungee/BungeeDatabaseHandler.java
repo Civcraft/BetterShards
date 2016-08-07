@@ -75,27 +75,32 @@ public class BungeeDatabaseHandler {
 				+ "primary key uuidKey (uuid));");
 	}
 	
-	public void setServer(ProxiedPlayer p, ServerInfo server) {
+	public boolean hasPlayerBefore(UUID uuid) {
+		 ServerInfo test = getServer(uuid);
+		 return test != null;
+	}
+	
+	public void setServer(UUID uuid, ServerInfo server) {
 		if (!db.isConnected())
 			db.connect();
 		PreparedStatement setServer = db.prepareStatement(this.setServer);
 		try {
-			setServer.setString(1, p.getUniqueId().toString());
+			setServer.setString(1, uuid.toString());
 			setServer.setString(2, server.getName());
 			setServer.execute();
-			playerServerCache.put(p.getUniqueId(), server);
-			BungeeMercuryManager.sendPlayerServerUpdate(p.getUniqueId(), server.getName());
+			playerServerCache.put(uuid, server);
+			BungeeMercuryManager.sendPlayerServerUpdate(uuid, server.getName());
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
-	public void setServer(ProxiedPlayer p, ServerInfo server, boolean saveToDB) {
+	public void setServer(UUID uuid, ServerInfo server, boolean saveToDB) {
 		if(saveToDB){
-			setServer(p, server);
+			setServer(uuid, server);
 		} else {
-			playerServerCache.put(p.getUniqueId(), server);
+			playerServerCache.put(uuid, server);
 		}
 	}
 	
