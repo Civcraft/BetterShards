@@ -54,7 +54,7 @@ public class DatabaseManager{
 	private Config config;
 	private Database db;
 	
-	private Map<UUID, ByteArrayInputStream> invCache = new ConcurrentHashMap<UUID, ByteArrayInputStream>();
+	private Map<UUID, Map<InventoryIdentifier, byte[]>> invCache = new ConcurrentHashMap<UUID, byte[]>();
 
 	private List<String> respawnExclusionCache = Collections.emptyList();
 	private List<String> respawnExclusionCacheImmutable = Collections.unmodifiableList(respawnExclusionCache);
@@ -529,8 +529,14 @@ public class DatabaseManager{
 		});
 	}
 
+	public void clearPrefetch(UUID uuid, InventoryIdentifier id) {
+		invCache.remove(uuid);
+	}
+
 	/**
 	 * This loadPlayerData ignores any data locks. PLEASE USE WITH CARE. Calls to this method might return old data!
+	 * 
+	 * This method _consumes_ from the cache but never adds to it.
 	 * 
 	 * @param uuid
 	 * @param id
@@ -540,14 +546,14 @@ public class DatabaseManager{
 		// Here we had it caches before hand so no need to load it again.
 		if (invCache.containsKey(uuid)) {
 			plugin.getLogger().log(Level.INFO, "Getting player data sync from cache for {0}", uuid);
-			return invCache.get(uuid);
+			byte[] bais = invCache.remove(uuid);
+			return new ByteArrayInputStream(bais);
 		}
 			
 		plugin.getLogger().log(Level.INFO, "IGNORING LOCKS: Getting player data sync for {0}", uuid);
-		ByteArrayInputStream bais = doLoadPlayerData(uuid, id);
-		invCache.put(uuid, bais);
+		byte[] bais = doLoadPlayerData(uuid, id);
 		plugin.getLogger().log(Level.INFO, "IGNORING LOCKS: Done getting player data sync for {0}", uuid);
-		return bais;
+		return new ByteArrayInputStream(bais);
 	}
 	
 	/**
@@ -557,7 +563,7 @@ public class DatabaseManager{
 	 * @param id
 	 * @return
 	 */
-	private ByteArrayInputStream doLoadPlayerData(UUID uuid, InventoryIdentifier id){
+	private byte[] doLoadPlayerData(UUID uuid, InventoryIdentifier id){
 		isConnected();
 		PreparedStatement getPlayerData = db.prepareStatement(this.getPlayerData);
 		try {
@@ -565,13 +571,13 @@ public class DatabaseManager{
 			getPlayerData.setInt(2, id.ordinal());
 			ResultSet set = getPlayerData.executeQuery();
 			if (!set.next())
-				return new ByteArrayInputStream(new byte[0]);
+				return new byte[0];
 			YamlConfiguration sect = new YamlConfiguration();
 			String sectString = set.getString("config_sect");
 			if (sectString != null)
 				sect.loadFromString(sectString);
 			CustomWorldNBTStorage.getWorldNBTStorage().loadConfigurationSectionForPlayer(uuid, sect);
-			return new ByteArrayInputStream(set.getBytes("entity"));			
+			return set.getBytes("entity");			
 		} catch (SQLException e) {
 			plugin.getLogger().log(Level.SEVERE, "Error retrieving player data from database for {0}", uuid);
 			e.printStackTrace();
@@ -583,7 +589,7 @@ public class DatabaseManager{
 				getPlayerData.close();
 			} catch (Exception ex) {}
 		}
-		return new ByteArrayInputStream(new byte[0]);
+		return new byte[0];
 	}
 	
 	/**
@@ -592,6 +598,13 @@ public class DatabaseManager{
 	 * Use .get on the Future to wait for it to load and return the result. 
 	 * 
 	 * EXTERNAL PLUGINS SHOULD USE THIS EXCLUSIVELY
+	 *
+	 * This method both consumes and contributes to the cache. If data is on cache when triggered, it consumes it.
+	 * If data is not on cache, it puts it on cache.
+	 *
+	 * So, if you want to preload your data but not _use_ it, call loadPlayerDataAsync in an async method, then
+	 * call loadPlayerData in a sync method. If you're lucky and there aren't any race conditions in play to get that
+	 * data (multiple consumers) then the sync call will pull from the cache.
 	 * 
 	 * @param uuid
 	 * @param id
@@ -600,21 +613,21 @@ public class DatabaseManager{
 	public Future<ByteArrayInputStream> loadPlayerDataAsync(final UUID uuid, final InventoryIdentifier id) {
 		if (invCache.containsKey(uuid)) {
 			plugin.getLogger().log(Level.INFO, "Getting player data async from cache for {0}", uuid);
-			final ByteArrayInputStream baisPIT = invCache.get(uuid);
+			final byte[] baisPIT = invCache.remove(uuid);
 			return new Future<ByteArrayInputStream>() {
-				ByteArrayInputStream bais = baisPIT;
+				byte[] bais = baisPIT;
 
 				@Override
 				public boolean cancel(boolean arg0) {return false;}
 
 				@Override
 				public ByteArrayInputStream get() throws InterruptedException, ExecutionException {
-					return bais;
+					return new ByteArrayInputStream(bais);
 				}
 
 				@Override
 				public ByteArrayInputStream get(long arg0, TimeUnit arg1) throws InterruptedException,ExecutionException, TimeoutException {
-					return bais;
+					return new ByteArrayInputStream(bais);
 				}
 
 				@Override
@@ -643,10 +656,10 @@ public class DatabaseManager{
 						/* This leaves an opening for race conditions, but with a very small interval size (< 10ms) which is
 						 * far superior to previous.
 						 */ 
-						ByteArrayInputStream bais = doLoadPlayerData(uuid, id);
+						byte[] bais = doLoadPlayerData(uuid, id);
 						invCache.put(uuid, bais);
 						plugin.getLogger().log(Level.INFO, "Done getting player data async for {0}", uuid);
-						return bais;
+						return new ByteArrayInputStream(bais);
 					}
 				}	
 			);
@@ -655,7 +668,7 @@ public class DatabaseManager{
 		
 		return todo;
 	}
-	
+
 	
 	/**
 	 * Can only be from worlds that are valid on this server.
@@ -780,6 +793,7 @@ public class DatabaseManager{
 
 	public void removePlayerData(UUID uuid, InventoryIdentifier id) {
 		isConnected();
+		if (invCache.contains(uuid)) {
 		PreparedStatement removePlayerData = db.prepareStatement(this.removePlayerData);
 		try {
 			removePlayerData.setString(1, uuid.toString());
