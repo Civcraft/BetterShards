@@ -54,7 +54,88 @@ public class DatabaseManager{
 	private Config config;
 	private Database db;
 	
-	private Map<UUID, Map<InventoryIdentifier, byte[]>> invCache = new ConcurrentHashMap<UUID, byte[]>();
+	private Map<UUID, Map<InventoryIdentifier, byte[]>> invCache = new ConcurrentHashMap<UUID, Map<InventoryIdentifier, byte[]>>();
+	private Map<UUID, Long> invCacheFreshness = new ConcurrentHashMap<UUID, Long>();
+	private long invCacheTimeout = 30 * 1000; // how long does a cached inventory stick around?
+
+	/**
+	 * Threadsafe accessor for the inventory cache. Respects the cache timeout; old caches are discarded, not returned.
+	 *
+	 * @param uuid The player to lookup
+	 * @param id The inventory to retrieve
+	 * @returns a byte array for the raw inventory data or null if none found or cache expired.
+	 */
+	private byte[] queryCache(UUID uuid, InventoryIdentifier id) {
+		synchronized(invCache) {
+			Map<InventoryIdentifier, byte[]> playerInvCache = invCache.get(uuid);
+			if (playerInvCache != null) {
+
+				// Check for freshness.
+				Long freshness = invCacheFreshness.get(uuid);
+				if (freshness != null && (System.currentTimeMillis() - freshness) > invCacheTimeout) {
+					// Not Fresh. Clear the cache and return null.
+					playerInvCache.clear();
+					invCacheFreshness.remove(uuid);
+					return null;
+				}
+				// Fresh or doesn't exist, either way carry on.
+				return playerInvCache.get(id);
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Threadsafe mutator for the inventory cache. Updates cache timeout.
+	 * Be warned that since this doesn't check the cache timeout or clear out old caches, it is best to have some other process
+	 * that periodically clears up old caches.
+	 *
+	 * @param uuid The player to cache data for
+	 * @param id The inventory to cache into
+	 * @param data The inventory data to cache
+	 */
+	private void updateCache(UUID uuid, InventoryIdentifier id, byte[] data) {
+		synchronized(invCache) {
+			Map<InventoryIdentifier, byte[]> playerInvCache = invCache.get(uuid);
+			if (playerInvCache == null) {
+				playerInvCache = new HashMap<InventoryIdentifier, byte[]>();
+				invCache.put(uuid, playerInvCache);
+			}
+			playerInvCache.put(id, data);
+			invCacheFreshness.put(uuid, System.currentTimeMillis());
+		}
+	}
+
+	/**
+	 * Threadsafe cleanup for the inventory cache. Respects freshness; if not fresh removes all inventories
+	 * Can be used otherwise to remove a single cached inventory or all inventories.
+	 * 
+	 * @param uuid The player whose cache to modify
+	 * @param id The inventory to remove from cache, null to clear all inventories
+	 */
+	private void clearCache(UUID uuid, InventoryIdentifier id) {
+		synchronized(invCache) {
+			Map<InventoryIdentifier, byte[]> playerInvCache = invCache.get(uuid);
+			if (playerInvCache == null) {
+				return;
+			}
+			if (id == null) { // clear all
+				playerInvCache.clear();
+				invCacheFreshness.remove(uuid);
+			} else {
+				// Check freshness
+				Long freshness = invCacheFreshness.get(uuid);
+				if (freshness != null && (System.currentTimeMillis() - freshness) > invCacheTimeout) {
+					// Not fresh so clear all the cache anyway
+					playerInvCache.clear();
+					invCacheFreshness.remove(uuid);
+				} else {
+					// Fresh so just remove this one inventory
+					playerInvCache.remove(id);
+				}
+			}
+		}
+	}
 
 	private List<String> respawnExclusionCache = Collections.emptyList();
 	private List<String> respawnExclusionCacheImmutable = Collections.unmodifiableList(respawnExclusionCache);
@@ -102,9 +183,11 @@ public class DatabaseManager{
 	
 	@CivConfigs({
 		@CivConfig(name = "locks.cleanup", def = "true", type = CivConfigType.Bool),
-		@CivConfig(name = "locks.interval", def = "1200", type = CivConfigType.Long)
+		@CivConfig(name = "locks.interval", def = "1200", type = CivConfigType.Long),
+		@CivConfig(name = "cache.freshness_period", def = "30000", type = CivConfigType.Long)
 	})
 	private void setupCleanup() {
+		this.invCacheTimeout = config.get("cache.freshness_period").getLong();
 		if (config.get("locks.cleanup").getBool()){  // no forever locks
 			this.lockCleanup = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, new Runnable() {
 
@@ -233,7 +316,7 @@ public class DatabaseManager{
 		@CivConfig(name = "locks.cleanup_minutes", def = "1", type = CivConfigType.Int),
 	})
 	private void loadPreparedStatements(){
-		insertPlayerData = "INSERT INTO createPlayerData(uuid, server, entity, config_sect) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE entity = ?, config_sect = ?;";
+		insertPlayerData = "INSERT INTO createPlayerData(uuid, server, entity, config_sect) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE entity = VALUES(entity), config_sect = VALUES(config_sect);";
 		getPlayerData = "select * from createPlayerData where uuid = ? and server = ?;";
 		removePlayerData = "delete from createPlayerData where uuid = ? and server = ?;";
 		
@@ -337,8 +420,7 @@ public class DatabaseManager{
 	 * @param uuid The uuid of the player
 	 */
 	public void playerQuitServer(UUID uuid) {
-	    	
-		invCache.remove(uuid);
+	    clearCache(uuid, null);
 	}
 	
 	private String serverName = MercuryAPI.serverName();
@@ -422,7 +504,7 @@ public class DatabaseManager{
 			ConfigurationSection section) {
 		plugin.getLogger().log(Level.INFO, "savePlayer Sync player data {0}", uuid);
 		isConnected();
-		invCache.remove(uuid); // So if it is loaded again it is recaught.
+		clearCache(uuid, id); // So if it is loaded again it is recaught.
 		
 		/*
 		 * Some notes. 
@@ -465,24 +547,22 @@ public class DatabaseManager{
 			insertPlayerDataPS.setString(1, uuid.toString());
 			insertPlayerDataPS.setInt(2, id.ordinal());
 
+			byte[] outputBytes = null;
 			if (output == null) {
 				insertPlayerDataPS.setNull(3, Types.BLOB);
-				insertPlayerDataPS.setNull(5, Types.BLOB);
 			} else {
-				byte[] outputBytes = output.toByteArray();
+				outputBytes = output.toByteArray();
 				insertPlayerDataPS.setBytes(3, outputBytes);
-				insertPlayerDataPS.setBytes(5,  outputBytes);
 			}
 			YamlConfiguration yaml = (YamlConfiguration) section;
 			if (yaml == null) {
 				insertPlayerDataPS.setNull(4, Types.VARCHAR);
-				insertPlayerDataPS.setNull(6, Types.VARCHAR);
 			} else {
 				String ymlStr = yaml.saveToString();
 				insertPlayerDataPS.setString(4, ymlStr);
-				insertPlayerDataPS.setString(6, ymlStr);
 			}
 			insertPlayerDataPS.execute();
+			updateCache(uuid, id, outputBytes);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (Exception ididntthinkofthis) {
@@ -513,7 +593,7 @@ public class DatabaseManager{
 	public void savePlayerDataAsync(final UUID uuid, final ByteArrayOutputStream output, 
 			final InventoryIdentifier id, final ConfigurationSection section) {
 		plugin.getLogger().log(Level.INFO, "savePlayer Async player data {0}", uuid);
-		invCache.remove(uuid); // So if it is loaded again it is recaught.
+		clearCache(uuid, id); // So if it is loaded again it is recaught.
 		isConnected();
 		
 		if (!getPlayerLock(uuid, id)) { // someone beat us to it?
@@ -536,7 +616,7 @@ public class DatabaseManager{
 	/**
 	 * This loadPlayerData ignores any data locks. PLEASE USE WITH CARE. Calls to this method might return old data!
 	 * 
-	 * This method _consumes_ from the cache but never adds to it.
+	 * This method _reads_ from the cache and _updates_ the cache if nothing previously cached
 	 * 
 	 * @param uuid
 	 * @param id
@@ -544,14 +624,15 @@ public class DatabaseManager{
 	 */
 	public ByteArrayInputStream loadPlayerData(UUID uuid, InventoryIdentifier id){
 		// Here we had it caches before hand so no need to load it again.
-		if (invCache.containsKey(uuid)) {
+		byte[] bais = queryCache(uuid, id);
+		if (bais != null) {
 			plugin.getLogger().log(Level.INFO, "Getting player data sync from cache for {0}", uuid);
-			byte[] bais = invCache.remove(uuid);
 			return new ByteArrayInputStream(bais);
 		}
 			
 		plugin.getLogger().log(Level.INFO, "IGNORING LOCKS: Getting player data sync for {0}", uuid);
-		byte[] bais = doLoadPlayerData(uuid, id);
+		bais = doLoadPlayerData(uuid, id);
+		updateCache(uuid, id, bais);
 		plugin.getLogger().log(Level.INFO, "IGNORING LOCKS: Done getting player data sync for {0}", uuid);
 		return new ByteArrayInputStream(bais);
 	}
@@ -611,9 +692,10 @@ public class DatabaseManager{
 	 * @return
 	 */
 	public Future<ByteArrayInputStream> loadPlayerDataAsync(final UUID uuid, final InventoryIdentifier id) {
-		if (invCache.containsKey(uuid)) {
+		byte[] bais = queryCache(uuid, id);
+		if (bais != null) {
 			plugin.getLogger().log(Level.INFO, "Getting player data async from cache for {0}", uuid);
-			final byte[] baisPIT = invCache.remove(uuid);
+			final byte[] baisPIT = bais;
 			return new Future<ByteArrayInputStream>() {
 				byte[] bais = baisPIT;
 
@@ -657,7 +739,7 @@ public class DatabaseManager{
 						 * far superior to previous.
 						 */ 
 						byte[] bais = doLoadPlayerData(uuid, id);
-						invCache.put(uuid, bais);
+						updateCache(uuid, id, bais);
 						plugin.getLogger().log(Level.INFO, "Done getting player data async for {0}", uuid);
 						return new ByteArrayInputStream(bais);
 					}
@@ -793,7 +875,7 @@ public class DatabaseManager{
 
 	public void removePlayerData(UUID uuid, InventoryIdentifier id) {
 		isConnected();
-		if (invCache.contains(uuid)) {
+		clearCache(uuid, id);
 		PreparedStatement removePlayerData = db.prepareStatement(this.removePlayerData);
 		try {
 			removePlayerData.setString(1, uuid.toString());
