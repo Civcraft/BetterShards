@@ -30,8 +30,8 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	private DatabaseManager db = BetterShardsPlugin.getInstance().getDatabaseManager();
 	
 	private static CustomWorldNBTStorage storage;
-	private Map<UUID, InventoryIdentifier> invs = new HashMap<UUID, InventoryIdentifier>(); 
-	private Map<UUID, ConfigurationSection> sect = new HashMap<UUID, ConfigurationSection>();
+	private Map<UUID, InventoryIdentifier> invs = new ConcurrentHashMap<UUID, InventoryIdentifier>(); 
+	private Map<UUID, ConfigurationSection> sect = new ConcurrentHashMap<UUID, ConfigurationSection>();
 	private Logger logger = BetterShardsPlugin.getInstance().getLogger();
 
 	public CustomWorldNBTStorage(File file, String s, boolean flag) {

@@ -54,9 +54,9 @@ public class DatabaseManager{
 	private Config config;
 	private Database db;
 	
-	private Map<UUID, Map<InventoryIdentifier, byte[]>> invCache = new ConcurrentHashMap<UUID, Map<InventoryIdentifier, byte[]>>();
-	private Map<UUID, Long> invCacheFreshness = new ConcurrentHashMap<UUID, Long>();
-	private long invCacheTimeout = 30 * 1000; // how long does a cached inventory stick around?
+	private Map<UUID, Map<InventoryIdentifier, byte[]>> invCache = new HashMap<UUID, Map<InventoryIdentifier, byte[]>>();
+	private Map<UUID, Long> invCacheFreshness = new HashMap<UUID, Long>();
+	private long invCacheTimeout = 30000; // how long does a cached inventory stick around?
 
 	/**
 	 * Threadsafe accessor for the inventory cache. Respects the cache timeout; old caches are discarded, not returned.
@@ -608,9 +608,9 @@ public class DatabaseManager{
 			}
 		});
 	}
-
+	
 	public void clearPrefetch(UUID uuid, InventoryIdentifier id) {
-		invCache.remove(uuid);
+		clearCache(uuid, id);
 	}
 
 	/**
