@@ -15,7 +15,8 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -57,6 +58,7 @@ public class DatabaseManager{
 	private Map<UUID, Map<InventoryIdentifier, byte[]>> invCache = new HashMap<UUID, Map<InventoryIdentifier, byte[]>>();
 	private Map<UUID, Long> invCacheFreshness = new HashMap<UUID, Long>();
 	private long invCacheTimeout = 30000; // how long does a cached inventory stick around?
+	private ExecutorService executor = Executors.newSingleThreadExecutor();
 
 	/**
 	 * Threadsafe accessor for the inventory cache. Respects the cache timeout; old caches are discarded, not returned.
@@ -504,7 +506,6 @@ public class DatabaseManager{
 			ConfigurationSection section) {
 		plugin.getLogger().log(Level.INFO, "savePlayer Sync player data {0}", uuid);
 		isConnected();
-		clearCache(uuid, id); // So if it is loaded again it is recaught.
 		
 		/*
 		 * Some notes. 
@@ -523,6 +524,7 @@ public class DatabaseManager{
 			plugin.getLogger().log(Level.SEVERE, "Unable to grab rowlock for save of {0}, some other server is saving at the same time as me.", uuid);
 			return;
 		}
+		clearCache(uuid, id); // So if it is loaded again it is recaught.
 
 		doSavePlayerData(uuid, output, id, section);
 	}
@@ -593,16 +595,16 @@ public class DatabaseManager{
 	public void savePlayerDataAsync(final UUID uuid, final ByteArrayOutputStream output, 
 			final InventoryIdentifier id, final ConfigurationSection section) {
 		plugin.getLogger().log(Level.INFO, "savePlayer Async player data {0}", uuid);
-		clearCache(uuid, id); // So if it is loaded again it is recaught.
 		isConnected();
 		
 		if (!getPlayerLock(uuid, id)) { // someone beat us to it?
 			plugin.getLogger().log(Level.SEVERE, "Unable to grab rowlock for save of {0}, some other server or process is saving at the same time as me.", uuid);
 			return;
 		}
+		clearCache(uuid, id); // So if it is loaded again it is recaught.
 
 		// So, we get the lock synchronously, then do our save asynch. When done, we end.
-		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+		executor.submit( new Runnable() {
 			public void run() {
 				doSavePlayerData(uuid, output, id, section);
 			}
@@ -720,8 +722,7 @@ public class DatabaseManager{
 			};
 		}
 		
-		FutureTask<ByteArrayInputStream> todo = new FutureTask<ByteArrayInputStream>(
-				new Callable<ByteArrayInputStream>(){
+		return executor.submit( new Callable<ByteArrayInputStream>(){
 
 					@Override
 					public ByteArrayInputStream call() throws Exception {
@@ -743,12 +744,8 @@ public class DatabaseManager{
 						plugin.getLogger().log(Level.INFO, "Done getting player data async for {0}", uuid);
 						return new ByteArrayInputStream(bais);
 					}
-				}	
+				}
 			);
-		
-		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, todo);
-		
-		return todo;
 	}
 
 	
