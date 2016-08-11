@@ -23,6 +23,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Logger;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -173,9 +174,11 @@ public class DatabaseManager{
 	
 	private BukkitTask lockCleanup;
 	
+	private Logger logger;
 
 	public DatabaseManager(){
 		config = plugin.GetConfig();
+		logger = plugin.getLogger();
 		if (!isValidConnection())
 			return;
 		loadPreparedStatements();
@@ -288,8 +291,7 @@ public class DatabaseManager{
 				return 0;
 			return set.getInt("db_version");
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Check Version DB failure: ", e);
 		}
 		return 0;
 	}
@@ -302,8 +304,7 @@ public class DatabaseManager{
 			updateVersion.setString(2, sdf.format(new Date()));
 			updateVersion.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Update Version DB failure: ", e);
 		}
 		return ++version;
 	}
@@ -407,7 +408,7 @@ public class DatabaseManager{
 			}
 			addPortalLoc.execute();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Add Portal DB failure: ", e);
 		} finally {
 			try {
 				addPortalLoc.close();
@@ -439,8 +440,7 @@ public class DatabaseManager{
 			addPortalData.setString(4, name);
 			addPortalData.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Add Portal Data DB failure: ", e);
 		} finally {
 			try {
 				addPortalData.close();
@@ -461,7 +461,8 @@ public class DatabaseManager{
 		} catch (SQLException nolockforyou) {
 			// TODO ideally only return false for known duplicate key failure error; otherwise raise holy hell.
 			if (config.get("locks.show_culprit").getBool()) {
-				nolockforyou.printStackTrace(); // Who is responsible for this expected travesty
+				// Who is responsible for this expected travesty
+				logger.log(Level.WARNING, "Someone wanted a save-lock but was late to the party: ", nolockforyou);
 			}
 			return false;
 		}
@@ -475,7 +476,7 @@ public class DatabaseManager{
 			return releaseLock.executeUpdate() > 0;
 		} catch (SQLException nolockforyou) {
 			plugin.getLogger().log(Level.INFO, "Unable to release lock for {0}, please investigate", uuid);
-			nolockforyou.printStackTrace();
+			plugin.getLogger().log(Level.INFO, "Unable to release lock, exception: ", nolockforyou);
 			return false;
 		}
 	}
@@ -488,7 +489,7 @@ public class DatabaseManager{
 			return rs.first();
 		} catch (SQLException se) {
 			plugin.getLogger().log(Level.INFO, "Could not check on lock for {0}, please investigate", uuid);
-			se.printStackTrace();
+			plugin.getLogger().log(Level.INFO, "Unable to check lock, exception: ", se);
 			return true;
 		}
 	}
@@ -504,7 +505,7 @@ public class DatabaseManager{
 	 */
 	public void savePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
 			ConfigurationSection section) {
-		plugin.getLogger().log(Level.INFO, "savePlayer Sync player data {0}", uuid);
+		logger.log(Level.FINER, "savePlayer Sync player data {0}", uuid);
 		isConnected();
 		
 		/*
@@ -521,7 +522,8 @@ public class DatabaseManager{
 		 * that should never occur but _if_ we externalize the lock, we can find it.
 		 */
 		if (!getPlayerLock(uuid, id)) { // someone beat us to it?
-			plugin.getLogger().log(Level.SEVERE, "Unable to grab rowlock for save of {0}, some other server is saving at the same time as me.", uuid);
+			logger.log(Level.WARNING, "Unable to grab rowlock for save of {0}, another process or server is saving at the same time as me.", uuid);
+			shortTrace();
 			return;
 		}
 		clearCache(uuid, id); // So if it is loaded again it is recaught.
@@ -538,7 +540,7 @@ public class DatabaseManager{
 	 */
 	private void doSavePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
 			ConfigurationSection section) {
-		plugin.getLogger().log(Level.INFO, "doSave player data {0}", uuid);
+		plugin.getLogger().log(Level.FINER, "doSave player data {0}", uuid);
 		PreparedStatement insertPlayerDataPS = null;
 		try {
 			insertPlayerDataPS = db.prepareStatement(insertPlayerData);
@@ -566,18 +568,20 @@ public class DatabaseManager{
 			insertPlayerDataPS.execute();
 			updateCache(uuid, id, outputBytes);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to doSavePlayerData for {0}", uuid);
+			logger.log(Level.SEVERE, "Failed to doSavePlayerData exception:", e);
 		} catch (Exception ididntthinkofthis) {
-			ididntthinkofthis.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to doSavePlayerData for {0}", uuid);
+			logger.log(Level.SEVERE, "Failed to doSavePlayerData exception:", ididntthinkofthis);
 		} finally {
 			try {
 				insertPlayerDataPS.close();
 			} catch (Exception ex) {}
 			
 			if (!releasePlayerLock(uuid, id)) { // Both calling methods require release always, so we'll just do it here.
-				plugin.getLogger().log(Level.INFO, "Unable to release lock for {0}, lock is already released", uuid);
+				plugin.getLogger().log(Level.WARNING, "Unable to release lock for {0}, lock is already released", uuid);
 			} else {
-				plugin.getLogger().log(Level.INFO, "DONE doSave player data {0}", uuid);
+				plugin.getLogger().log(Level.FINER, "DONE doSave player data {0}", uuid);
 			}
 		}
 	}
@@ -594,11 +598,12 @@ public class DatabaseManager{
 	 */
 	public void savePlayerDataAsync(final UUID uuid, final ByteArrayOutputStream output, 
 			final InventoryIdentifier id, final ConfigurationSection section) {
-		plugin.getLogger().log(Level.INFO, "savePlayer Async player data {0}", uuid);
+		plugin.getLogger().log(Level.FINER, "savePlayer Async player data {0}", uuid);
 		isConnected();
 		
 		if (!getPlayerLock(uuid, id)) { // someone beat us to it?
-			plugin.getLogger().log(Level.SEVERE, "Unable to grab rowlock for save of {0}, some other server or process is saving at the same time as me.", uuid);
+			plugin.getLogger().log(Level.WARNING, "Unable to grab rowlock for save of {0}, some other server or process is saving at the same time as me.", uuid);
+			shortTrace();
 			return;
 		}
 		clearCache(uuid, id); // So if it is loaded again it is recaught.
@@ -628,14 +633,14 @@ public class DatabaseManager{
 		// Here we had it caches before hand so no need to load it again.
 		byte[] bais = queryCache(uuid, id);
 		if (bais != null) {
-			plugin.getLogger().log(Level.INFO, "Getting player data sync from cache for {0}", uuid);
+			plugin.getLogger().log(Level.FINER, "Getting player data sync from cache for {0}", uuid);
 			return new ByteArrayInputStream(bais);
 		}
 			
-		plugin.getLogger().log(Level.INFO, "IGNORING LOCKS: Getting player data sync for {0}", uuid);
+		plugin.getLogger().log(Level.FINER, "IGNORING LOCKS: Getting player data sync for {0}", uuid);
 		bais = doLoadPlayerData(uuid, id);
 		updateCache(uuid, id, bais);
-		plugin.getLogger().log(Level.INFO, "IGNORING LOCKS: Done getting player data sync for {0}", uuid);
+		plugin.getLogger().log(Level.FINER, "IGNORING LOCKS: Done getting player data sync for {0}", uuid);
 		return new ByteArrayInputStream(bais);
 	}
 	
@@ -663,10 +668,10 @@ public class DatabaseManager{
 			return set.getBytes("entity");			
 		} catch (SQLException e) {
 			plugin.getLogger().log(Level.SEVERE, "Error retrieving player data from database for {0}", uuid);
-			e.printStackTrace();
+			plugin.getLogger().log(Level.SEVERE, "Error retrieving player data from database exception:", e);
 		} catch (InvalidConfigurationException e) {
 			plugin.getLogger().log(Level.WARNING, "Configuration is invalid for {0}", uuid);
-			e.printStackTrace();
+			plugin.getLogger().log(Level.WARNING, "Configuration is invalid exception:", e);
 		} finally {
 			try {
 				getPlayerData.close();
@@ -696,7 +701,7 @@ public class DatabaseManager{
 	public Future<ByteArrayInputStream> loadPlayerDataAsync(final UUID uuid, final InventoryIdentifier id) {
 		byte[] bais = queryCache(uuid, id);
 		if (bais != null) {
-			plugin.getLogger().log(Level.INFO, "Getting player data async from cache for {0}", uuid);
+			plugin.getLogger().log(Level.FINER, "Getting player data async from cache for {0}", uuid);
 			final byte[] baisPIT = bais;
 			return new Future<ByteArrayInputStream>() {
 				byte[] bais = baisPIT;
@@ -726,7 +731,7 @@ public class DatabaseManager{
 
 					@Override
 					public ByteArrayInputStream call() throws Exception {
-						plugin.getLogger().log(Level.INFO, "Getting player data async for {0}", uuid);
+						plugin.getLogger().log(Level.FINER, "Getting player data async for {0}", uuid);
 						long sleepSoFar = (long) (Math.random() * 10.0);
 						// basic spinlock.
 						while (isPlayerLocked(uuid, id)) {
@@ -741,7 +746,7 @@ public class DatabaseManager{
 						 */ 
 						byte[] bais = doLoadPlayerData(uuid, id);
 						updateCache(uuid, id, bais);
-						plugin.getLogger().log(Level.INFO, "Done getting player data async for {0}", uuid);
+						plugin.getLogger().log(Level.FINER, "Done getting player data async for {0}", uuid);
 						return new ByteArrayInputStream(bais);
 					}
 				}
@@ -778,8 +783,7 @@ public class DatabaseManager{
 					portals.add(p);
 				}
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.log(Level.SEVERE, "Failed to getAllPortalsByWorld, exception:", e);
 			} finally {
 				try {
 					if (getPortalLocation != null) {
@@ -821,8 +825,8 @@ public class DatabaseManager{
 			
 			return getPortalData(name, first, second);
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to getPortal for {0}", name);
+			logger.log(Level.SEVERE, "Failed to getPortal, exception:", e);
 		} finally {
 			try {
 				getPortalData.close();
@@ -860,8 +864,8 @@ public class DatabaseManager{
 				return null;
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to getPortalData for {0}", name);
+			logger.log(Level.SEVERE, "Failed to getPortalData, exception:", e);
 		} finally {
 			try {
 				getPortalData.close();
@@ -879,8 +883,8 @@ public class DatabaseManager{
 			removePlayerData.setInt(2, id.ordinal());
 			removePlayerData.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removePlayerData, uuid: {0} id: {1}", new Object[]{uuid, id});
+			logger.log(Level.SEVERE, "Failed to removePlayerData, exception:", e);
 		} finally {
 			try {
 				removePlayerData.close();
@@ -895,8 +899,7 @@ public class DatabaseManager{
 			removePortalLoc.setString(1, p.getName());
 			removePortalLoc.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removePortalLoc, exception:", e);
 		} finally {
 			try {
 				removePortalLoc.close();
@@ -911,8 +914,7 @@ public class DatabaseManager{
 			removePortalData.setString(1, p.getName());
 			removePortalData.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removePortalData, exception:", e);
 		} finally {
 			try {
 				removePortalData.close();
@@ -931,8 +933,7 @@ public class DatabaseManager{
 			updatePortalData.setString(2, p.getName());
 			updatePortalData.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to updatePortalData, exception:", e);
 		} finally {
 			try {
 				updatePortalData.close();
@@ -951,8 +952,8 @@ public class DatabaseManager{
 			addExclude.setString(1, server);
 			addExclude.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	 		logger.log(Level.SEVERE, "Failed to addExclude for {0}", server);
+	 		logger.log(Level.SEVERE, "Failed to addExclude, exception:", e);
 		} finally {
 			try {
 				addExclude.close();
@@ -984,8 +985,7 @@ public class DatabaseManager{
 				result.add(set.getString("name"));
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to retrieveAllExcludeFromDb, exception:", e);
 		} finally {
 			try {
 				getAllExclude.close();
@@ -1004,8 +1004,8 @@ public class DatabaseManager{
 			removeExclude.setString(1, server);
 			removeExclude.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removeExclude for {0}", server);
+			logger.log(Level.SEVERE, "Failed to removeExclude, exception:", e);
 		} finally {
 			try {
 				removeExclude.close();
@@ -1025,8 +1025,8 @@ public class DatabaseManager{
 			addPriority.setInt(2, populationCap);
 			addPriority.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to addPriorityServer {0}", server);
+			logger.log(Level.SEVERE, "Failed to addPriorityServer, exception:", e);
 		} finally {
 			try {
 				addPriority.close();
@@ -1059,8 +1059,7 @@ public class DatabaseManager{
 				result.put(server, new PriorityInfo(server, set.getInt("cap")));
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to retrieveAllPriorityFromDb, exception:", e);
 		} finally {
 			try {
 				getAllPriority.close();
@@ -1079,8 +1078,8 @@ public class DatabaseManager{
 			removePriority.setString(1, server);
 			removePriority.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removePriorityServer {0}", server);
+			logger.log(Level.SEVERE, "Failed to removePriorityServer, exception:", e);
 		} finally {
 			try {
 				removePriority.close();
@@ -1101,8 +1100,7 @@ public class DatabaseManager{
 			addBedLocation.setInt(6, info.getZ());
 			addBedLocation.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to addBedLocation, exception:", e);
 		} finally {
 			try {
 				addBedLocation.close();
@@ -1128,8 +1126,7 @@ public class DatabaseManager{
 				beds.add(bed);
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to getAllBedLocations, exception:", e);
 		} finally {
 			try {
 				getAllBedLocation.close();
@@ -1145,12 +1142,26 @@ public class DatabaseManager{
 			removeBedLocation.setString(1, uuid.toString());
 			removeBedLocation.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removeBed for {0}", uuid);
+			logger.log(Level.SEVERE, "Failed to removeBed, exception:", e);
 		} finally {
 			try {
 				removeBedLocation.close();
 			} catch (Exception ex) {}
 		}
 	}
+
+	private void shortTrace() {
+		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
+		if (ste.length < 2) return;
+
+		StringBuffer sb = new StringBuffer();
+		sb.append(ste[1].toString());
+		for (int i = 2; i < Math.min(5, ste.length); i++) {
+			sb.append("\n").append(ste[i].toString());
+		}
+
+		logger.log(Level.INFO, "Short Traceback: \n {0}", sb);
+	}
+
 }
