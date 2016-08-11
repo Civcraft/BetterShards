@@ -21,6 +21,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
@@ -87,11 +88,6 @@ public class BetterShardsListener implements Listener{
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void playerPreLoginCacheInv(AsyncPlayerPreLoginEvent event) {
 		UUID uuid = event.getUniqueId();
-		if (uuid != null) {
-			plugin.getLogger().log(Level.SEVERE, "Preparing to pre-load the player's data: {0}", uuid);
-		} else { 
-			return;
-		}
 		if (st == null){ // Small race condition if someone logs on as soon as the server starts.
 			event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, "Please try to log in again in a moment, server is not ready to accept log-ins.");
 			plugin.getLogger().log(Level.INFO, "Player {0} logged on before async process was ready, skipping.", uuid);
@@ -296,7 +292,18 @@ public class BetterShardsListener implements Listener{
 	public void bedBreak(BlockBreakEvent event) {
 		if (config.get("lobby").getBool())
 			return;
-		Block b = event.getBlock();
+		bedBreak(event.getBlock());
+	}
+	
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void bedBreakExplosion(BlockExplodeEvent event) {
+		if (config.get("lobby").getBool())
+			return;
+		for (Block b : event.blockList())
+			bedBreak(b);
+	}
+	
+	private void bedBreak(Block b) {
 		if (b.getType() != Material.BED_BLOCK) 
 			return;
 		Block real = getRealFace(b);
