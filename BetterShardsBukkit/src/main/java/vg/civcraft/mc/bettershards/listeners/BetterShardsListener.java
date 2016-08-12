@@ -21,6 +21,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
@@ -302,7 +303,18 @@ public class BetterShardsListener implements Listener{
 	public void bedBreak(BlockBreakEvent event) {
 		if (config.get("lobby").getBool())
 			return;
-		Block b = event.getBlock();
+		bedBreak(event.getBlock());
+	}
+	
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void bedBreakExplosion(BlockExplodeEvent event) {
+		if (config.get("lobby").getBool())
+			return;
+		for (Block b : event.blockList())
+			bedBreak(b);
+	}
+	
+	private void bedBreak(Block b) {
 		if (b.getType() != Material.BED_BLOCK) 
 			return;
 		Block real = getRealFace(b);
