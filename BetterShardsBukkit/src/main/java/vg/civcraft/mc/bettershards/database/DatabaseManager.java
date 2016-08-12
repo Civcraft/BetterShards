@@ -206,7 +206,9 @@ public class DatabaseManager{
 	}
 	
 	public void cleanup() {
-		lockCleanup.cancel();
+		if (lockCleanup != null) {
+			lockCleanup.cancel();
+		}
 	}
 	
 	@CivConfigs({
