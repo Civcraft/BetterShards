@@ -88,7 +88,7 @@ public class BetterShardsListener implements Listener{
 	public void playerPreLoginCacheInv(AsyncPlayerPreLoginEvent event) {
 		UUID uuid = event.getUniqueId();
 		if (uuid != null) {
-			plugin.getLogger().log(Level.INFO, "Preparing to pre-load player data: {0}", uuid);
+			plugin.getLogger().log(Level.FINER, "Preparing to pre-load player data: {0}", uuid);
 		} else { 
 			return;
 		}
@@ -104,7 +104,7 @@ public class BetterShardsListener implements Listener{
 			if (after == null) {
 				plugin.getLogger().log(Level.INFO, "Pre-load for player data {0} came back empty. New player? Error?", uuid);
 			} else {
-				plugin.getLogger().log(Level.INFO, "Pre-load for player data {0} complete.", uuid);
+				plugin.getLogger().log(Level.FINER, "Pre-load for player data {0} complete.", uuid);
 			}
 			
 		} catch (InterruptedException | ExecutionException e) {
