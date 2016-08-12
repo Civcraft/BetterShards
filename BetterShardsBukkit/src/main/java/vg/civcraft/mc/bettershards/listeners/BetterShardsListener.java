@@ -322,7 +322,10 @@ public class BetterShardsListener implements Listener{
 	public void pistonDestroyBed(BlockPistonExtendEvent e) {
 		if (config.get("lobby").getBool()) 
 			return;
-		bedBreak(event.getBlock());
+		bedBreak(e.getBlock());
+		for(Block b : e.getBlocks()) {
+			bedBreak(b);
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
