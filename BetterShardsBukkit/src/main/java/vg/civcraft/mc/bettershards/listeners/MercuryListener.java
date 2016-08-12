@@ -3,12 +3,15 @@ package vg.civcraft.mc.bettershards.listeners;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.PortalsManager;
@@ -72,6 +75,9 @@ public class MercuryListener implements Listener{
 						if (targetLoc == null) {
 							targetLoc = portal.findSpawnLocation();
 							//just randomize it
+							plugin.getLogger().log(Level.INFO,
+									"No known portal handler for {0}, sending player {1} to {2} instead",
+									new Object[]{p, uuid, targetLoc});
 						}
 						uuids.put(uuid, targetLoc);
 					}
@@ -82,7 +88,7 @@ public class MercuryListener implements Listener{
 							Player targetPlayer = Bukkit.getPlayer(UUID.fromString(content[3]));
 							loc = targetPlayer.getLocation();
 						} else if(content.length == 6){ //use default overworld
-								loc = new Location(Bukkit.getWorlds().get(0), Integer.parseInt(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]));
+							loc = new Location(Bukkit.getWorlds().get(0), Integer.parseInt(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]));
 						} else if(content.length == 7){
 							loc = new Location(Bukkit.getWorld(content[3]), Integer.parseInt(content[4]), Integer.parseInt(content[5]), Integer.parseInt(content[6]));
 						}
@@ -102,12 +108,15 @@ public class MercuryListener implements Listener{
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
+							plugin.getLogger().log(Level.INFO, "Connect received from Mercury, letting randomspawn happen while waiting for connect for {0}",
+									content[2]);
 						}
 					}
 					
 					Player p = Bukkit.getPlayer(uuid);
 					if (p != null){
 						Location loc = getTeleportLocation(uuid);
+						plugin.getLogger().log(Level.INFO, "Sending player {0} to location: {1}", new Object[] { uuid, loc });
 						PlayerArrivedChangeServerEvent event = new PlayerArrivedChangeServerEvent(p, loc);
 						Bukkit.getPluginManager().callEvent(event);
 						loc = event.getLocation();

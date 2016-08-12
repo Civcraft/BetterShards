@@ -199,8 +199,10 @@ public class BetterShardsPlugin extends ACivMod{
 		if (combatManager.isCombatTagNPC(p)) 
 			return false;
 		combatManager.unCombatTag(p);
-		if (p.isInsideVehicle())
+		if (p.isInsideVehicle()) {
+			plugin.getLogger().log(Level.INFO, "During BetterShards teleport, removing player {0} from vehicle", p.getUniqueId());
 			p.getVehicle().eject();
+		}
 		if (p.isDead()) {
 			throw new PlayerStillDeadException();
 		}
