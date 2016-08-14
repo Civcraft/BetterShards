@@ -44,7 +44,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	public void save(EntityHuman entityhuman) {
 		try {
 			UUID uuid = entityhuman.getUniqueID();
-			logger.log(Level.FINER, "EntityHuman]* Save player data for {0}", uuid);
+			logger.log(Level.INFO, "EntityHuman]* Save player data for {0}", uuid);
 			
 			NBTTagCompound nbttagcompound = new NBTTagCompound();
 
@@ -62,7 +62,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	
 	public void save(NBTTagCompound nbttagcompound, UUID uuid) {
 		try {
-			logger.log(Level.FINER, "NBTTagCompound,UUID] Save player data for {0}", uuid);
+			logger.log(Level.INFO, "NBTTagCompound,UUID] Save player data for {0}", uuid);
 
 			//logInventory(nbttagcompound);
 			ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -80,7 +80,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 		NBTTagCompound nbttagcompound = null;
 		try {
 			UUID uuid = entityhuman.getUniqueID();
-			logger.log(Level.FINER, "EntityHuman]* Load for {0}", uuid);
+			logger.log(Level.INFO, "EntityHuman]* Load for {0}", uuid);
 
 			ByteArrayInputStream input = db.loadPlayerData(uuid, getInvIdentifier(uuid));
 
@@ -110,7 +110,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	public NBTTagCompound getPlayerData(String s) {
 		try {
 			UUID uuid = UUID.fromString(s);
-			logger.log(Level.FINER, "String]* get / load for " + uuid);
+			logger.log(Level.INFO, "String]* get / load for " + uuid);
 			
 			ByteArrayInputStream input = db.loadPlayerData(uuid, getInvIdentifier(uuid));
 			NBTTagCompound nbttagcompound = NBTCompressedStreamTools.a(input);
@@ -125,7 +125,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 
 	public NBTTagCompound getPlayerData(UUID uuid) {
 		try {
-			logger.log(Level.FINER, "UUID] Get / Load player data for {0}", uuid);
+			logger.log(Level.INFO, "UUID] Get / Load player data for {0}", uuid);
 			
 			ByteArrayInputStream input = db.loadPlayerDataAsync(uuid, getInvIdentifier(uuid)).get();
 			NBTTagCompound nbttagcompound = NBTCompressedStreamTools.a(input);
@@ -141,7 +141,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	
 	public void load(Player p, InventoryIdentifier iden) {
 		UUID uuid = p.getUniqueId();
-		logger.log(Level.FINER, "Player,InvIdent] Load player data for {0}", uuid);
+		logger.log(Level.INFO, "Player,InvIdent] Load player data for {0}", uuid);
 		
 		CraftPlayer cPlayer = (CraftPlayer) p;
 		
@@ -168,7 +168,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	
 	public void save(Player p, InventoryIdentifier iden, boolean async) {
 		UUID uuid = p.getUniqueId();
-		logger.log(Level.FINER, "Player,InvIdent,bool] Save player data for {0}", uuid);
+		logger.log(Level.INFO, "Player,InvIdent,bool] Save player data for {0}", uuid);
 		
 		CraftPlayer cPlayer = (CraftPlayer) p;
 		
@@ -199,7 +199,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	}
 	
 	public void save(UUID uuid, NBTTagCompound nbttagcompound, InventoryIdentifier iden, boolean async) {
-		logger.log(Level.FINER, "UUID,NBTTagCompound,InvIdent,bool] Save player data for {0}", uuid);
+		logger.log(Level.INFO, "UUID,NBTTagCompound,InvIdent,bool] Save player data for {0}", uuid);
 		
 		//logInventory(nbttagcompound);
 		ByteArrayOutputStream output = new ByteArrayOutputStream();

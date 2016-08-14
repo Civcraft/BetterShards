@@ -89,7 +89,7 @@ public class BetterShardsListener implements Listener{
 	public void playerPreLoginCacheInv(AsyncPlayerPreLoginEvent event) {
 		UUID uuid = event.getUniqueId();
 		if (uuid != null) {
-			plugin.getLogger().log(Level.FINER, "Preparing to pre-load player data: {0}", uuid);
+			plugin.getLogger().log(Level.INFO, "Preparing to pre-load player data: {0}", uuid);
 		} else { 
 			return;
 		}
@@ -98,6 +98,14 @@ public class BetterShardsListener implements Listener{
 			plugin.getLogger().log(Level.INFO, "Player {0} logged on before async process was ready, skipping.", uuid);
 			return;
 		}
+		// So we're having all kinds of synchronization problems, lets just wait a moment.
+		try {
+			plugin.getLogger().log(Level.INFO, "Rest player {0}", uuid);
+			Thread.sleep(4000l);
+		} catch(InterruptedException ie) {
+			plugin.getLogger().log(Level.INFO, "Player {0} done resting", uuid);
+		}
+		
 		Future<ByteArrayInputStream> soondata = db.loadPlayerDataAsync(uuid, st.getInvIdentifier(uuid)); // wedon't use the data, but know that it caches behind the scenes.
 		
 		try {
@@ -105,7 +113,7 @@ public class BetterShardsListener implements Listener{
 			if (after == null) {
 				plugin.getLogger().log(Level.INFO, "Pre-load for player data {0} came back empty. New player? Error?", uuid);
 			} else {
-				plugin.getLogger().log(Level.FINER, "Pre-load for player data {0} complete.", uuid);
+				plugin.getLogger().log(Level.INFO, "Pre-load for player data {0} complete.", uuid);
 			}
 			
 		} catch (InterruptedException | ExecutionException e) {
@@ -115,6 +123,11 @@ public class BetterShardsListener implements Listener{
 		
 		// We do this so it fetches the cache, then when called for real
 		// by our CustomWorldNBTStorage class it doesn't have to wait and server won't lock.
+	}
+	
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void playerJoinEventLow(PlayerJoinEvent event) {
+		plugin.getLogger().log(Level.INFO, "Preparing to join player: {0}", event.getPlayer().getUniqueId());
 	}
 
 	@CivConfig(name = "lobby", def = "false", type = CivConfigType.Bool)
