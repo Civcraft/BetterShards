@@ -6,7 +6,7 @@
 	<groupId>vg.civcraft.mc.bettershards</groupId>
 	<artifactId>BetterShardsParent</artifactId>
 	<packaging>pom</packaging>
-	<version>1.4.44</version>
+	<version>1.4.45</version>
 	<name>BetterShards</name>
 	<url>https://github.com/Civcraft/BetterShards/</url>
 

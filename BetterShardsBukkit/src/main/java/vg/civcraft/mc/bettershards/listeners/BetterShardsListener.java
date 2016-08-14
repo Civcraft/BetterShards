@@ -157,7 +157,7 @@ public class BetterShardsListener implements Listener{
 		Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
 		db.playerQuitServer(uuid);
-		st.save(p, st.getInvIdentifier(uuid), true);
+		//st.save(p, st.getInvIdentifier(uuid), true);// eliminate low-order save which is causing some issues.
 	}
 	
 	//without this method players are able to detect who is in their shard as 
