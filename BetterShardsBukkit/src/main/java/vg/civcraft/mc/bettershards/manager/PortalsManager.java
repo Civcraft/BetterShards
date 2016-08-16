@@ -165,11 +165,11 @@ public class PortalsManager {
 	        @Override
 	        public void run() {
 	    	for(Portal portal : portals.values()) {
-	    	    if (!portal.isOnCurrentServer()) {
-	    		continue;
+	    	    if (!portal.isOnCurrentServer() || portal.getPartnerPortal() == null) {
+	    	    	continue;
 	    	    }
 	    	    for(Player p : Bukkit.getOnlinePlayers()) {
-	    		portal.showParticles(p);
+	    	    	portal.showParticles(p);
 	    	    }
 	    	}
 	        }
