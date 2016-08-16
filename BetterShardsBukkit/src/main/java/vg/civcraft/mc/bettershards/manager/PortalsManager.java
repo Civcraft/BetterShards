@@ -1,4 +1,4 @@
-package vg.civcraft.mc.bettershards;
+package vg.civcraft.mc.bettershards.manager;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,22 +14,21 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class PortalsManager {
 
-	private DatabaseManager db = BetterShardsPlugin.getInstance().getDatabaseManager();
+	private DatabaseManager db = BetterShardsPlugin.getDatabaseManager();
 	private Map<String, Portal> portals;
 	private Map<UUID, Long> arrivedPlayers = new ConcurrentHashMap<UUID,Long>();
-	private MercuryManager mercManager;
 	private final long portalCoolDown = 10000L;  //10 seconds
 	
 	public PortalsManager() {
 		super();
 		portals = new HashMap<String, Portal>();
-		mercManager = BetterShardsPlugin.getMercuryManager();
 		registerParticleRunnable();
 	}
 	
@@ -49,7 +48,7 @@ public class PortalsManager {
 		deletePortalLocally(portal);
 		db.removePortalData(portal);
 		db.removePortalLoc(portal);
-		mercManager.sendPortalDelete(portal.getName());
+		MercuryManager.sendPortalDelete(portal.getName());
 	}
 	
 	public void deletePortalLocally(Portal portal) {

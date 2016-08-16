@@ -3,31 +3,46 @@ package vg.civcraft.mc.bettershards.misc;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.io.IOUtils;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.craftbukkit.v1_10_R1.CraftWorld;
 import org.bukkit.craftbukkit.v1_10_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
+import vg.civcraft.mc.civmodcore.annotations.CivConfig;
+import vg.civcraft.mc.civmodcore.annotations.CivConfigType;
 import net.minecraft.server.v1_10_R1.DataConverterManager;
 import net.minecraft.server.v1_10_R1.EntityHuman;
 import net.minecraft.server.v1_10_R1.EntityPlayer;
+import net.minecraft.server.v1_10_R1.IDataManager;
+import net.minecraft.server.v1_10_R1.MinecraftServer;
 import net.minecraft.server.v1_10_R1.NBTCompressedStreamTools;
 import net.minecraft.server.v1_10_R1.NBTTagCompound;
 import net.minecraft.server.v1_10_R1.ServerNBTManager;
+import net.minecraft.server.v1_10_R1.WorldNBTStorage;
+import net.minecraft.server.v1_10_R1.WorldServer;
 
 public class CustomWorldNBTStorage extends ServerNBTManager {
 
-	private DatabaseManager db = BetterShardsPlugin.getInstance().getDatabaseManager();
+	private DatabaseManager db;
 	
 	private static CustomWorldNBTStorage storage;
 	private Map<UUID, InventoryIdentifier> invs = new HashMap<UUID, InventoryIdentifier>(); 
@@ -36,6 +51,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 
 	public CustomWorldNBTStorage(File file, String s, boolean flag) {
 		super(file, s, flag, new DataConverterManager(0));
+		db = BetterShardsPlugin.getDatabaseManager();
 		storage = this;
 	}
 
@@ -269,8 +285,97 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 	public void setInventoryIdentifier(UUID uuid, InventoryIdentifier iden) {
 		invs.put(uuid, iden);
 	}
+	
+	/**
+	 * Only called when enabling the plugin to replace minecraft's internal player data handling with BetterShards'
+	 */
+	public static void setWorldNBTStorage() {
+		for (World w: Bukkit.getWorlds()) {
+			WorldServer nmsWorld = ((CraftWorld) w).getHandle();
+			Field fieldName;
+			try {
+				fieldName = net.minecraft.server.v1_10_R1.World.class.getDeclaredField("dataManager");
+				fieldName.setAccessible(true);
+				
+				IDataManager manager = nmsWorld.getDataManager();
+				
+				// Spigot has a file lock we want to try remove before invoking our own stuff.
+				WorldNBTStorage nbtManager = ((WorldNBTStorage) manager);
+				
+				try {
+					Field f = nbtManager.getClass().getSuperclass().getDeclaredField("sessionLock");
+					f.setAccessible(true);
+					FileLock sessionLock = (FileLock) f.get(nbtManager);
+					sessionLock.close();
+				} catch (Exception e) {
+				}
+				
+				CustomWorldNBTStorage newStorage = new CustomWorldNBTStorage(manager.getDirectory(), "", true);
+				setFinalStatic(fieldName, newStorage, nmsWorld);
+				
+				MinecraftServer.getServer().getPlayerList().playerFileData = newStorage;
+			} catch (NoSuchFieldException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private static void setFinalStatic(Field field, Object newValue, Object obj) {
+		try {
+			field.setAccessible(true);
 
-	private void logInventory(NBTTagCompound nbt) {
-		logger.log(Level.INFO, "Data as saved: {0} ", nbt.toString());
+			// remove final modifier from field
+			Field modifiersField;
+			modifiersField = Field.class.getDeclaredField("modifiers");
+			modifiersField.setAccessible(true);
+			modifiersField
+					.setInt(field, field.getModifiers() & ~Modifier.PROTECTED);
+			
+			field.set(obj, newValue);
+		} catch (NoSuchFieldException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@CivConfig(name = "import_playerdata", def = "false", type = CivConfigType.Bool)
+	public static void uploadExistingPlayers() {
+		if (!BetterShardsPlugin.getInstance().GetConfig().get("import_playerdata").getBool()) {
+			return;
+		}
+		for (World w: Bukkit.getWorlds()) {
+			WorldServer nmsWorld = ((CraftWorld) w).getHandle();
+			IDataManager data = nmsWorld.getDataManager();
+			String[] names = data.getPlayerFileData().getSeenPlayers();
+			for (String name: names) {
+				Bukkit.getLogger().log(Level.INFO, "Updating player " + name + " to mysql.");
+				try {
+					File file = new File(data.getDirectory() + File.separator + "playerdata", name + ".dat");
+					if (!file.exists())
+						continue;
+					InputStream stream = new FileInputStream(file);
+					
+					ByteArrayOutputStream output = new ByteArrayOutputStream();
+					output.write(IOUtils.toByteArray(stream));
+					// Now to run our custom mysql code
+					UUID uuid = UUID.fromString(name);
+					CustomWorldNBTStorage storage = getWorldNBTStorage();
+					BetterShardsPlugin.getDatabaseManager().savePlayerDataAsync(uuid, output, storage.getInvIdentifier(uuid), new YamlConfiguration());
+					file.delete();
+					stream.close();
+				} catch (Exception localException) {
+					localException.printStackTrace();
+				}
+			}
+		}
 	}
 }

@@ -6,9 +6,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
-import vg.civcraft.mc.bettershards.PortalsManager;
+import vg.civcraft.mc.bettershards.manager.PortalsManager;
 import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.misc.LocationWrapper;
 import vg.civcraft.mc.bettershards.misc.Grid.GridLocation;
@@ -20,13 +19,15 @@ import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 
 public class CreatePortal extends PlayerCommand {
 
-	private PortalsManager pm = BetterShardsAPI.getPortalsManager();
+	private PortalsManager pm;
+	
 	public CreatePortal(String name) {
 		super(name);
 		setIdentifier("bsc");
 		setDescription("Creates a portal from the selection made.");
 		setUsage("/bsc <name>, <PortalType>");
 		setArguments(1,2);
+		pm = BetterShardsPlugin.getPortalManager();
 	}
 
 	@Override
@@ -36,7 +37,7 @@ public class CreatePortal extends PlayerCommand {
 			return true;
 		}
 		Player p = (Player) sender;
-		Grid g = BetterShardsPlugin.getInstance().getPlayerGrid(p);
+		Grid g = Grid.getPlayerGrid(p);
 		if (g.getMissingSelection() == GridLocation.NOSELECTION) 
 			return sendPlayerMessage(p, ChatColor.RED + "You have not selected any points.", true);
 		else if (g.getMissingSelection() == GridLocation.RIGHTSELECTION)

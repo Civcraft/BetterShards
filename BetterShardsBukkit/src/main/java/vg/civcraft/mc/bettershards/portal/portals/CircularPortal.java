@@ -3,7 +3,6 @@ package vg.civcraft.mc.bettershards.portal.portals;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;

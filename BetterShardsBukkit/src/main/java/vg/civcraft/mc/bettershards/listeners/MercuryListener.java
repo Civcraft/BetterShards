@@ -14,12 +14,12 @@ import org.bukkit.event.Listener;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
-import vg.civcraft.mc.bettershards.PortalsManager;
 import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
+import vg.civcraft.mc.bettershards.manager.PortalsManager;
+import vg.civcraft.mc.bettershards.manager.RandomSpawnManager;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
-import vg.civcraft.mc.bettershards.misc.RandomSpawn;
 import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.bettershards.portal.portals.CircularPortal;
@@ -28,24 +28,30 @@ import vg.civcraft.mc.mercury.events.AsyncPluginBroadcastMessageEvent;
 
 public class MercuryListener implements Listener{
 	
-	private String c = "BetterShards";
-	private PortalsManager pm = BetterShardsAPI.getPortalsManager();
-	private BetterShardsPlugin plugin = BetterShardsPlugin.getInstance();
-	private RandomSpawn rs = BetterShardsPlugin.getRandomSpawn();
+	private String channelName = "BetterShards";
+	private PortalsManager portalManager;
+	private BetterShardsPlugin plugin;
+	private RandomSpawnManager randomSpawnManager;
 	
 	private static Map<UUID, Location> uuids = new ConcurrentHashMap<UUID, Location>();
+	
+	public MercuryListener() {
+		portalManager = BetterShardsPlugin.getPortalManager();
+		plugin = BetterShardsPlugin.getInstance();
+		randomSpawnManager = BetterShardsPlugin.getRandomSpawn();
+	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void asyncPluginBroadcastMessageEvent(AsyncPluginBroadcastMessageEvent event) {
 		String channel = event.getChannel();
-		if (!channel.equals(c))
+		if (!channel.equals(this.channelName))
 			return;
 		String message = event.getMessage();
 		final String[] content = message.split("\\|");
 		if (content[0].equals("delete")) {
-			Portal p = pm.getPortal(content[1]);
+			Portal p = portalManager.getPortal(content[1]);
 			if (p != null)
-				pm.deletePortalLocally(p);
+				portalManager.deletePortalLocally(p);
 		}
 		else if (content[0].equals("teleport")) {
 			Bukkit.getScheduler().runTask(BetterShardsPlugin.getInstance(), new Runnable() {
@@ -57,7 +63,7 @@ public class MercuryListener implements Listener{
 					if (action.equals("portal")) {
 						uuid = UUID.fromString(content[2]);
 						String p = content[3];
-						Portal portal = pm.getPortal(p);
+						Portal portal = portalManager.getPortal(p);
 						if (!portal.isOnCurrentServer())
 							return;
 						Location targetLoc = null;
@@ -133,23 +139,23 @@ public class MercuryListener implements Listener{
 				TeleportInfo info = new TeleportInfo(content[4], server, Integer.parseInt(content[5]), Integer.parseInt(content[6]),
 						Integer.parseInt(content[7]));
 				BedLocation bed = new BedLocation(uuid, info);
-				plugin.addBedLocation(uuid, bed);
+				BetterShardsPlugin.getBedManager().addBedLocation(uuid, bed);
 			}
 			else if (content[1].equals("remove")) {
 				UUID uuid = UUID.fromString(content[2]);
-				plugin.removeBed(uuid);
+				BetterShardsPlugin.getBedManager().removeBed(uuid);
 			}
 		}
 		else if (content[0].equals("portal")) {
 			if (content[1].equals("connect")) {
-				Portal p1 = pm.getPortal(content[2]);
-				Portal p2 = pm.getPortal(content[3]);
+				Portal p1 = portalManager.getPortal(content[2]);
+				Portal p2 = portalManager.getPortal(content[3]);
 				if (p1 == null || p2 == null)
 					return;
 				p1.setPartnerPortal(p2);
 			}
 			else if (content[1].equals("remove")) {
-				Portal p1 = pm.getPortal(content[2]);
+				Portal p1 = portalManager.getPortal(content[2]);
 				if (p1 == null)
 					return;
 				p1.setPartnerPortal(null);
@@ -158,13 +164,13 @@ public class MercuryListener implements Listener{
 		else if (content[0].equals("info")) {
 			if (content[1].equals("randomspawn")) {
 				if (content[2].equals("disable")) {
-					rs.setFirstJoin(true);
+					randomSpawnManager.setFirstJoin(true);
 				}
 			}
 		}
 		else if (content [0].equals("arrival")) {
 			UUID uuid = UUID.fromString(content [1]);
-			plugin.notifySuccessfullTransfer(uuid);
+			BetterShardsPlugin.getTransitManager().notifySuccessfullTransfer(uuid);
 		}
 	}
 	

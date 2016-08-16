@@ -39,17 +39,17 @@ import org.bukkit.util.Vector;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
-import vg.civcraft.mc.bettershards.PortalsManager;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
+import vg.civcraft.mc.bettershards.manager.PortalsManager;
+import vg.civcraft.mc.bettershards.manager.RandomSpawnManager;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
 import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
-import vg.civcraft.mc.bettershards.misc.RandomSpawn;
 import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.Config;
@@ -63,16 +63,14 @@ public class BetterShardsListener implements Listener{
 	private DatabaseManager db;
 	private Config config;
 	private PortalsManager pm;
-	private MercuryManager mercManager;
 	private CustomWorldNBTStorage st;
-	private RandomSpawn rs;
+	private RandomSpawnManager rs;
 	
 	public BetterShardsListener(){
 		plugin = BetterShardsPlugin.getInstance();
-		db = plugin.getDatabaseManager();
-		pm = plugin.getPortalManager();
+		db = BetterShardsPlugin.getDatabaseManager();
+		pm = BetterShardsPlugin.getPortalManager();
 		config = plugin.GetConfig();
-		mercManager = BetterShardsPlugin.getMercuryManager();
 		rs = BetterShardsPlugin.getRandomSpawn();
 		Bukkit.getScheduler().runTask(plugin, new Runnable() {
 
@@ -235,7 +233,7 @@ public class BetterShardsListener implements Listener{
 		Action a = event.getAction();
 		if ((a != Action.RIGHT_CLICK_BLOCK ||
 				a != Action.LEFT_CLICK_BLOCK) &&
-				(p.getItemInHand().getType() != Material.WATER_LILY) || 
+				(p.getInventory().getItemInMainHand().getType() != Material.WATER_LILY) || 
 				!(p.hasPermission("bettershards.build") || p.isOp()))
 			return;
 		Block block = event.getClickedBlock();
@@ -243,7 +241,7 @@ public class BetterShardsListener implements Listener{
 			return;
 		
 		Location loc = block.getLocation();
-		Grid g = plugin.getPlayerGrid(p);
+		Grid g = Grid.getPlayerGrid(p);
 		String message = ChatColor.YELLOW + "";
 		if (a == Action.LEFT_CLICK_BLOCK) {
 			g.setLeftClickLocation(loc);
@@ -264,7 +262,7 @@ public class BetterShardsListener implements Listener{
 			return;
 		final Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
-		final BedLocation bed = plugin.getBed(uuid);
+		final BedLocation bed = BetterShardsPlugin.getBedManager().getBed(uuid);
 		//if the player has no bed or an invalid bed location, we just want to randomspawn
 		//him. This needs to be delayed by 1 tick, because the respawn event has to complete first
 		if (bed == null || (bed.getServer() != null && bed.getServer().equals(MercuryAPI.serverName()) 
@@ -289,7 +287,7 @@ public class BetterShardsListener implements Listener{
 			@Override
 			public void run() {
 				//just a badly named method, this only sends a mercury message
-				mercManager.teleportPlayer(bed.getServer(), bed.getUUID(), teleportInfo);
+				MercuryManager.teleportPlayer(bed.getServer(), bed.getUUID(), teleportInfo);
 				try {
 					BetterShardsAPI.connectPlayer(p, bed.getServer(), PlayerChangeServerReason.BED);
 				} catch (PlayerStillDeadException e) {
@@ -309,7 +307,7 @@ public class BetterShardsListener implements Listener{
 			return;
 		Block real = getRealFace(b);
 		List<BedLocation> toBeRemoved = new ArrayList<BedLocation>();
-		for (BedLocation bed: plugin.getAllBeds()) {
+		for (BedLocation bed: BetterShardsPlugin.getBedManager().getAllBeds()) {
 			if (!bed.getServer().equals(MercuryAPI.serverName()))
 					continue;
 			TeleportInfo loc = new TeleportInfo(real.getWorld().getName(), bed.getServer(), real.getX(), real.getY(), real.getZ());
@@ -363,7 +361,7 @@ public class BetterShardsListener implements Listener{
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void playerDropItem(PlayerDropItemEvent event) {
 		Player player = event.getPlayer();
-		if(plugin.isPlayerInTransit(player.getUniqueId())) {
+		if(BetterShardsPlugin.getTransitManager().isPlayerInTransit(player.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}
@@ -373,7 +371,7 @@ public class BetterShardsListener implements Listener{
 		if (!(event.getEntity() instanceof Player))
 			return;
 		Player p = (Player) event.getEntity();
-		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}
@@ -391,7 +389,7 @@ public class BetterShardsListener implements Listener{
             return;
         }
 		Player p = (Player) event.getPlayer();
-		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}
@@ -399,7 +397,7 @@ public class BetterShardsListener implements Listener{
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void playerPickupEvent(PlayerPickupItemEvent event) {
 		Player p = (Player) event.getPlayer();
-		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}
@@ -407,7 +405,7 @@ public class BetterShardsListener implements Listener{
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void playerInteractEvent(PlayerInteractEvent event) {
 		Player p = (Player) event.getPlayer();
-		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}
@@ -415,7 +413,7 @@ public class BetterShardsListener implements Listener{
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void blockBreakEvent(BlockBreakEvent event) {
 		Player p = (Player) event.getPlayer();
-		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}
@@ -423,7 +421,7 @@ public class BetterShardsListener implements Listener{
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void blockPlaceEvent(BlockPlaceEvent event) {
 		Player p = (Player) event.getPlayer();
-		if (plugin.isPlayerInTransit(p.getUniqueId())) {
+		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}

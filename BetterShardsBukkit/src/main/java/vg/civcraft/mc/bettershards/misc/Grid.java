@@ -1,9 +1,27 @@
 package vg.civcraft.mc.bettershards.misc;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 public class Grid {
+	
+	private static Map<UUID, Grid> grids;
+	
+	public static Grid getPlayerGrid(Player p) {
+		if (grids == null) {
+			grids = new HashMap<UUID, Grid>();
+		}
+		Grid g = grids.get(p.getUniqueId());
+		if (g == null) {
+			g = new Grid(p, null, null);
+			grids.put(p.getUniqueId(), g);
+		}
+		return g;
+	}
 
 	private Player p;
 	private Location left;

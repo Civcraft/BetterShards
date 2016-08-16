@@ -19,7 +19,7 @@ import vg.civcraft.mc.mercury.MercuryAPI;
  */
 public class MercuryManager {
 
-	public MercuryManager() {
+	public static void initializeChannelsAndPing() {
 		registerMercuryChannels();
 		Bukkit.getScheduler().runTaskTimer(BetterShardsPlugin.getInstance(), new Runnable() {
 
