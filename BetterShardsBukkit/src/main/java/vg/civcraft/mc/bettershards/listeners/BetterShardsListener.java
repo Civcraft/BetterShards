@@ -99,12 +99,12 @@ public class BetterShardsListener implements Listener{
 			return;
 		}
 		// So we're having all kinds of synchronization problems, lets just wait a moment.
-		try {
+	/*	try {
 			plugin.getLogger().log(Level.INFO, "Rest player {0}", uuid);
 			Thread.sleep(4000l);
 		} catch(InterruptedException ie) {
 			plugin.getLogger().log(Level.INFO, "Player {0} done resting", uuid);
-		}
+		}*/
 		
 		Future<ByteArrayInputStream> soondata = db.loadPlayerDataAsync(uuid, st.getInvIdentifier(uuid)); // wedon't use the data, but know that it caches behind the scenes.
 		
