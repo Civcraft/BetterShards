@@ -41,7 +41,7 @@ public class MercuryManager {
 		}, 100, 100);
 	}
 
-	public void sendPortalDelete(String name) {
+	public static void sendPortalDelete(String name) {
 		MercuryAPI.sendGlobalMessage("delete|" + name, "BetterShards");
 	}
 
@@ -51,7 +51,7 @@ public class MercuryManager {
 	 * @param uuid
 	 * @param p
 	 */
-	public void teleportPlayer(UUID uuid, Portal p, Object ... data) {
+	public static void teleportPlayer(UUID uuid, Portal p, Object ... data) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("teleport|portal|" + uuid.toString() + "|" + p.getName());
 		for(Object o:data) {
@@ -65,54 +65,58 @@ public class MercuryManager {
 	 * Sends the info to servers that a player needs to be teleported.
 	 * @param info Use the TeleportInfo object.
 	 */
-	public void teleportPlayer(String server, UUID uuid, TeleportInfo info) {
+	public static void teleportPlayer(String server, UUID uuid, TeleportInfo info) {
 		MercuryAPI.sendMessage(server, "teleport|command|" + uuid.toString() + "|" + info , "BetterShards");
 	}
 	
-	public void teleportPlayer(String server, UUID playerToTeleportUUID, UUID targetPlayerUUID) {
+	public static void teleportPlayer(String server, UUID playerToTeleportUUID, UUID targetPlayerUUID) {
 		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + targetPlayerUUID , "BetterShards");
 	}
 	
-	public void teleportPlayer(String server, UUID playerToTeleportUUID, String x, String y, String z) {
+	public static void teleportPlayer(String server, UUID playerToTeleportUUID, String x, String y, String z) {
 		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + x + "|" + y +"|" + z , "BetterShards");
 	}
 	
-	public void teleportPlayer(String server, UUID playerToTeleportUUID, String x, String y, String z, String world) {
+	public static void teleportPlayer(String server, UUID playerToTeleportUUID, String x, String y, String z, String world) {
 		MercuryAPI.sendMessage(server, "teleport|command|" + playerToTeleportUUID + "|" + world + "|" + x + "|" + y +"|" + z, "BetterShards");
 	}
 
-	private void registerMercuryChannels() {
+	private static void registerMercuryChannels() {
 		MercuryAPI.addChannels("BetterShards");
 	}
 
-	public void sendBedLocation(BedLocation bed) {
+	public static void sendBedLocation(BedLocation bed) {
 		String info = bed.getUUID().toString() + "|" + bed.getServer() + "|" + bed.getTeleportInfo();
 		MercuryAPI.sendGlobalMessage("bed|add|" + info, "BetterShards");
 	}
 	
-	public void notifyRandomSpawn(String server, UUID player) {
+	public static void notifyRandomSpawn(String server, UUID player) {
 		MercuryAPI.sendMessage(server, "teleport|randomspawn|" + player.toString(), "BetterShards");
 	}
 
-	public void removeBedLocation(BedLocation bed) {
+	public static void removeBedLocation(BedLocation bed) {
 		MercuryAPI.sendGlobalMessage("bed|remove|" + bed.getUUID().toString(), "BetterShards");
 	}
 
-	public void sendBungeeUpdateMessage() {
+	public static void sendBungeeUpdateMessage() {
 		// Remove Server is just the message being sent.
 		// Bungee ends up calling the db to get all the update tables.
 		MercuryAPI.sendGlobalMessage("removeServer", "BetterShards");
 	}
 	
-	public void sendPortalJoin(Portal main, Portal con) {
+	public static void sendPortalJoin(Portal main, Portal con) {
 		MercuryAPI.sendGlobalMessage("portal|connect|"+main.getName()+"|"+con.getName(), "BetterShards");
 	}
 	
-	public void removePortalJoin(Portal main) {
+	public static void removePortalJoin(Portal main) {
 		MercuryAPI.sendGlobalMessage("portal|remove|"+main.getName(), "BetterShards");
 	}
 	
-	public void sendPlayerCount(int count) {
+	public static void sendPlayerCount(int count) {
 		MercuryAPI.sendGlobalMessage("count|" + count, "BetterShards");
+	}
+	
+	public static void notifyOfArrival(UUID player) {
+		MercuryAPI.sendGlobalMessage("arrival|" + player.toString(), "BetterShards");
 	}
 }

@@ -128,6 +128,8 @@ public class BetterShardsListener implements Listener{
 			rs.handleFirstJoin(event.getPlayer());
 			return;
 		}
+		//tell other server to remove player from transit
+		MercuryManager.notifyOfArrival(event.getPlayer().getUniqueId());
 		Location loc = MercuryListener.getTeleportLocation(event.getPlayer().getUniqueId());
 		if (loc == null)
 			return;

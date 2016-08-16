@@ -17,8 +17,6 @@ import java.util.logging.Level;
 
 import net.minecraft.server.v1_10_R1.IDataManager;
 import net.minecraft.server.v1_10_R1.MinecraftServer;
-import net.minecraft.server.v1_10_R1.NBTTagDouble;
-import net.minecraft.server.v1_10_R1.NBTTagList;
 import net.minecraft.server.v1_10_R1.WorldNBTStorage;
 import net.minecraft.server.v1_10_R1.WorldServer;
 
@@ -121,20 +119,6 @@ public class BetterShardsPlugin extends ACivMod{
 		*/
 	}
 	
-	private NBTTagList a(double... adouble) {
-        NBTTagList nbttaglist = new NBTTagList();
-        double[] adouble1 = adouble;
-        int i = adouble.length;
-
-        for (int j = 0; j < i; ++j) {
-            double d0 = adouble1[j];
-
-            nbttaglist.add(new NBTTagDouble(d0));
-        }
-
-        return nbttaglist;
-    }
-	
 	/**
 	 * @return Returns the instance of the JavaPlugin.
 	 */
@@ -150,20 +134,23 @@ public class BetterShardsPlugin extends ACivMod{
 
 			@Override
 			public void run() {
-				transit.remove(uuid);
-				Player player = Bukkit.getPlayer(uuid);
-				if (player != null && !player.isOnline()) {
+				if (isPlayerInTransit(uuid)) {
+					info(uuid + " failed to transit, was removed by timeout");
 					PlayerFailedToTransitEvent event = new PlayerFailedToTransitEvent(uuid, server);
-					Bukkit.getPluginManager().callEvent(event);
-				}
-				else {
-					PlayerEnsuredToTransitEvent event = new PlayerEnsuredToTransitEvent(uuid, server);
 					Bukkit.getPluginManager().callEvent(event);
 				}
 			}
 			
-		}, 20);
+		}, 600); //30 seconds timeout
 	}
+	
+	public void notifySuccessfullTransfer(UUID player) {
+		if (isPlayerInTransit(player)) {
+			//TODO Readd PlayerEnsuredToTransitEvent here
+			transit.remove(player);
+		}
+	}
+	
 	/**
 	 * Checks if a player is in transit.
 	 */
@@ -190,8 +177,9 @@ public class BetterShardsPlugin extends ACivMod{
 	 * @param server The server to teleport the player to.
 	 */
 	public boolean teleportPlayerToServer(Player p, String server, PlayerChangeServerReason reason) throws PlayerStillDeadException {
-		if (isPlayerInTransit(p.getUniqueId())) // Somehow this got triggered twice for one reason or another
+		if (isPlayerInTransit(p.getUniqueId())) { // Somehow this got triggered twice for one reason or another
 				return false; // We dont wan't to continue twice because it could cause issues with the db.
+		}
 		PlayerChangeServerEvent event = new PlayerChangeServerEvent(reason, p.getUniqueId(), server);
 		Bukkit.getPluginManager().callEvent(event);
 		if (event.isCancelled())

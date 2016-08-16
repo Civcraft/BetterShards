@@ -95,7 +95,7 @@ public class MercuryListener implements Listener{
 						uuids.put(uuid, loc);
 					}
 					else if (action.equals("randomspawn")) {
-						Location loc = plugin.getRandomSpawn().getLocation();
+						Location loc = BetterShardsPlugin.getRandomSpawn().getLocation();
 						uuid =UUID.fromString(content[2]);		
 						uuids.put(uuid, loc);
 					}
@@ -161,6 +161,10 @@ public class MercuryListener implements Listener{
 					rs.setFirstJoin(true);
 				}
 			}
+		}
+		else if (content [0].equals("arrival")) {
+			UUID uuid = UUID.fromString(content [1]);
+			plugin.notifySuccessfullTransfer(uuid);
 		}
 	}
 	
