@@ -116,7 +116,17 @@ public class MercuryManager {
 		MercuryAPI.sendGlobalMessage("count|" + count, "BetterShards");
 	}
 	
+	/**
+	 * Called after a player successfully arrived
+	 */
 	public static void notifyOfArrival(UUID player) {
 		MercuryAPI.sendGlobalMessage("arrival|" + player.toString(), "BetterShards");
+	}
+	
+	/**
+	 * Called when a player is sent to another server, so the target server prepares and put the player in arrival transit
+	 */
+	public static void warnOfArrival(UUID player, String targetServer) {
+		MercuryAPI.sendGlobalMessage("exit|" + player.toString() + "|" + targetServer, "BetterShards");
 	}
 }

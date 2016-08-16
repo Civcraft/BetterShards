@@ -13,6 +13,7 @@ import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.CombatTagManager;
+import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.mercury.MercuryAPI;
@@ -82,6 +83,7 @@ public class ConnectionManager {
 			throw new PlayerStillDeadException();
 		}
 		transitManager.addPlayerToExitTransit(p.getUniqueId(), server); // So the player isn't tried to be sent twice.
+		MercuryManager.warnOfArrival(p.getUniqueId(), server); //so target server prepares
 		CustomWorldNBTStorage st = CustomWorldNBTStorage.getWorldNBTStorage();
 		st.save(p, st.getInvIdentifier(p.getUniqueId()), true);
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();

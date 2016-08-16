@@ -172,6 +172,11 @@ public class MercuryListener implements Listener{
 			UUID uuid = UUID.fromString(content [1]);
 			BetterShardsPlugin.getTransitManager().notifySuccessfullExit(uuid);
 		}
+		else if (content [0].equals("exit")) {
+			UUID uuid = UUID.fromString(content [1]);
+			String server = content [2];
+			BetterShardsPlugin.getTransitManager().addPlayerToArrivalTransit(uuid, server);
+		}
 	}
 	
 	public static void stageTeleport(UUID uuid, Location loc){

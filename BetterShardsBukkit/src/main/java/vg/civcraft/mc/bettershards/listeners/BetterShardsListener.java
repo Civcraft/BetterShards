@@ -15,6 +15,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -24,6 +25,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerChatTabCompleteEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -373,7 +375,7 @@ public class BetterShardsListener implements Listener{
 	
 	// Start of methods to try and stop interaction when transferring.
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void playerDropItem(PlayerDropItemEvent event) {
 		Player player = event.getPlayer();
 		if(BetterShardsPlugin.getTransitManager().isPlayerInTransit(player.getUniqueId())) {
@@ -381,9 +383,9 @@ public class BetterShardsListener implements Listener{
 		}
 	}
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void playerDamageEvent(EntityDamageEvent event) {
-		if (!(event.getEntity() instanceof Player))
+		if (!(event.getEntity().getType() == EntityType.PLAYER))
 			return;
 		Player p = (Player) event.getEntity();
 		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
@@ -391,7 +393,7 @@ public class BetterShardsListener implements Listener{
 		}
 	}
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void playerMoveEventWhenInTransit(PlayerMoveEvent event) {
 		Location from = event.getFrom();
         Location to = event.getTo();
@@ -403,21 +405,29 @@ public class BetterShardsListener implements Listener{
             // Player didn't move by at least one block.
             return;
         }
-		Player p = (Player) event.getPlayer();
+		Player p = event.getPlayer();
 		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler
+	public void inventoryClick(InventoryClickEvent event) {
+		Player p = (Player) event.getWhoClicked();
+		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
+			event.setCancelled(true);
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void playerPickupEvent(PlayerPickupItemEvent event) {
-		Player p = (Player) event.getPlayer();
+		Player p = event.getPlayer();
 		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void playerInteractEvent(PlayerInteractEvent event) {
 		Player p = (Player) event.getPlayer();
 		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
@@ -425,20 +435,19 @@ public class BetterShardsListener implements Listener{
 		}
 	}
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void blockBreakEvent(BlockBreakEvent event) {
-		Player p = (Player) event.getPlayer();
+		Player p = event.getPlayer();
 		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void blockPlaceEvent(BlockPlaceEvent event) {
-		Player p = (Player) event.getPlayer();
+		Player p = event.getPlayer();
 		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
 		}
 	}
-	// End of methods.
 }
