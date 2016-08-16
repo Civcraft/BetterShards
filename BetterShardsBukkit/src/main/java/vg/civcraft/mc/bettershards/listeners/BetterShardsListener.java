@@ -137,6 +137,7 @@ public class BetterShardsListener implements Listener{
 		loc = e.getLocation();
 		pm.addArrivedPlayer(event.getPlayer());
 		event.getPlayer().teleport(loc);
+		BetterShardsPlugin.getTransitManager().notifySuccessfullArrival(event.getPlayer().getUniqueId());
 	}
 	
 	@EventHandler(priority = EventPriority.LOWEST)
@@ -149,7 +150,6 @@ public class BetterShardsListener implements Listener{
 			return;
 		}
 		st.setInventoryIdentifier(uuid, InventoryIdentifier.IGNORE_INV);
-		BetterShardsPlugin.getTransitManager().notifySuccessfullArrival(uuid);
 	}
 	
 	@EventHandler(priority = EventPriority.LOWEST)

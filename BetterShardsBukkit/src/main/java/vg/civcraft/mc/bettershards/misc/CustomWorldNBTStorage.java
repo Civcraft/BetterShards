@@ -69,7 +69,12 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 			NBTCompressedStreamTools.a(nbttagcompound, output);
 
 			// Now to run our custom mysql code
-			db.savePlayerData(uuid, output, getInvIdentifier(uuid), sect.get(uuid));
+			if (!BetterShardsPlugin.getTransitManager().isPlayerInTransit(uuid)) {
+				db.savePlayerData(uuid, output, getInvIdentifier(uuid), sect.get(uuid));
+			}
+			else {
+				logger.log(Level.WARNING, "Didn't save data for {0}, because he was in transit", entityhuman.getName());
+			}
 		} catch (Exception localException) {
 			logger.log(Level.SEVERE, "EntityHuman]* Failed to save player data for {0}", entityhuman.getName());
 		}
