@@ -7,13 +7,12 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.channels.FileLock;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 import net.minecraft.server.v1_10_R1.IDataManager;
@@ -68,7 +67,7 @@ public class BetterShardsPlugin extends ACivMod{
 	private Map<Player, Grid> grids = new HashMap<Player, Grid>();
 	private Map<UUID, BedLocation> beds = new HashMap<UUID, BedLocation>();
 	
-	private Map<UUID, String> transit = new TreeMap<UUID, String>();
+	private Map<UUID, String> transit = new ConcurrentHashMap<UUID, String>();
 	@CivConfigs({
 		@CivConfig(name = "randomspawn.range", def = "1000", type = CivConfigType.Int),
 		@CivConfig(name = "randomspawn.spawnworld", def = "world", type = CivConfigType.String),

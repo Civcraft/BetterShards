@@ -6,8 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -22,7 +22,7 @@ public class PortalsManager {
 
 	private DatabaseManager db = BetterShardsPlugin.getInstance().getDatabaseManager();
 	private Map<String, Portal> portals;
-	private Map<UUID, Long> arrivedPlayers = new TreeMap<UUID,Long>();
+	private Map<UUID, Long> arrivedPlayers = new ConcurrentHashMap<UUID,Long>();
 	private MercuryManager mercManager;
 	private final long portalCoolDown = 10000L;  //10 seconds
 	
