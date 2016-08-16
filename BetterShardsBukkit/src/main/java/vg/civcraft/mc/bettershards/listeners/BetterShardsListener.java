@@ -21,6 +21,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
@@ -86,7 +87,7 @@ public class BetterShardsListener implements Listener{
 	public void playerPreLoginCacheInv(AsyncPlayerPreLoginEvent event) {
 		UUID uuid = event.getUniqueId();
 		if (uuid != null) {
-			plugin.getLogger().log(Level.INFO, "Preparing to pre-load player data: {0}", uuid);
+			plugin.getLogger().log(Level.FINER, "Preparing to pre-load player data: {0}", uuid);
 		} else { 
 			return;
 		}
@@ -102,7 +103,7 @@ public class BetterShardsListener implements Listener{
 			if (after == null) {
 				plugin.getLogger().log(Level.INFO, "Pre-load for player data {0} came back empty. New player? Error?", uuid);
 			} else {
-				plugin.getLogger().log(Level.INFO, "Pre-load for player data {0} complete.", uuid);
+				plugin.getLogger().log(Level.FINER, "Pre-load for player data {0} complete.", uuid);
 			}
 			
 		} catch (InterruptedException | ExecutionException e) {
@@ -305,7 +306,18 @@ public class BetterShardsListener implements Listener{
 	public void bedBreak(BlockBreakEvent event) {
 		if (config.get("lobby").getBool())
 			return;
-		Block b = event.getBlock();
+		bedBreak(event.getBlock());
+	}
+	
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void bedBreakExplosion(BlockExplodeEvent event) {
+		if (config.get("lobby").getBool())
+			return;
+		for (Block b : event.blockList())
+			bedBreak(b);
+	}
+	
+	private void bedBreak(Block b) {
 		if (b.getType() != Material.BED_BLOCK) 
 			return;
 		Block real = getRealFace(b);

@@ -15,13 +15,15 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Logger;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -54,7 +56,89 @@ public class DatabaseManager{
 	private Config config;
 	private Database db;
 	
-	private Map<UUID, ByteArrayInputStream> invCache = new ConcurrentHashMap<UUID, ByteArrayInputStream>();
+	private Map<UUID, Map<InventoryIdentifier, byte[]>> invCache = new HashMap<UUID, Map<InventoryIdentifier, byte[]>>();
+	private Map<UUID, Long> invCacheFreshness = new HashMap<UUID, Long>();
+	private long invCacheTimeout = 30000; // how long does a cached inventory stick around?
+	private ExecutorService executor = Executors.newSingleThreadExecutor();
+
+	/**
+	 * Threadsafe accessor for the inventory cache. Respects the cache timeout; old caches are discarded, not returned.
+	 *
+	 * @param uuid The player to lookup
+	 * @param id The inventory to retrieve
+	 * @returns a byte array for the raw inventory data or null if none found or cache expired.
+	 */
+	private byte[] queryCache(UUID uuid, InventoryIdentifier id) {
+		synchronized(invCache) {
+			Map<InventoryIdentifier, byte[]> playerInvCache = invCache.get(uuid);
+			if (playerInvCache != null) {
+
+				// Check for freshness.
+				Long freshness = invCacheFreshness.get(uuid);
+				if (freshness != null && (System.currentTimeMillis() - freshness) > invCacheTimeout) {
+					// Not Fresh. Clear the cache and return null.
+					playerInvCache.clear();
+					invCacheFreshness.remove(uuid);
+					return null;
+				}
+				// Fresh or doesn't exist, either way carry on.
+				return playerInvCache.get(id);
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Threadsafe mutator for the inventory cache. Updates cache timeout.
+	 * Be warned that since this doesn't check the cache timeout or clear out old caches, it is best to have some other process
+	 * that periodically clears up old caches.
+	 *
+	 * @param uuid The player to cache data for
+	 * @param id The inventory to cache into
+	 * @param data The inventory data to cache
+	 */
+	private void updateCache(UUID uuid, InventoryIdentifier id, byte[] data) {
+		synchronized(invCache) {
+			Map<InventoryIdentifier, byte[]> playerInvCache = invCache.get(uuid);
+			if (playerInvCache == null) {
+				playerInvCache = new HashMap<InventoryIdentifier, byte[]>();
+				invCache.put(uuid, playerInvCache);
+			}
+			playerInvCache.put(id, data);
+			invCacheFreshness.put(uuid, System.currentTimeMillis());
+		}
+	}
+
+	/**
+	 * Threadsafe cleanup for the inventory cache. Respects freshness; if not fresh removes all inventories
+	 * Can be used otherwise to remove a single cached inventory or all inventories.
+	 * 
+	 * @param uuid The player whose cache to modify
+	 * @param id The inventory to remove from cache, null to clear all inventories
+	 */
+	private void clearCache(UUID uuid, InventoryIdentifier id) {
+		synchronized(invCache) {
+			Map<InventoryIdentifier, byte[]> playerInvCache = invCache.get(uuid);
+			if (playerInvCache == null) {
+				return;
+			}
+			if (id == null) { // clear all
+				playerInvCache.clear();
+				invCacheFreshness.remove(uuid);
+			} else {
+				// Check freshness
+				Long freshness = invCacheFreshness.get(uuid);
+				if (freshness != null && (System.currentTimeMillis() - freshness) > invCacheTimeout) {
+					// Not fresh so clear all the cache anyway
+					playerInvCache.clear();
+					invCacheFreshness.remove(uuid);
+				} else {
+					// Fresh so just remove this one inventory
+					playerInvCache.remove(id);
+				}
+			}
+		}
+	}
 
 	private List<String> respawnExclusionCache = Collections.emptyList();
 	private List<String> respawnExclusionCacheImmutable = Collections.unmodifiableList(respawnExclusionCache);
@@ -90,9 +174,11 @@ public class DatabaseManager{
 	
 	private BukkitTask lockCleanup;
 	
+	private Logger logger;
 
 	public DatabaseManager(){
 		config = plugin.GetConfig();
+		logger = plugin.getLogger();
 		if (!isValidConnection())
 			return;
 		loadPreparedStatements();
@@ -102,9 +188,11 @@ public class DatabaseManager{
 	
 	@CivConfigs({
 		@CivConfig(name = "locks.cleanup", def = "true", type = CivConfigType.Bool),
-		@CivConfig(name = "locks.interval", def = "1200", type = CivConfigType.Long)
+		@CivConfig(name = "locks.interval", def = "1200", type = CivConfigType.Long),
+		@CivConfig(name = "cache.freshness_period", def = "30000", type = CivConfigType.Long)
 	})
 	private void setupCleanup() {
+		this.invCacheTimeout = config.get("cache.freshness_period").getLong();
 		if (config.get("locks.cleanup").getBool()){  // no forever locks
 			this.lockCleanup = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, new Runnable() {
 
@@ -118,7 +206,9 @@ public class DatabaseManager{
 	}
 	
 	public void cleanup() {
-		lockCleanup.cancel();
+		if (lockCleanup != null) {
+			lockCleanup.cancel();
+		}
 	}
 	
 	@CivConfigs({
@@ -203,8 +293,7 @@ public class DatabaseManager{
 				return 0;
 			return set.getInt("db_version");
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Check Version DB failure: ", e);
 		}
 		return 0;
 	}
@@ -217,8 +306,7 @@ public class DatabaseManager{
 			updateVersion.setString(2, sdf.format(new Date()));
 			updateVersion.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Update Version DB failure: ", e);
 		}
 		return ++version;
 	}
@@ -233,7 +321,7 @@ public class DatabaseManager{
 		@CivConfig(name = "locks.cleanup_minutes", def = "1", type = CivConfigType.Int),
 	})
 	private void loadPreparedStatements(){
-		insertPlayerData = "INSERT INTO createPlayerData(uuid, server, entity, config_sect) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE entity = ?, config_sect = ?;";
+		insertPlayerData = "INSERT INTO createPlayerData(uuid, server, entity, config_sect) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE entity = VALUES(entity), config_sect = VALUES(config_sect);";
 		getPlayerData = "select * from createPlayerData where uuid = ? and server = ?;";
 		removePlayerData = "delete from createPlayerData where uuid = ? and server = ?;";
 		
@@ -322,7 +410,7 @@ public class DatabaseManager{
 			}
 			addPortalLoc.execute();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Add Portal DB failure: ", e);
 		} finally {
 			try {
 				addPortalLoc.close();
@@ -337,8 +425,7 @@ public class DatabaseManager{
 	 * @param uuid The uuid of the player
 	 */
 	public void playerQuitServer(UUID uuid) {
-	    	
-		invCache.remove(uuid);
+	    clearCache(uuid, null);
 	}
 	
 	private String serverName = MercuryAPI.serverName();
@@ -355,8 +442,7 @@ public class DatabaseManager{
 			addPortalData.setString(4, name);
 			addPortalData.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Add Portal Data DB failure: ", e);
 		} finally {
 			try {
 				addPortalData.close();
@@ -377,7 +463,8 @@ public class DatabaseManager{
 		} catch (SQLException nolockforyou) {
 			// TODO ideally only return false for known duplicate key failure error; otherwise raise holy hell.
 			if (config.get("locks.show_culprit").getBool()) {
-				nolockforyou.printStackTrace(); // Who is responsible for this expected travesty
+				// Who is responsible for this expected travesty
+				logger.log(Level.WARNING, "Someone wanted a save-lock but was late to the party: ", nolockforyou);
 			}
 			return false;
 		}
@@ -391,7 +478,7 @@ public class DatabaseManager{
 			return releaseLock.executeUpdate() > 0;
 		} catch (SQLException nolockforyou) {
 			plugin.getLogger().log(Level.INFO, "Unable to release lock for {0}, please investigate", uuid);
-			nolockforyou.printStackTrace();
+			plugin.getLogger().log(Level.INFO, "Unable to release lock, exception: ", nolockforyou);
 			return false;
 		}
 	}
@@ -404,7 +491,7 @@ public class DatabaseManager{
 			return rs.first();
 		} catch (SQLException se) {
 			plugin.getLogger().log(Level.INFO, "Could not check on lock for {0}, please investigate", uuid);
-			se.printStackTrace();
+			plugin.getLogger().log(Level.INFO, "Unable to check lock, exception: ", se);
 			return true;
 		}
 	}
@@ -420,9 +507,8 @@ public class DatabaseManager{
 	 */
 	public void savePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
 			ConfigurationSection section) {
-		plugin.getLogger().log(Level.INFO, "savePlayer Sync player data {0}", uuid);
+		logger.log(Level.FINER, "savePlayer Sync player data {0}", uuid);
 		isConnected();
-		invCache.remove(uuid); // So if it is loaded again it is recaught.
 		
 		/*
 		 * Some notes. 
@@ -438,9 +524,11 @@ public class DatabaseManager{
 		 * that should never occur but _if_ we externalize the lock, we can find it.
 		 */
 		if (!getPlayerLock(uuid, id)) { // someone beat us to it?
-			plugin.getLogger().log(Level.SEVERE, "Unable to grab rowlock for save of {0}, some other server is saving at the same time as me.", uuid);
+			logger.log(Level.WARNING, "Unable to grab rowlock for save of {0}, another process or server is saving at the same time as me.", uuid);
+			shortTrace();
 			return;
 		}
+		clearCache(uuid, id); // So if it is loaded again it is recaught.
 
 		doSavePlayerData(uuid, output, id, section);
 	}
@@ -454,7 +542,7 @@ public class DatabaseManager{
 	 */
 	private void doSavePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
 			ConfigurationSection section) {
-		plugin.getLogger().log(Level.INFO, "doSave player data {0}", uuid);
+		plugin.getLogger().log(Level.FINER, "doSave player data {0}", uuid);
 		PreparedStatement insertPlayerDataPS = null;
 		try {
 			insertPlayerDataPS = db.prepareStatement(insertPlayerData);
@@ -465,37 +553,37 @@ public class DatabaseManager{
 			insertPlayerDataPS.setString(1, uuid.toString());
 			insertPlayerDataPS.setInt(2, id.ordinal());
 
+			byte[] outputBytes = null;
 			if (output == null) {
 				insertPlayerDataPS.setNull(3, Types.BLOB);
-				insertPlayerDataPS.setNull(5, Types.BLOB);
 			} else {
-				byte[] outputBytes = output.toByteArray();
+				outputBytes = output.toByteArray();
 				insertPlayerDataPS.setBytes(3, outputBytes);
-				insertPlayerDataPS.setBytes(5,  outputBytes);
 			}
 			YamlConfiguration yaml = (YamlConfiguration) section;
 			if (yaml == null) {
 				insertPlayerDataPS.setNull(4, Types.VARCHAR);
-				insertPlayerDataPS.setNull(6, Types.VARCHAR);
 			} else {
 				String ymlStr = yaml.saveToString();
 				insertPlayerDataPS.setString(4, ymlStr);
-				insertPlayerDataPS.setString(6, ymlStr);
 			}
 			insertPlayerDataPS.execute();
+			updateCache(uuid, id, outputBytes);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to doSavePlayerData for {0}", uuid);
+			logger.log(Level.SEVERE, "Failed to doSavePlayerData exception:", e);
 		} catch (Exception ididntthinkofthis) {
-			ididntthinkofthis.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to doSavePlayerData for {0}", uuid);
+			logger.log(Level.SEVERE, "Failed to doSavePlayerData exception:", ididntthinkofthis);
 		} finally {
 			try {
 				insertPlayerDataPS.close();
 			} catch (Exception ex) {}
 			
 			if (!releasePlayerLock(uuid, id)) { // Both calling methods require release always, so we'll just do it here.
-				plugin.getLogger().log(Level.INFO, "Unable to release lock for {0}, lock is already released", uuid);
+				plugin.getLogger().log(Level.WARNING, "Unable to release lock for {0}, lock is already released", uuid);
 			} else {
-				plugin.getLogger().log(Level.INFO, "DONE doSave player data {0}", uuid);
+				plugin.getLogger().log(Level.FINER, "DONE doSave player data {0}", uuid);
 			}
 		}
 	}
@@ -512,25 +600,32 @@ public class DatabaseManager{
 	 */
 	public void savePlayerDataAsync(final UUID uuid, final ByteArrayOutputStream output, 
 			final InventoryIdentifier id, final ConfigurationSection section) {
-		plugin.getLogger().log(Level.INFO, "savePlayer Async player data {0}", uuid);
-		invCache.remove(uuid); // So if it is loaded again it is recaught.
+		plugin.getLogger().log(Level.FINER, "savePlayer Async player data {0}", uuid);
 		isConnected();
 		
 		if (!getPlayerLock(uuid, id)) { // someone beat us to it?
-			plugin.getLogger().log(Level.SEVERE, "Unable to grab rowlock for save of {0}, some other server or process is saving at the same time as me.", uuid);
+			plugin.getLogger().log(Level.WARNING, "Unable to grab rowlock for save of {0}, some other server or process is saving at the same time as me.", uuid);
+			shortTrace();
 			return;
 		}
+		clearCache(uuid, id); // So if it is loaded again it is recaught.
 
 		// So, we get the lock synchronously, then do our save asynch. When done, we end.
-		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+		executor.submit( new Runnable() {
 			public void run() {
 				doSavePlayerData(uuid, output, id, section);
 			}
 		});
 	}
+	
+	public void clearPrefetch(UUID uuid, InventoryIdentifier id) {
+		clearCache(uuid, id);
+	}
 
 	/**
 	 * This loadPlayerData ignores any data locks. PLEASE USE WITH CARE. Calls to this method might return old data!
+	 * 
+	 * This method _reads_ from the cache and _updates_ the cache if nothing previously cached
 	 * 
 	 * @param uuid
 	 * @param id
@@ -538,16 +633,17 @@ public class DatabaseManager{
 	 */
 	public ByteArrayInputStream loadPlayerData(UUID uuid, InventoryIdentifier id){
 		// Here we had it caches before hand so no need to load it again.
-		if (invCache.containsKey(uuid)) {
-			plugin.getLogger().log(Level.INFO, "Getting player data sync from cache for {0}", uuid);
-			return invCache.get(uuid);
+		byte[] bais = queryCache(uuid, id);
+		if (bais != null) {
+			plugin.getLogger().log(Level.FINER, "Getting player data sync from cache for {0}", uuid);
+			return new ByteArrayInputStream(bais);
 		}
 			
-		plugin.getLogger().log(Level.INFO, "IGNORING LOCKS: Getting player data sync for {0}", uuid);
-		ByteArrayInputStream bais = doLoadPlayerData(uuid, id);
-		invCache.put(uuid, bais);
-		plugin.getLogger().log(Level.INFO, "IGNORING LOCKS: Done getting player data sync for {0}", uuid);
-		return bais;
+		plugin.getLogger().log(Level.FINER, "IGNORING LOCKS: Getting player data sync for {0}", uuid);
+		bais = doLoadPlayerData(uuid, id);
+		updateCache(uuid, id, bais);
+		plugin.getLogger().log(Level.FINER, "IGNORING LOCKS: Done getting player data sync for {0}", uuid);
+		return new ByteArrayInputStream(bais);
 	}
 	
 	/**
@@ -557,7 +653,7 @@ public class DatabaseManager{
 	 * @param id
 	 * @return
 	 */
-	private ByteArrayInputStream doLoadPlayerData(UUID uuid, InventoryIdentifier id){
+	private byte[] doLoadPlayerData(UUID uuid, InventoryIdentifier id){
 		isConnected();
 		PreparedStatement getPlayerData = db.prepareStatement(this.getPlayerData);
 		try {
@@ -565,25 +661,25 @@ public class DatabaseManager{
 			getPlayerData.setInt(2, id.ordinal());
 			ResultSet set = getPlayerData.executeQuery();
 			if (!set.next())
-				return new ByteArrayInputStream(new byte[0]);
+				return new byte[0];
 			YamlConfiguration sect = new YamlConfiguration();
 			String sectString = set.getString("config_sect");
 			if (sectString != null)
 				sect.loadFromString(sectString);
 			CustomWorldNBTStorage.getWorldNBTStorage().loadConfigurationSectionForPlayer(uuid, sect);
-			return new ByteArrayInputStream(set.getBytes("entity"));			
+			return set.getBytes("entity");			
 		} catch (SQLException e) {
 			plugin.getLogger().log(Level.SEVERE, "Error retrieving player data from database for {0}", uuid);
-			e.printStackTrace();
+			plugin.getLogger().log(Level.SEVERE, "Error retrieving player data from database exception:", e);
 		} catch (InvalidConfigurationException e) {
 			plugin.getLogger().log(Level.WARNING, "Configuration is invalid for {0}", uuid);
-			e.printStackTrace();
+			plugin.getLogger().log(Level.WARNING, "Configuration is invalid exception:", e);
 		} finally {
 			try {
 				getPlayerData.close();
 			} catch (Exception ex) {}
 		}
-		return new ByteArrayInputStream(new byte[0]);
+		return new byte[0];
 	}
 	
 	/**
@@ -592,29 +688,37 @@ public class DatabaseManager{
 	 * Use .get on the Future to wait for it to load and return the result. 
 	 * 
 	 * EXTERNAL PLUGINS SHOULD USE THIS EXCLUSIVELY
+	 *
+	 * This method both consumes and contributes to the cache. If data is on cache when triggered, it consumes it.
+	 * If data is not on cache, it puts it on cache.
+	 *
+	 * So, if you want to preload your data but not _use_ it, call loadPlayerDataAsync in an async method, then
+	 * call loadPlayerData in a sync method. If you're lucky and there aren't any race conditions in play to get that
+	 * data (multiple consumers) then the sync call will pull from the cache.
 	 * 
 	 * @param uuid
 	 * @param id
 	 * @return
 	 */
 	public Future<ByteArrayInputStream> loadPlayerDataAsync(final UUID uuid, final InventoryIdentifier id) {
-		if (invCache.containsKey(uuid)) {
-			plugin.getLogger().log(Level.INFO, "Getting player data async from cache for {0}", uuid);
-			final ByteArrayInputStream baisPIT = invCache.get(uuid);
+		byte[] bais = queryCache(uuid, id);
+		if (bais != null) {
+			plugin.getLogger().log(Level.FINER, "Getting player data async from cache for {0}", uuid);
+			final byte[] baisPIT = bais;
 			return new Future<ByteArrayInputStream>() {
-				ByteArrayInputStream bais = baisPIT;
+				byte[] bais = baisPIT;
 
 				@Override
 				public boolean cancel(boolean arg0) {return false;}
 
 				@Override
 				public ByteArrayInputStream get() throws InterruptedException, ExecutionException {
-					return bais;
+					return new ByteArrayInputStream(bais);
 				}
 
 				@Override
 				public ByteArrayInputStream get(long arg0, TimeUnit arg1) throws InterruptedException,ExecutionException, TimeoutException {
-					return bais;
+					return new ByteArrayInputStream(bais);
 				}
 
 				@Override
@@ -625,12 +729,11 @@ public class DatabaseManager{
 			};
 		}
 		
-		FutureTask<ByteArrayInputStream> todo = new FutureTask<ByteArrayInputStream>(
-				new Callable<ByteArrayInputStream>(){
+		return executor.submit( new Callable<ByteArrayInputStream>(){
 
 					@Override
 					public ByteArrayInputStream call() throws Exception {
-						plugin.getLogger().log(Level.INFO, "Getting player data async for {0}", uuid);
+						plugin.getLogger().log(Level.FINER, "Getting player data async for {0}", uuid);
 						long sleepSoFar = (long) (Math.random() * 10.0);
 						// basic spinlock.
 						while (isPlayerLocked(uuid, id)) {
@@ -643,19 +746,15 @@ public class DatabaseManager{
 						/* This leaves an opening for race conditions, but with a very small interval size (< 10ms) which is
 						 * far superior to previous.
 						 */ 
-						ByteArrayInputStream bais = doLoadPlayerData(uuid, id);
-						invCache.put(uuid, bais);
-						plugin.getLogger().log(Level.INFO, "Done getting player data async for {0}", uuid);
-						return bais;
+						byte[] bais = doLoadPlayerData(uuid, id);
+						updateCache(uuid, id, bais);
+						plugin.getLogger().log(Level.FINER, "Done getting player data async for {0}", uuid);
+						return new ByteArrayInputStream(bais);
 					}
-				}	
+				}
 			);
-		
-		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, todo);
-		
-		return todo;
 	}
-	
+
 	
 	/**
 	 * Can only be from worlds that are valid on this server.
@@ -686,8 +785,7 @@ public class DatabaseManager{
 					portals.add(p);
 				}
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.log(Level.SEVERE, "Failed to getAllPortalsByWorld, exception:", e);
 			} finally {
 				try {
 					if (getPortalLocation != null) {
@@ -729,8 +827,8 @@ public class DatabaseManager{
 			
 			return getPortalData(name, first, second);
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to getPortal for {0}", name);
+			logger.log(Level.SEVERE, "Failed to getPortal, exception:", e);
 		} finally {
 			try {
 				getPortalData.close();
@@ -768,8 +866,8 @@ public class DatabaseManager{
 				return null;
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to getPortalData for {0}", name);
+			logger.log(Level.SEVERE, "Failed to getPortalData, exception:", e);
 		} finally {
 			try {
 				getPortalData.close();
@@ -780,14 +878,15 @@ public class DatabaseManager{
 
 	public void removePlayerData(UUID uuid, InventoryIdentifier id) {
 		isConnected();
+		clearCache(uuid, id);
 		PreparedStatement removePlayerData = db.prepareStatement(this.removePlayerData);
 		try {
 			removePlayerData.setString(1, uuid.toString());
 			removePlayerData.setInt(2, id.ordinal());
 			removePlayerData.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removePlayerData, uuid: {0} id: {1}", new Object[]{uuid, id});
+			logger.log(Level.SEVERE, "Failed to removePlayerData, exception:", e);
 		} finally {
 			try {
 				removePlayerData.close();
@@ -802,8 +901,7 @@ public class DatabaseManager{
 			removePortalLoc.setString(1, p.getName());
 			removePortalLoc.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removePortalLoc, exception:", e);
 		} finally {
 			try {
 				removePortalLoc.close();
@@ -818,8 +916,7 @@ public class DatabaseManager{
 			removePortalData.setString(1, p.getName());
 			removePortalData.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removePortalData, exception:", e);
 		} finally {
 			try {
 				removePortalData.close();
@@ -838,8 +935,7 @@ public class DatabaseManager{
 			updatePortalData.setString(2, p.getName());
 			updatePortalData.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to updatePortalData, exception:", e);
 		} finally {
 			try {
 				updatePortalData.close();
@@ -858,8 +954,8 @@ public class DatabaseManager{
 			addExclude.setString(1, server);
 			addExclude.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	 		logger.log(Level.SEVERE, "Failed to addExclude for {0}", server);
+	 		logger.log(Level.SEVERE, "Failed to addExclude, exception:", e);
 		} finally {
 			try {
 				addExclude.close();
@@ -891,8 +987,7 @@ public class DatabaseManager{
 				result.add(set.getString("name"));
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to retrieveAllExcludeFromDb, exception:", e);
 		} finally {
 			try {
 				getAllExclude.close();
@@ -911,8 +1006,8 @@ public class DatabaseManager{
 			removeExclude.setString(1, server);
 			removeExclude.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removeExclude for {0}", server);
+			logger.log(Level.SEVERE, "Failed to removeExclude, exception:", e);
 		} finally {
 			try {
 				removeExclude.close();
@@ -932,8 +1027,8 @@ public class DatabaseManager{
 			addPriority.setInt(2, populationCap);
 			addPriority.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to addPriorityServer {0}", server);
+			logger.log(Level.SEVERE, "Failed to addPriorityServer, exception:", e);
 		} finally {
 			try {
 				addPriority.close();
@@ -966,8 +1061,7 @@ public class DatabaseManager{
 				result.put(server, new PriorityInfo(server, set.getInt("cap")));
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to retrieveAllPriorityFromDb, exception:", e);
 		} finally {
 			try {
 				getAllPriority.close();
@@ -986,8 +1080,8 @@ public class DatabaseManager{
 			removePriority.setString(1, server);
 			removePriority.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removePriorityServer {0}", server);
+			logger.log(Level.SEVERE, "Failed to removePriorityServer, exception:", e);
 		} finally {
 			try {
 				removePriority.close();
@@ -1008,8 +1102,7 @@ public class DatabaseManager{
 			addBedLocation.setInt(6, info.getZ());
 			addBedLocation.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to addBedLocation, exception:", e);
 		} finally {
 			try {
 				addBedLocation.close();
@@ -1035,8 +1128,7 @@ public class DatabaseManager{
 				beds.add(bed);
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to getAllBedLocations, exception:", e);
 		} finally {
 			try {
 				getAllBedLocation.close();
@@ -1052,12 +1144,26 @@ public class DatabaseManager{
 			removeBedLocation.setString(1, uuid.toString());
 			removeBedLocation.execute();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to removeBed for {0}", uuid);
+			logger.log(Level.SEVERE, "Failed to removeBed, exception:", e);
 		} finally {
 			try {
 				removeBedLocation.close();
 			} catch (Exception ex) {}
 		}
 	}
+
+	private void shortTrace() {
+		StackTraceElement[] ste = Thread.currentThread().getStackTrace();
+		if (ste.length < 2) return;
+
+		StringBuffer sb = new StringBuffer();
+		sb.append(ste[1].toString());
+		for (int i = 2; i < Math.min(5, ste.length); i++) {
+			sb.append("\n").append(ste[i].toString());
+		}
+
+		logger.log(Level.INFO, "Short Traceback: \n {0}", sb);
+	}
+
 }
