@@ -208,7 +208,7 @@ public class BetterShardsPlugin extends ACivMod{
 		}
 		addPlayerToTransit(p.getUniqueId(), server); // So the player isn't tried to be sent twice.
 		CustomWorldNBTStorage st = CustomWorldNBTStorage.getWorldNBTStorage();
-		st.save(p, st.getInvIdentifier(p.getUniqueId()), true);
+		st.save(p, st.getInvIdentifier(p.getUniqueId()), false);
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
 		out.writeUTF("Connect");
 		out.writeUTF(server);
@@ -358,7 +358,7 @@ public class BetterShardsPlugin extends ACivMod{
 					// Now to run our custom mysql code
 					UUID uuid = UUID.fromString(name);
 					CustomWorldNBTStorage storage = CustomWorldNBTStorage.getWorldNBTStorage();
-					db.savePlayerDataAsync(uuid, output, storage.getInvIdentifier(uuid), new YamlConfiguration());
+					db.savePlayerData(uuid, output, storage.getInvIdentifier(uuid), new YamlConfiguration()); // was async
 					file.delete();
 					stream.close();
 				} catch (Exception localException) {

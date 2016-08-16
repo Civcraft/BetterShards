@@ -127,7 +127,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 		try {
 			logger.log(Level.INFO, "UUID] Get / Load player data for {0}", uuid);
 			
-			ByteArrayInputStream input = db.loadPlayerDataAsync(uuid, getInvIdentifier(uuid)).get();
+			ByteArrayInputStream input = db.loadPlayerData(uuid, getInvIdentifier(uuid)); // was async
 			NBTTagCompound nbttagcompound = NBTCompressedStreamTools.a(input);
 			//logInventory(nbttagcompound);
 			
