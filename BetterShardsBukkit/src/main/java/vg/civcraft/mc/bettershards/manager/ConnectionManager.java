@@ -40,7 +40,6 @@ public class ConnectionManager {
 		Bukkit.getOnlinePlayers().iterator().next().sendPluginMessage(BetterShardsPlugin.getInstance(), "BungeeCord", out.toByteArray());
 	}
 	
-	
 	public boolean teleportPlayerToServer(UUID playerUUID, String server, PlayerChangeServerReason reason) throws PlayerStillDeadException {
 		//Get the server of the player
 		String currentServer = MercuryAPI.getServerforAccount(playerUUID).getServerName();
@@ -63,15 +62,17 @@ public class ConnectionManager {
 	 * @param server The server to teleport the player to.
 	 */
 	public boolean teleportPlayerToServer(Player p, String server, PlayerChangeServerReason reason) throws PlayerStillDeadException {
-		if (transitManager.isPlayerInTransit(p.getUniqueId())) { // Somehow this got triggered twice for one reason or another
+		if (transitManager.isPlayerInExitTransit(p.getUniqueId())) { // Somehow this got triggered twice for one reason or another
 				return false; // We dont wan't to continue twice because it could cause issues with the db.
 		}
 		PlayerChangeServerEvent event = new PlayerChangeServerEvent(reason, p.getUniqueId(), server);
 		Bukkit.getPluginManager().callEvent(event);
-		if (event.isCancelled())
+		if (event.isCancelled()) {
 			return false;
-		if (combatManager.isCombatTagNPC(p)) 
+		}
+		if (combatManager.isCombatTagNPC(p)) {
 			return false;
+		}
 		combatManager.unCombatTag(p);
 		if (p.isInsideVehicle()) {
 			BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, "During BetterShards teleport, removing player {0} from vehicle", p.getUniqueId());
@@ -80,7 +81,7 @@ public class ConnectionManager {
 		if (p.isDead()) {
 			throw new PlayerStillDeadException();
 		}
-		transitManager.addPlayerToTransit(p.getUniqueId(), server); // So the player isn't tried to be sent twice.
+		transitManager.addPlayerToExitTransit(p.getUniqueId(), server); // So the player isn't tried to be sent twice.
 		CustomWorldNBTStorage st = CustomWorldNBTStorage.getWorldNBTStorage();
 		st.save(p, st.getInvIdentifier(p.getUniqueId()), true);
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();

@@ -170,7 +170,7 @@ public class MercuryListener implements Listener{
 		}
 		else if (content [0].equals("arrival")) {
 			UUID uuid = UUID.fromString(content [1]);
-			BetterShardsPlugin.getTransitManager().notifySuccessfullTransfer(uuid);
+			BetterShardsPlugin.getTransitManager().notifySuccessfullExit(uuid);
 		}
 	}
 	

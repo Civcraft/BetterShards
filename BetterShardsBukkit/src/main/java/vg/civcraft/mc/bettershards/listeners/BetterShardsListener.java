@@ -149,6 +149,7 @@ public class BetterShardsListener implements Listener{
 			return;
 		}
 		st.setInventoryIdentifier(uuid, InventoryIdentifier.IGNORE_INV);
+		BetterShardsPlugin.getTransitManager().notifySuccessfullArrival(uuid);
 	}
 	
 	@EventHandler(priority = EventPriority.LOWEST)
@@ -156,7 +157,9 @@ public class BetterShardsListener implements Listener{
 		Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
 		db.playerQuitServer(uuid);
-		st.save(p, st.getInvIdentifier(uuid), true);
+		if (!BetterShardsPlugin.getTransitManager().isPlayerInTransit(uuid)) {
+			st.save(p, st.getInvIdentifier(uuid), true);
+		}
 	}
 	
 	//without this method players are able to detect who is in their shard as 
