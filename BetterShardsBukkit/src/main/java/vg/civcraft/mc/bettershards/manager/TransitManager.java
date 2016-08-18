@@ -5,6 +5,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.events.PlayerEnsuredToTransitEvent;
@@ -41,6 +42,8 @@ public class TransitManager {
 	 */
 	public void addPlayerToExitTransit(final UUID uuid, final String server) {
 		exitTransit.put(uuid, server);
+		// Here we want to hide players while they are loading.
+		hidePlayer(uuid);
 		Bukkit.getScheduler().runTaskLater(BetterShardsPlugin.getInstance(), new Runnable() {
 
 			@Override
@@ -50,6 +53,7 @@ public class TransitManager {
 							uuid + " failed to transit to " + server + ", was removed by timeout");
 					PlayerFailedToTransitEvent event = new PlayerFailedToTransitEvent(uuid, server);
 					Bukkit.getPluginManager().callEvent(event);
+					showPlayer(uuid);
 				}
 			}
 
@@ -58,6 +62,8 @@ public class TransitManager {
 	
 	public void addPlayerToArrivalTransit(final UUID uuid, final String server) {
 		arrivalTransit.put(uuid, server);
+		// Here we want to hide players while they are loading.
+		hidePlayer(uuid);
 		Bukkit.getScheduler().runTaskLater(BetterShardsPlugin.getInstance(), new Runnable() {
 
 			@Override
@@ -67,6 +73,7 @@ public class TransitManager {
 							uuid + " failed to transit from " + server + ", was removed by timeout");
 					PlayerFailedToTransitEvent event = new PlayerFailedToTransitEvent(uuid, server);
 					Bukkit.getPluginManager().callEvent(event);
+					showPlayer(uuid);
 				}
 			}
 
@@ -84,6 +91,7 @@ public class TransitManager {
 			PlayerEnsuredToTransitEvent e = new PlayerEnsuredToTransitEvent(player, exitTransit.get(player));
 			Bukkit.getPluginManager().callEvent(e);
 			exitTransit.remove(player);
+			showPlayer(player);
 		}
 	}
 	
@@ -96,8 +104,34 @@ public class TransitManager {
 		if (isPlayerInArrivalTransit(player)) {
 			//TODO Add appropriate event here
 			arrivalTransit.remove(player);
+			showPlayer(player);
 		}
 	}
 	
+	private void showPlayer(UUID uuid) {
+		Player player = Bukkit.getPlayer(uuid);
+		if (player == null) {
+			return;
+		}
+		for (Player other : Bukkit.getOnlinePlayers()) {
+			if (other.equals(Bukkit.getPlayer(uuid))) {
+				continue;
+			}
+			other.showPlayer(player);
+		}
+	}
+	
+	private void hidePlayer(UUID uuid) {
+		Player player = Bukkit.getPlayer(uuid);
+		if (player == null) {
+			return;
+		}
+		for (Player other : Bukkit.getOnlinePlayers()) {
+			if (other.equals(Bukkit.getPlayer(uuid))) {
+				continue;
+			}
+			other.hidePlayer(player);
+		}
+	}
 	
 }

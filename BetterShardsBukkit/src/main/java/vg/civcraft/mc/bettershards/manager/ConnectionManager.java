@@ -94,7 +94,6 @@ public class ConnectionManager {
 		CustomWorldNBTStorage st = CustomWorldNBTStorage.getWorldNBTStorage();
 		st.save(p, st.getInvIdentifier(p.getUniqueId()), true);
 		
-		p.setGameMode(GameMode.SPECTATOR); // So they cant do anything.
 		// None of this is saved as well so haza.
 		boolean delayed = delayedTransit.contains(p.getUniqueId());
 		sendPlayer(p, server, delayed);
