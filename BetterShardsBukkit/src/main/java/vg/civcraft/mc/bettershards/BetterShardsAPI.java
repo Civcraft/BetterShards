@@ -15,6 +15,9 @@ public class BetterShardsAPI {
 	
 	/**
 	 * Teleports a player to a different shard.
+	 * If you are calling this method from the RespawnPlayerEvent make sure you set your event priority
+	 * to either low, normal, or high and nothing else.  You will get strange behavior if your priority is
+	 * anything else.
 	 * @param p The Player that you wish to connect.
 	 * @param serverName The name of the server that you wish the player to be sent to.
 	 * @param reason The reason to be identified by the PlayerChangeServerEvent triggered by this method.
@@ -27,6 +30,9 @@ public class BetterShardsAPI {
 	
 	/**
 	 * Teleports a player to a different shard.
+	 * If you are calling this method from the RespawnPlayerEvent make sure you set your event priority
+	 * to either low, normal, or high and nothing else.  You will get strange behavior if your priority is
+	 * anything else.
 	 * @param p The UUID of the Player that you wish to connect.
 	 * @param serverName The name of the server that you wish the player to be sent to.
 	 * @param reason The reason to be identified by the PlayerChangeServerEvent triggered by this method.
@@ -47,6 +53,9 @@ public class BetterShardsAPI {
 	
 	/**
 	 * Teleports a player to a different shard.
+	 * If you are calling this method from the RespawnPlayerEvent make sure you set your event priority
+	 * to either low, normal, or high and nothing else.  You will get strange behavior if your priority is
+	 * anything else.
 	 * @param p The Player that you wish to connect.
 	 * @param portal The portal that the player should be teleported to.
 	 * @param reason The reason to be identified by the PlayerChangeServerEvent triggered by this method.

@@ -1,9 +1,12 @@
 package vg.civcraft.mc.bettershards.manager;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 
 import com.google.common.io.ByteArrayDataOutput;
@@ -22,6 +25,8 @@ public class ConnectionManager {
 	
 	private TransitManager transitManager;
 	private CombatTagManager combatManager;
+	
+	private List<UUID> delayedTransit = new ArrayList<UUID>();
 	
 	public ConnectionManager() {
 		this.transitManager = BetterShardsPlugin.getTransitManager();
@@ -62,10 +67,12 @@ public class ConnectionManager {
 	 * @param p The Player to teleport.
 	 * @param server The server to teleport the player to.
 	 */
-	public boolean teleportPlayerToServer(Player p, String server, PlayerChangeServerReason reason) throws PlayerStillDeadException {
+	public boolean teleportPlayerToServer(final Player p, final String server, final PlayerChangeServerReason reason) 
+			throws PlayerStillDeadException {
 		if (transitManager.isPlayerInExitTransit(p.getUniqueId())) { // Somehow this got triggered twice for one reason or another
 				return false; // We dont wan't to continue twice because it could cause issues with the db.
 		}
+		
 		PlayerChangeServerEvent event = new PlayerChangeServerEvent(reason, p.getUniqueId(), server);
 		Bukkit.getPluginManager().callEvent(event);
 		if (event.isCancelled()) {
@@ -79,17 +86,48 @@ public class ConnectionManager {
 			BetterShardsPlugin.getInstance().getLogger().log(Level.INFO, "During BetterShards teleport, removing player {0} from vehicle", p.getUniqueId());
 			p.getVehicle().eject();
 		}
-		if (p.isDead()) {
+		if (p.isDead() && !delayedTransit.contains(p.getUniqueId())) {
 			throw new PlayerStillDeadException();
 		}
 		transitManager.addPlayerToExitTransit(p.getUniqueId(), server); // So the player isn't tried to be sent twice.
 		MercuryManager.warnOfArrival(p.getUniqueId(), server); //so target server prepares
 		CustomWorldNBTStorage st = CustomWorldNBTStorage.getWorldNBTStorage();
 		st.save(p, st.getInvIdentifier(p.getUniqueId()), true);
+		
+		p.setGameMode(GameMode.SPECTATOR); // So they cant do anything.
+		// None of this is saved as well so haza.
+		boolean delayed = delayedTransit.contains(p.getUniqueId());
+		sendPlayer(p, server, delayed);
+		return true;
+	}
+	
+	private void sendPlayer(final Player p, final String server, boolean delayed) {
+		if (delayed) {
+			Bukkit.getScheduler().scheduleSyncDelayedTask(BetterShardsPlugin.getInstance(), new Runnable() {
+
+				@Override
+				public void run() {
+					sendPlayer(p, server);
+				}
+				
+			});
+		} else {
+			sendPlayer(p, server);
+		}
+	}
+	
+	private void sendPlayer(Player p, String server) {
 		ByteArrayDataOutput out = ByteStreams.newDataOutput();
 		out.writeUTF("Connect");
 		out.writeUTF(server);
 		p.sendPluginMessage(BetterShardsPlugin.getInstance(), "BungeeCord", out.toByteArray());
-		return true;
+	}
+	
+	public void addDelayedTransit(UUID uuid) {
+		delayedTransit.add(uuid);
+	}
+	
+	public void removeDelayedTransit(UUID uuid) {
+		delayedTransit.remove(uuid);
 	}
 }

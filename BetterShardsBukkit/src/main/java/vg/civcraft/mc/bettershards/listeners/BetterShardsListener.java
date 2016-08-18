@@ -457,4 +457,27 @@ public class BetterShardsListener implements Listener{
 			event.setCancelled(true);
 		}
 	}
+	
+	// These events will handle if a player is respawning.
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void playerStartedRespawnEvent(PlayerRespawnEvent event) {
+		Player p = event.getPlayer();
+		BetterShardsPlugin.getConnectionManager().addDelayedTransit(p.getUniqueId());
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void playerFinishedRespawnEvent(PlayerRespawnEvent event) {
+		Player p = event.getPlayer();
+		BetterShardsPlugin.getConnectionManager().removeDelayedTransit(p.getUniqueId());
+		if (BetterShardsPlugin.getTransitManager().isPlayerInExitTransit(p.getUniqueId())) {
+			event.setRespawnLocation(p.getLocation());
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void playerMoveEventOnTransit(PlayerMoveEvent event) {
+		if (BetterShardsPlugin.getTransitManager().isPlayerInExitTransit(event.getPlayer().getUniqueId())) {
+			event.setCancelled(true);
+		}
+	}
 }
