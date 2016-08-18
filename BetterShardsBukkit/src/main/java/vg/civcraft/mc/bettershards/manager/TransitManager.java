@@ -93,10 +93,9 @@ public class TransitManager {
 	 * @param player UUID of the transferred player
 	 */
 	public void notifySuccessfullArrival(UUID player) {
-		if (isPlayerInExitTransit(player)) {
-			PlayerEnsuredToTransitEvent e = new PlayerEnsuredToTransitEvent(player, exitTransit.get(player));
-			Bukkit.getPluginManager().callEvent(e);
-			exitTransit.remove(player);
+		if (isPlayerInArrivalTransit(player)) {
+			//TODO Add appropriate event here
+			arrivalTransit.remove(player);
 		}
 	}
 	

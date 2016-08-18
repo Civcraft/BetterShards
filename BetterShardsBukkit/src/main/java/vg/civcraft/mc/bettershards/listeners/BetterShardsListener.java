@@ -385,8 +385,9 @@ public class BetterShardsListener implements Listener{
 	
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void playerDamageEvent(EntityDamageEvent event) {
-		if (!(event.getEntity().getType() == EntityType.PLAYER))
+		if (!(event.getEntity() instanceof Player)) {
 			return;
+		}
 		Player p = (Player) event.getEntity();
 		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
