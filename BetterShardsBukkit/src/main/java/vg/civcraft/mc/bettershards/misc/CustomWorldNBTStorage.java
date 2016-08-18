@@ -73,7 +73,7 @@ public class CustomWorldNBTStorage extends ServerNBTManager {
 				db.savePlayerData(uuid, output, getInvIdentifier(uuid), sect.get(uuid));
 			}
 			else {
-				logger.log(Level.WARNING, "Didn't save data for {0}, because he was in transit", entityhuman.getName());
+				logger.log(Level.WARNING, "Did not save data for {0}, because he was in transit", entityhuman.getName());
 			}
 		} catch (Exception localException) {
 			logger.log(Level.SEVERE, "EntityHuman]* Failed to save player data for {0}", entityhuman.getName());

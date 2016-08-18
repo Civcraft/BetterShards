@@ -129,8 +129,6 @@ public class BetterShardsListener implements Listener{
 			rs.handleFirstJoin(event.getPlayer());
 			return;
 		}
-		//tell other server to remove player from transit
-		MercuryManager.notifyOfArrival(event.getPlayer().getUniqueId());
 		Location loc = MercuryListener.getTeleportLocation(event.getPlayer().getUniqueId());
 		if (loc == null)
 			return;
@@ -140,7 +138,15 @@ public class BetterShardsListener implements Listener{
 		loc = e.getLocation();
 		pm.addArrivedPlayer(event.getPlayer());
 		event.getPlayer().teleport(loc);
-		BetterShardsPlugin.getTransitManager().notifySuccessfullArrival(event.getPlayer().getUniqueId());
+		// Defer to next tick so join is fully complete before we unlock
+		final UUID player = event.getPlayer().getUniqueId();
+		Bukkit.getScheduler().runTask(plugin, new Runnable() {
+			public void run() {
+				//tell other server to remove player from transit
+				MercuryManager.notifyOfArrival(player);
+				BetterShardsPlugin.getTransitManager().notifySuccessfullArrival(player);
+			}
+		});
 	}
 	
 	@EventHandler(priority = EventPriority.LOWEST)
