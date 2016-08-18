@@ -25,7 +25,6 @@ import vg.civcraft.mc.namelayer.NameAPI;
 
 public class Teleport extends PlayerCommand {
 	
-	private MercuryManager mercManager = BetterShardsPlugin.getMercuryManager();
 	private BetterShardsPlugin plugin = BetterShardsPlugin.getInstance();
 
 	public Teleport(String name) {
@@ -92,7 +91,7 @@ public class Teleport extends PlayerCommand {
 		String serverName = pd.getServerName();
 		
 		//Stage teleport on destination server
-		mercManager.teleportPlayer(serverName, p.getUniqueId(), targetPlayerUUID);
+		MercuryManager.teleportPlayer(serverName, p.getUniqueId(), targetPlayerUUID);
 		
 		//Send the player to destination server
 		try {
@@ -150,7 +149,7 @@ public class Teleport extends PlayerCommand {
 			MercuryListener.stageTeleport(PlayerUUID, targetPlayer.getLocation());		
 		} else {
 			//Stage teleport on destination server
-			mercManager.teleportPlayer(serverName, PlayerUUID, targetPlayerUUID);
+			MercuryManager.teleportPlayer(serverName, PlayerUUID, targetPlayerUUID);
 		}
 		
 		//Send the player to destination server

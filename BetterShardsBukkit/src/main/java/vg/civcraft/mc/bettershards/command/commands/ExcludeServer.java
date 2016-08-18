@@ -8,11 +8,12 @@ import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
+import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 
 public class ExcludeServer extends PlayerCommand {
 
-	private DatabaseManager db = BetterShardsPlugin.getInstance().getDatabaseManager();
+	private DatabaseManager db;
 
 	public ExcludeServer(String name) {
 		super(name);
@@ -20,6 +21,7 @@ public class ExcludeServer extends PlayerCommand {
 		setDescription("Used to exclude or remove exclusion of a server on first join.");
 		setUsage("/bse <add/remove/list> <server>");
 		setArguments(1, 2);
+		db = BetterShardsPlugin.getDatabaseManager();
 	}
 
 	@Override
@@ -48,7 +50,7 @@ public class ExcludeServer extends PlayerCommand {
 						+ "updates to this list take a little time.";
 			}
 			// Reloads bungee list.
-			BetterShardsPlugin.getMercuryManager().sendBungeeUpdateMessage();
+			MercuryManager.sendBungeeUpdateMessage();
 		}
 		return sendPlayerMessage(p, message, true);
 	}

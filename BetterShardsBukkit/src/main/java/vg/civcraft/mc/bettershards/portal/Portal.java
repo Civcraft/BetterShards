@@ -4,7 +4,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 
@@ -25,13 +24,13 @@ public abstract class Portal {
 
 			@Override
 			public void run() {
-				connection = BetterShardsAPI.getPortalsManager().getPortal(con);
+				connection = BetterShardsPlugin.getPortalManager().getPortal(con);
 			}
 			
 		});
 		this.name = name;
 		this.isOnCurrentServer = isOnCurrentServer;
-		db = BetterShardsPlugin.getInstance().getDatabaseManager();
+		db = BetterShardsPlugin.getDatabaseManager();
 		this.specialId = specialId;
 	}
 

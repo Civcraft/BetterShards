@@ -6,14 +6,14 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import vg.civcraft.mc.bettershards.BetterShardsAPI;
-import vg.civcraft.mc.bettershards.PortalsManager;
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
+import vg.civcraft.mc.bettershards.manager.PortalsManager;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 
 public class DeletePortal extends PlayerCommand{
 
-	private PortalsManager pm = BetterShardsAPI.getPortalsManager();
+	private PortalsManager pm;
 	
 	public DeletePortal(String name) {
 		super(name);
@@ -21,6 +21,7 @@ public class DeletePortal extends PlayerCommand{
 		setDescription("Deletes a portal.");
 		setUsage("/bsd <Portal>");
 		setArguments(1,1);
+		pm = BetterShardsPlugin.getPortalManager();
 	}
 
 	@Override

@@ -1,33 +1,34 @@
-package vg.civcraft.mc.bettershards;
+package vg.civcraft.mc.bettershards.manager;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class PortalsManager {
 
-	private DatabaseManager db = BetterShardsPlugin.getInstance().getDatabaseManager();
+	private DatabaseManager db = BetterShardsPlugin.getDatabaseManager();
 	private Map<String, Portal> portals;
-	private List<Player> arrivedPlayers = new ArrayList<Player>();
-	private MercuryManager mercManager;
+	private Map<UUID, Long> arrivedPlayers = new ConcurrentHashMap<UUID,Long>();
+	private final long portalCoolDown = 10000L;  //10 seconds
 	
 	public PortalsManager() {
 		super();
 		portals = new HashMap<String, Portal>();
-		mercManager = BetterShardsPlugin.getMercuryManager();
 		registerParticleRunnable();
 	}
 	
@@ -47,7 +48,7 @@ public class PortalsManager {
 		deletePortalLocally(portal);
 		db.removePortalData(portal);
 		db.removePortalLoc(portal);
-		mercManager.sendPortalDelete(portal.getName());
+		MercuryManager.sendPortalDelete(portal.getName());
 	}
 	
 	public void deletePortalLocally(Portal portal) {
@@ -105,33 +106,38 @@ public class PortalsManager {
 
 					@Override
 					public void run() {
-						List<Player> toRemove = new ArrayList<Player>();
-						for (Player p: arrivedPlayers){
-							if (!p.isOnline()) {
-								toRemove.add(p);
+						List<UUID> toRemove = new LinkedList<UUID>();
+						long currTime = System.currentTimeMillis();
+						for (Entry <UUID, Long> entry: arrivedPlayers.entrySet()){
+							Player p = Bukkit.getPlayer(entry.getKey());
+							if (p == null) {
 								continue;
 							}
-							Location loc = p.getLocation();
-							if (getPortal(loc) != null)
+							if (getPortal(p.getLocation()) != null) {
+								//the player is still in a portal
 								continue;
-							toRemove.add(p);
+							}
+							if ((currTime - entry.getValue()) > portalCoolDown) {
+								toRemove.add(entry.getKey());
+							}
 						}
-						arrivedPlayers.removeAll(toRemove);
-					}
-					
-		}, 100, 20);
+						for(UUID rem : toRemove) {
+							arrivedPlayers.remove(rem);
+						}
+					}	
+		}, 5, 5);
 	}
 	
 	public boolean canTransferPlayer(Player p) {
 		if (BetterShardsPlugin.getCombatTagManager().isInCombatTag(p)){
 			return false;
 		} else{
-			return !arrivedPlayers.contains(p);
+			return !arrivedPlayers.containsKey(p.getUniqueId());
 		}
 	}
 	
 	public void addArrivedPlayer(Player p) {
-		arrivedPlayers.add(p);
+		arrivedPlayers.put(p.getUniqueId(), System.currentTimeMillis());
 	}
 	
 	// We want it sync incase a mercury message comes through we don't want it to override the db before 
@@ -159,11 +165,11 @@ public class PortalsManager {
 	        @Override
 	        public void run() {
 	    	for(Portal portal : portals.values()) {
-	    	    if (!portal.isOnCurrentServer()) {
-	    		continue;
+	    	    if (!portal.isOnCurrentServer() || portal.getPartnerPortal() == null) {
+	    	    	continue;
 	    	    }
 	    	    for(Player p : Bukkit.getOnlinePlayers()) {
-	    		portal.showParticles(p);
+	    	    	portal.showParticles(p);
 	    	    }
 	    	}
 	        }

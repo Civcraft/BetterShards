@@ -20,7 +20,7 @@ import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 import vg.civcraft.mc.mercury.MercuryAPI;
 
 public class BetterTeleportServer extends PlayerCommand {
-	private MercuryManager mercManager = BetterShardsPlugin.getMercuryManager();
+	
 	private BetterShardsPlugin plugin = BetterShardsPlugin.getInstance();
 
 	public BetterTeleportServer(String name) {
@@ -89,9 +89,9 @@ public class BetterTeleportServer extends PlayerCommand {
 			if(server.equalsIgnoreCase(serverName)){
 				if(args.length == 4){
 					//default world
-					mercManager.teleportPlayer(server ,p.getUniqueId(), args[1], args[2], args[3]);
+					MercuryManager.teleportPlayer(server ,p.getUniqueId(), args[1], args[2], args[3]);
 				} else if(args.length == 5){
-					mercManager.teleportPlayer(server ,p.getUniqueId(), args[1], args[2], args[3], args[4]);
+					MercuryManager.teleportPlayer(server ,p.getUniqueId(), args[1], args[2], args[3], args[4]);
 				}
 				try {
 					BetterShardsAPI.connectPlayer(p, server, PlayerChangeServerReason.TP_COMMAND);

@@ -4,7 +4,6 @@ import java.util.UUID;
 
 import org.bukkit.entity.Player;
 
-import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
@@ -13,16 +12,6 @@ import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class BetterShardsAPI {
-
-	private static BetterShardsPlugin plugin;
-	private static MercuryManager mercManager;
-	private static DatabaseManager db;
-	
-	public BetterShardsAPI() {
-		plugin = BetterShardsPlugin.getInstance();
-		db = plugin.getDatabaseManager();
-		mercManager = BetterShardsPlugin.getMercuryManager();
-	}
 	
 	/**
 	 * Teleports a player to a different shard.
@@ -33,7 +22,7 @@ public class BetterShardsAPI {
 	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
 	 */
 	public static boolean connectPlayer(Player p, String serverName, PlayerChangeServerReason reason) throws PlayerStillDeadException {
-		return plugin.teleportPlayerToServer(p, serverName, reason);
+		return BetterShardsPlugin.getConnectionManager().teleportPlayerToServer(p, serverName, reason);
 	}
 	
 	/**
@@ -45,7 +34,7 @@ public class BetterShardsAPI {
 	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
 	 */
 	public static boolean connectPlayer(UUID p, String serverName, PlayerChangeServerReason reason) throws PlayerStillDeadException {
-		return plugin.teleportPlayerToServer(p, serverName, reason);
+		return BetterShardsPlugin.getConnectionManager().teleportPlayerToServer(p, serverName, reason);
 	}
 	
 	/**
@@ -53,7 +42,7 @@ public class BetterShardsAPI {
 	 * @param uuid The name of said player.
 	 */
 	public static void requestPlayerTeleport(String name) {
-		plugin.teleportOtherServerPlayer(name);
+		BetterShardsPlugin.getConnectionManager().teleportOtherServerPlayer(name);
 	}
 	
 	/**
@@ -66,8 +55,8 @@ public class BetterShardsAPI {
 	 * to teleport a dead player.  If calling from PlayerRespawnEvent just schedule a sync method to occur after the event.
 	 */
 	public static boolean connectPlayer(Player p, Portal portal, PlayerChangeServerReason reason, Object ... data) throws PlayerStillDeadException {
-		if (plugin.teleportPlayerToServer(p, portal.getServerName(), reason)) {
-			mercManager.teleportPlayer(p.getUniqueId(), portal, data); // We want to do this after because we don't know if a player was teleported yet.
+		if (BetterShardsPlugin.getConnectionManager().teleportPlayerToServer(p, portal.getServerName(), reason)) {
+			MercuryManager.teleportPlayer(p.getUniqueId(), portal, data); // We want to do this after because we don't know if a player was teleported yet.
 			return true;
 		}
 		return false;
@@ -77,21 +66,17 @@ public class BetterShardsAPI {
 		return BetterShardsPlugin.getCurrentServerName();
 	}
 	
-	public static PortalsManager getPortalsManager() {
-		return BetterShardsPlugin.getInstance().getPortalManager();
-	}
-	
 	/**
 	 * Checks if a player has a bed.
 	 * @param uuid
 	 * @return Returns true if player has one, false otherwise.
 	 */
 	public static boolean hasBed(UUID uuid) {
-		return plugin.getBed(uuid) != null;
+		return BetterShardsPlugin.getBedManager().getBed(uuid) != null;
 	}
 	
 	public static BedLocation getBedLocation(UUID uuid) {
-		return plugin.getBed(uuid);
+		return BetterShardsPlugin.getBedManager().getBed(uuid);
 	}
 	
 	/**
@@ -102,15 +87,15 @@ public class BetterShardsAPI {
 	 */
 	public static void addBedLocation(UUID uuid, BedLocation bed) {
 		removeBedLocation(bed);
-		plugin.addBedLocation(uuid, bed);
-		db.addBedLocation(bed);
-		mercManager.sendBedLocation(bed);
+		BetterShardsPlugin.getBedManager().addBedLocation(uuid, bed);
+		BetterShardsPlugin.getDatabaseManager().addBedLocation(bed);
+		MercuryManager.sendBedLocation(bed);
 	}
 	
 	public static void removeBedLocation(BedLocation bed) {
-		plugin.removeBed(bed.getUUID());
-		db.removeBed(bed.getUUID());
-		mercManager.removeBedLocation(bed);
+		BetterShardsPlugin.getBedManager().removeBed(bed.getUUID());
+		BetterShardsPlugin.getDatabaseManager().removeBed(bed.getUUID());
+		MercuryManager.removeBedLocation(bed);
 	}
 	
 	/**
@@ -121,7 +106,7 @@ public class BetterShardsAPI {
 	 * world can be either the world name or world uuid.
 	 */
 	public static void teleportPlayer(String server, UUID uuid, TeleportInfo info) {
-		mercManager.teleportPlayer(server, uuid, info);
+		MercuryManager.teleportPlayer(server, uuid, info);
 	}
 	
 	/**
@@ -135,6 +120,6 @@ public class BetterShardsAPI {
 		} catch (PlayerStillDeadException e) {
 			e.printStackTrace();
 		}
-		mercManager.notifyRandomSpawn(server, player);
+		MercuryManager.notifyRandomSpawn(server, player);
 	}
 }

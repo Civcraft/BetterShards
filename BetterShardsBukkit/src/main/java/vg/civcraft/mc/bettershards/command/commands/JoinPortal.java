@@ -6,14 +6,14 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import vg.civcraft.mc.bettershards.BetterShardsAPI;
-import vg.civcraft.mc.bettershards.PortalsManager;
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
+import vg.civcraft.mc.bettershards.manager.PortalsManager;
 import vg.civcraft.mc.bettershards.portal.Portal;
 import vg.civcraft.mc.civmodcore.command.PlayerCommand;
 
 public class JoinPortal extends PlayerCommand {
 
-	private PortalsManager pm = BetterShardsAPI.getPortalsManager();
+	private PortalsManager pm;
 	
 	public JoinPortal(String name) {
 		super(name);
@@ -21,6 +21,7 @@ public class JoinPortal extends PlayerCommand {
 		setDescription("Joins the main Portal to the secondary Portal.");
 		setUsage("/bsj <main portal> <connection>");
 		setArguments(2,2);
+		pm = BetterShardsPlugin.getPortalManager();
 	}
 
 	@Override

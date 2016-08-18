@@ -1,4 +1,4 @@
-package vg.civcraft.mc.bettershards.misc;
+package vg.civcraft.mc.bettershards.manager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,20 +16,32 @@ import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
+import vg.civcraft.mc.bettershards.external.MercuryManager;
+import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
+import vg.civcraft.mc.civmodcore.Config;
+import vg.civcraft.mc.civmodcore.annotations.CivConfig;
+import vg.civcraft.mc.civmodcore.annotations.CivConfigType;
+import vg.civcraft.mc.civmodcore.annotations.CivConfigs;
 import vg.civcraft.mc.mercury.MercuryAPI;
 
-public class RandomSpawn {
+public class RandomSpawnManager {
 	private DatabaseManager dbm;
 	private int spawnRange;
 	private World w;
 	private boolean disableFirstJoin = false;
 	private List <Material> ignoreMaterials;
 
-	public RandomSpawn(Integer spawnRange, String worldName, List <String> ignoreMats) {
-		dbm = BetterShardsPlugin.getInstance().getDatabaseManager();
-		this.spawnRange = spawnRange;
-		this.w = BetterShardsPlugin.getInstance().getServer()
-				.getWorld(worldName);
+	
+	public RandomSpawnManager() {
+		Config config = BetterShardsPlugin.getInstance().GetConfig();
+		this.spawnRange = config.get("randomspawn.range").getInt();
+		String worldName = config.get("randomspawn.spawnworld").getString();
+		this.w = BetterShardsPlugin.getInstance().getServer().getWorld(worldName);
+		if (this.w == null) {
+			BetterShardsPlugin.getInstance().severe("Could not find world " + worldName + " for random spawning. Defaulting to standard world");
+			this.w = Bukkit.getWorlds().get(0);
+		}
+		List <String> ignoreMats = config.get("randomspawn.ignoreMaterials").getStringList();
 		this.ignoreMaterials = new ArrayList<Material>();
 		for(String ign : ignoreMats) {
 		    try {
@@ -40,6 +52,7 @@ public class RandomSpawn {
 		    	BetterShardsPlugin.getInstance().warning("The randomspawn ignore material specified as " + ign + " is not valid. It was ignored");
 		    }
 		}
+		dbm = BetterShardsPlugin.getDatabaseManager();
 	}
 
 	/**
@@ -49,7 +62,11 @@ public class RandomSpawn {
 	 * 
 	 * @param p Player who just died
 	 */
-
+	@CivConfigs({
+		@CivConfig(name = "randomspawn.range", def = "1000", type = CivConfigType.Int),
+		@CivConfig(name = "randomspawn.spawnworld", def = "world", type = CivConfigType.String),
+		@CivConfig(name = "randomspawn.ignoreMaterials", type = CivConfigType.String_List)
+	})
 	public void handleDeath(Player p) {
 		List<String> servers = getAllowedServers();
 		if (servers.isEmpty()) {
@@ -85,8 +102,7 @@ public class RandomSpawn {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			BetterShardsPlugin.getMercuryManager().notifyRandomSpawn(
-					servers.get(serverIndex), p.getUniqueId());
+			MercuryManager.notifyRandomSpawn(servers.get(serverIndex), p.getUniqueId());
 		}
 	}
 	

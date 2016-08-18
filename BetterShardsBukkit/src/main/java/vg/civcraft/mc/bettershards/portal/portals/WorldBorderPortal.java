@@ -1,7 +1,5 @@
 package vg.civcraft.mc.bettershards.portal.portals;
 
-import java.util.Random;
-
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -12,9 +10,9 @@ import org.bukkit.entity.Player;
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
+import vg.civcraft.mc.bettershards.manager.RandomSpawnManager;
 import vg.civcraft.mc.bettershards.misc.LocationWrapper;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
-import vg.civcraft.mc.bettershards.misc.RandomSpawn;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class WorldBorderPortal extends Portal {
@@ -147,7 +145,7 @@ public class WorldBorderPortal extends Portal {
 			if (w.getBlockAt(x, y, z).getType().isSolid()
 				&& w.getBlockAt(x, y + 1, z).getType() == Material.AIR
 				&& w.getBlockAt(x, y + 2, z).getType() == Material.AIR) {
-			return RandomSpawn.centerLocation(new Location(w, x, y + 1, z)); //+1 because player position is in lower body half
+			return RandomSpawnManager.centerLocation(new Location(w, x, y + 1, z)); //+1 because player position is in lower body half
 			}
 		    }
 		  //no valid spot at all, so randomspawn
@@ -155,7 +153,7 @@ public class WorldBorderPortal extends Portal {
 			    + " z=" + loc.getBlockZ() + ". Randomspawning player");
 		    return BetterShardsPlugin.getRandomSpawn().getLocation();
 		}
-		return RandomSpawn.centerLocation(eyes.getLocation());
+		return RandomSpawnManager.centerLocation(eyes.getLocation());
 	}
 	
 	public void teleport(Player p) {

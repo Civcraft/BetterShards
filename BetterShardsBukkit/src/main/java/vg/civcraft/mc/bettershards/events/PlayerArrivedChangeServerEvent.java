@@ -2,11 +2,8 @@ package vg.civcraft.mc.bettershards.events;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-
-import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class PlayerArrivedChangeServerEvent extends Event{
 
