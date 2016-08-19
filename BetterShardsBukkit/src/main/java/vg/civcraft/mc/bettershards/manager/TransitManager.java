@@ -50,6 +50,7 @@ public class TransitManager {
 							uuid + " failed to transit to " + server + ", was removed by timeout");
 					PlayerFailedToTransitEvent event = new PlayerFailedToTransitEvent(uuid, server);
 					Bukkit.getPluginManager().callEvent(event);
+					exitTransit.remove(uuid);
 				}
 			}
 
@@ -67,6 +68,7 @@ public class TransitManager {
 							uuid + " failed to transit from " + server + ", was removed by timeout");
 					PlayerFailedToTransitEvent event = new PlayerFailedToTransitEvent(uuid, server);
 					Bukkit.getPluginManager().callEvent(event);
+					arrivalTransit.remove(uuid);
 				}
 			}
 
