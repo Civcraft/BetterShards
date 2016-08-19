@@ -40,6 +40,7 @@ public class TransitManager {
 	 * transit.
 	 */
 	public void addPlayerToExitTransit(final UUID uuid, final String server) {
+		BetterShardsPlugin.getInstance().info("Player " + uuid + " was added to exit transit for " + server);
 		exitTransit.put(uuid, server);
 		Bukkit.getScheduler().runTaskLater(BetterShardsPlugin.getInstance(), new Runnable() {
 
@@ -52,12 +53,16 @@ public class TransitManager {
 					Bukkit.getPluginManager().callEvent(event);
 					exitTransit.remove(uuid);
 				}
+				else {
+					BetterShardsPlugin.getInstance().info("Player " + uuid + " was removed from exit transit cleanly");
+				}
 			}
 
 		}, 600); // 30 seconds timeout
 	}
 	
 	public void addPlayerToArrivalTransit(final UUID uuid, final String server) {
+		BetterShardsPlugin.getInstance().info("Player " + uuid + " was added to arrival transit for " + server);
 		arrivalTransit.put(uuid, server);
 		Bukkit.getScheduler().runTaskLater(BetterShardsPlugin.getInstance(), new Runnable() {
 
@@ -69,6 +74,9 @@ public class TransitManager {
 					PlayerFailedToTransitEvent event = new PlayerFailedToTransitEvent(uuid, server);
 					Bukkit.getPluginManager().callEvent(event);
 					arrivalTransit.remove(uuid);
+				}
+				else {
+					BetterShardsPlugin.getInstance().info("Player " + uuid + " was removed from arrival transit cleanly");
 				}
 			}
 
@@ -87,6 +95,9 @@ public class TransitManager {
 			Bukkit.getPluginManager().callEvent(e);
 			exitTransit.remove(player);
 		}
+		else {
+			BetterShardsPlugin.getInstance().info("Player " + player + " was attempted to be removed from exit transit, but was already gone");
+		}
 	}
 	
 	/**
@@ -98,6 +109,9 @@ public class TransitManager {
 		if (isPlayerInArrivalTransit(player)) {
 			//TODO Add appropriate event here
 			arrivalTransit.remove(player);
+		}
+		else {
+			BetterShardsPlugin.getInstance().info("Player " + player + " was attempted to be removed from arrival transit, but was already gone");
 		}
 	}
 	
