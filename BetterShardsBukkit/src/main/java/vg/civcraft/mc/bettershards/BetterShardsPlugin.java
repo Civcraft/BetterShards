@@ -50,9 +50,9 @@ public class BetterShardsPlugin extends ACivMod{
 		new BetterShardsAPI();
 		handle = new BetterCommandHandler();
 		handle.registerCommands();
+		transitManager = new TransitManager();
 		connectionManager = new ConnectionManager();
 		bedManager = new BedManager();
-		transitManager = new TransitManager();
 		isNameLayerEnabled = Bukkit.getPluginManager().isPluginEnabled("NameLayer");
 	}
 	
