@@ -120,6 +120,15 @@ public class BetterShardsListener implements Listener{
 	@CivConfig(name = "lobby", def = "false", type = CivConfigType.Bool)
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void playerJoinEvent(PlayerJoinEvent event){
+		// Defer to next tick so join is fully complete before we unlock
+		final UUID player = event.getPlayer().getUniqueId();
+		Bukkit.getScheduler().runTask(plugin, new Runnable() {
+			public void run() {
+				//tell other server to remove player from transit
+				MercuryManager.notifyOfArrival(player);
+				BetterShardsPlugin.getTransitManager().notifySuccessfullArrival(player);
+			}
+		});
 		if (config.get("lobby").getBool()) {
 		    World w = BetterShardsPlugin.getRandomSpawn().getWorld();
 		    event.getPlayer().teleport(w.getSpawnLocation());
@@ -138,15 +147,6 @@ public class BetterShardsListener implements Listener{
 		loc = e.getLocation();
 		pm.addArrivedPlayer(event.getPlayer());
 		event.getPlayer().teleport(loc);
-		// Defer to next tick so join is fully complete before we unlock
-		final UUID player = event.getPlayer().getUniqueId();
-		Bukkit.getScheduler().runTask(plugin, new Runnable() {
-			public void run() {
-				//tell other server to remove player from transit
-				MercuryManager.notifyOfArrival(player);
-				BetterShardsPlugin.getTransitManager().notifySuccessfullArrival(player);
-			}
-		});
 	}
 	
 	@EventHandler(priority = EventPriority.LOWEST)
