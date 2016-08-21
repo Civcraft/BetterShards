@@ -127,6 +127,6 @@ public class MercuryManager {
 	 * Called when a player is sent to another server, so the target server prepares and put the player in arrival transit
 	 */
 	public static void warnOfArrival(UUID player, String targetServer) {
-		MercuryAPI.sendGlobalMessage("exit|" + player.toString() + "|" + targetServer, "BetterShards");
+		MercuryAPI.sendMessage(targetServer, "exit|" + player.toString() + "|" + BetterShardsPlugin.getCurrentServerName(), "BetterShards");
 	}
 }

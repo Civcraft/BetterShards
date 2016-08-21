@@ -69,23 +69,7 @@ public class DatabaseManager{
 	 * @returns a byte array for the raw inventory data or null if none found or cache expired.
 	 */
 	private byte[] queryCache(UUID uuid, InventoryIdentifier id) {
-		synchronized(invCache) {
-			Map<InventoryIdentifier, byte[]> playerInvCache = invCache.get(uuid);
-			if (playerInvCache != null) {
-
-				// Check for freshness.
-				Long freshness = invCacheFreshness.get(uuid);
-				if (freshness != null && (System.currentTimeMillis() - freshness) > invCacheTimeout) {
-					// Not Fresh. Clear the cache and return null.
-					playerInvCache.clear();
-					invCacheFreshness.remove(uuid);
-					return null;
-				}
-				// Fresh or doesn't exist, either way carry on.
-				return playerInvCache.get(id);
-			}
-			return null;
-		}
+		return null;
 	}
 
 	/**
