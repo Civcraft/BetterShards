@@ -14,7 +14,6 @@ import org.bukkit.event.Listener;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
-import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.manager.PortalsManager;
 import vg.civcraft.mc.bettershards.manager.RandomSpawnManager;
@@ -123,9 +122,6 @@ public class MercuryListener implements Listener{
 					if (p != null){
 						Location loc = getTeleportLocation(uuid);
 						plugin.getLogger().log(Level.INFO, "Sending player {0} to location: {1}", new Object[] { uuid, loc });
-						PlayerArrivedChangeServerEvent event = new PlayerArrivedChangeServerEvent(p, loc);
-						Bukkit.getPluginManager().callEvent(event);
-						loc = event.getLocation();
 						p.teleport(loc);
 					}
 				}
