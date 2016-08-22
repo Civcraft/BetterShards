@@ -15,7 +15,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -23,8 +22,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerChatTabCompleteEvent;
@@ -43,7 +44,6 @@ import org.bukkit.util.Vector;
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
-import vg.civcraft.mc.bettershards.events.PlayerArrivedChangeServerEvent;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.manager.PortalsManager;
@@ -309,22 +309,44 @@ public class BetterShardsListener implements Listener{
 	
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void bedBreak(BlockBreakEvent event) {
-		if (config.get("lobby").getBool())
+		if (config.get("lobby").getBool()) {
 			return;
+		}
 		bedBreak(event.getBlock());
 	}
 	
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void bedExplode(EntityExplodeEvent e) {
+		if (config.get("lobby").getBool())
+			return;
+		for(Block b : e.blockList()) {
+			bedBreak(b);
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+	public void pistonDestroyBed(BlockPistonExtendEvent e) {
+		if (config.get("lobby").getBool()) 
+			return;
+		bedBreak(e.getBlock());
+		for(Block b : e.getBlocks()) {
+			bedBreak(b);
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void bedBreakExplosion(BlockExplodeEvent event) {
 		if (config.get("lobby").getBool())
 			return;
-		for (Block b : event.blockList())
+		for (Block b : event.blockList()) {
 			bedBreak(b);
+		}
 	}
 	
 	private void bedBreak(Block b) {
-		if (b.getType() != Material.BED_BLOCK) 
+		if (b == null || b.getType() != Material.BED_BLOCK) {
 			return;
+		}
 		Block real = getRealFace(b);
 		List<BedLocation> toBeRemoved = new ArrayList<BedLocation>();
 		for (BedLocation bed: BetterShardsPlugin.getBedManager().getAllBeds()) {
