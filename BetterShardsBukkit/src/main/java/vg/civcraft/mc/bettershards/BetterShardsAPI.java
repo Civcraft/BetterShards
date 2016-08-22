@@ -2,11 +2,14 @@ package vg.civcraft.mc.bettershards;
 
 import java.util.UUID;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
+import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
@@ -121,5 +124,18 @@ public class BetterShardsAPI {
 			e.printStackTrace();
 		}
 		MercuryManager.notifyRandomSpawn(server, player);
+	}
+	
+	/**
+	 * To make cross shard integration of other plugins easier, BetterShards allows those to store data in the form of yaml configuration
+	 * sections together with player data. It will automatically get saved when the player switches to another shard and get loaded on there.
+	 * 
+	 * @param plugin Plugin for which data should be saved
+	 * @param uuid UUID of the player for whom data should be saved
+	 * 
+	 * @return ConfigurationSection object, which can be edited and read as needed
+	 */
+	public static ConfigurationSection getConfigurationSection(JavaPlugin plugin, UUID uuid) {
+		return CustomWorldNBTStorage.getWorldNBTStorage().getConfigurationSection(uuid, plugin);
 	}
 }
