@@ -6,6 +6,10 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+/**
+ * Called when a shard transfer is attempted
+ *
+ */
 public class PlayerChangeServerEvent extends Event implements Cancellable{
 
 	private static HandlerList handler = new HandlerList();

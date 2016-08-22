@@ -142,9 +142,6 @@ public class BetterShardsListener implements Listener{
 		if (loc == null)
 			return;
 		loc.setDirection(new Vector(loc.getBlockX() * -1, 0, loc.getBlockZ() * -1));
-		PlayerArrivedChangeServerEvent e = new PlayerArrivedChangeServerEvent(event.getPlayer(), loc);
-		Bukkit.getPluginManager().callEvent(e);
-		loc = e.getLocation();
 		pm.addArrivedPlayer(event.getPlayer());
 		event.getPlayer().teleport(loc);
 	}

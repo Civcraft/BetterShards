@@ -5,6 +5,11 @@ import java.util.UUID;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
+/**
+ * Called after a player left this shard to go to another one and the target shard has confirmed that the player
+ * successfully arrived
+ *
+ */
 public class PlayerEnsuredToTransitEvent extends Event{
 
 	private static HandlerList handler = new HandlerList();
