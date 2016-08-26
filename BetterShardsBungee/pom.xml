@@ -6,12 +6,13 @@
 	<parent>
 		<groupId>vg.civcraft.mc.bettershards</groupId>
 		<artifactId>BetterShardsParent</artifactId>
-		<version>1.4.50</version>
+		<version>1.0.0</version>
 	</parent>
 
 	<artifactId>BetterShardsBungee</artifactId>
 	<packaging>jar</packaging>
 	<name>BetterShards</name>
+	<version>1.4.51</version>
 
 	<build>
 		<resources>
@@ -61,6 +62,13 @@
 			<type>jar</type>
 		</dependency>
 		<dependency>
+			<groupId>net.md-5</groupId>
+			<artifactId>bungeecord-proxy</artifactId>
+			<version>1.10-SNAPSHOT</version>
+			<scope>provided</scope>
+			<type>jar</type>
+		</dependency>
+		<dependency>
 			<groupId>vg.civcraft.mc.mercury</groupId>
 			<artifactId>Mercury</artifactId>
 			<version>1.2.11</version>
@@ -70,6 +78,12 @@
 			<artifactId>BetterShardsBukkit</artifactId>
 			<groupId>vg.civcraft.mc.bettershards</groupId>
 			<version>1.4.48</version>
+		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-transport</artifactId>
+			<version>4.0.40.Final</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 

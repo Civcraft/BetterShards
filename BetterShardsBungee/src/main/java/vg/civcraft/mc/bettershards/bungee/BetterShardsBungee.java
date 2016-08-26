@@ -14,7 +14,9 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
+import vg.civcraft.mc.bettershards.bungee.commands.FreezeCommand;
 import vg.civcraft.mc.bettershards.bungee.commands.ShardCommand;
+import vg.civcraft.mc.bettershards.bungee.net.BungeeNettyHook;
 import vg.civcraft.mc.mercury.MercuryAPI;
 
 public class BetterShardsBungee extends Plugin {
@@ -36,6 +38,7 @@ public class BetterShardsBungee extends Plugin {
 		loadConfiguration();
 		// Lets connect to the db.
 		loadDB();
+		BungeeNettyHook.initialize();
 		MercuryAPI.addChannels("BetterShards");
 		reconnectHandler = new BetterShardsReconnectHandler();
 		getProxy().setReconnectHandler(reconnectHandler);
@@ -47,6 +50,7 @@ public class BetterShardsBungee extends Plugin {
 		BungeeMercuryManager.disableLocalRandomSpawn();
 		
 		// Register commands
+		this.getProxy().getPluginManager().registerCommand(this, new FreezeCommand());
 		this.getProxy().getPluginManager().registerCommand(this, new ShardCommand());
 	}
 	

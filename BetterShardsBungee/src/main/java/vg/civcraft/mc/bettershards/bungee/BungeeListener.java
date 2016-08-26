@@ -11,14 +11,20 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
+import net.md_5.bungee.api.connection.PendingConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.LoginEvent;
+import net.md_5.bungee.api.event.PreLoginEvent;
 import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.ServerConnectEvent;
 import net.md_5.bungee.api.event.ServerKickEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 import net.md_5.bungee.event.EventPriority;
+
+import vg.civcraft.mc.bettershards.bungee.net.BungeeNettyHook;
+import vg.civcraft.mc.bettershards.bungee.net.ConnectionTracker;
+import vg.civcraft.mc.bettershards.bungee.net.NettyInboundHandler;
 import vg.civcraft.mc.mercury.MercuryAPI;
 import vg.civcraft.mc.mercury.events.EventListener;
 import vg.civcraft.mc.mercury.events.EventManager;
@@ -57,7 +63,7 @@ public class BungeeListener implements Listener, EventListener {
 		Map<String, BungeeDatabaseHandler.PriorityInfo> priorityServers = db.getPriorityServers();
 		int random = -1;
 		if (!priorityServers.isEmpty()) {
-		    	List <String> rndmServer = new ArrayList<String>(priorityServers.keySet());
+			List <String> rndmServer = new ArrayList<String>(priorityServers.keySet());
 			Collections.shuffle(rndmServer, rand);
 			for (String rndServer : rndmServer) {
 				int currentPopulation = MercuryAPI.getAllAccountsByServer(rndServer).size();
@@ -234,7 +240,23 @@ public class BungeeListener implements Listener, EventListener {
 					event.getConnection().getUniqueId().toString()));
 		}
 	}
-	
+
+	@EventHandler()
+	public void injectConnectionHandler(PreLoginEvent event) {
+		PendingConnection pc = event.getConnection();
+		NettyInboundHandler nih = BungeeNettyHook.setupHook(pc);
+		if (nih == null) {
+			BetterShardsBungee.getInstance().getLogger().info("Unable to initialize NettyInboundHandler hook");
+		} else {
+			ConnectionTracker.add(pc, nih);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void removeNettyHookTracker(PlayerDisconnectEvent event) {
+		ConnectionTracker.remove(event.getPlayer());
+	}
+
 	public static List<String> getAllExcludedServers() {
 		return execludedServers;
 	}
