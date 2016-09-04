@@ -22,7 +22,7 @@ public class FreezeCommand extends Command {
 		if (user == null) {
 			sender.sendMessage( ChatColor.RED + "That user is not online" );
 		} else {
-			boolean isFrozen = ConnectionTracker.toggleFreeze(user);
+			Boolean isFrozen = ConnectionTracker.toggleFreeze(user);
 			sender.sendMessage( ChatColor.BLUE + args[0] + " is " + isFrozen + " frozen." );
 		}
 	}

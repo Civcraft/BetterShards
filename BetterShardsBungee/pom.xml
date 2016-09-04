@@ -12,7 +12,7 @@
 	<artifactId>BetterShardsBungee</artifactId>
 	<packaging>jar</packaging>
 	<name>BetterShards</name>
-	<version>1.4.51</version>
+	<version>1.4.52</version>
 
 	<build>
 		<resources>
@@ -57,13 +57,6 @@
 		<dependency>
 			<groupId>net.md-5</groupId>
 			<artifactId>bungeecord-api</artifactId>
-			<version>1.10-SNAPSHOT</version>
-			<scope>provided</scope>
-			<type>jar</type>
-		</dependency>
-		<dependency>
-			<groupId>net.md-5</groupId>
-			<artifactId>bungeecord-proxy</artifactId>
 			<version>1.10-SNAPSHOT</version>
 			<scope>provided</scope>
 			<type>jar</type>

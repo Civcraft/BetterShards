@@ -52,6 +52,7 @@ public class BetterShardsBungee extends Plugin {
 		// Register commands
 		this.getProxy().getPluginManager().registerCommand(this, new FreezeCommand());
 		this.getProxy().getPluginManager().registerCommand(this, new ShardCommand());
+		this.getLogger().info("Loaded");
 	}
 	
 	@Override

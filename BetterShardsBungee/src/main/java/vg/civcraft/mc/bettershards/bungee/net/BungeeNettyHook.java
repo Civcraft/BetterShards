@@ -3,8 +3,6 @@ package vg.civcraft.mc.bettershards.bungee.net;
 import java.lang.reflect.Field;
 import io.netty.channel.Channel;
 import net.md_5.bungee.api.connection.PendingConnection;
-import net.md_5.bungee.connection.InitialHandler;
-import net.md_5.bungee.netty.ChannelWrapper;
 import vg.civcraft.mc.bettershards.bungee.BetterShardsBungee;
 
 public class BungeeNettyHook {
@@ -16,43 +14,55 @@ public class BungeeNettyHook {
 	public static final String BUNGEECORD_BOSS_HANDLER = "inbound-boss";
 	public static final String NAMELAYER_FREEZE_HANDLER = "namelayer-freeze";
 
-	private static boolean initialized_ = false;
+	private static int initialized_ = 0;
+	private static Class initialHandler_ = null;
 	private static Field channelWrapperField_ = null;
+	private static Class channelWrapper_ = null;
 	private static Field channelField_ = null;
 
 	public static boolean initialize() {
-		if (initialized_) {
+		if (initialized_ < 0) {
+			return false;
+		}
+		if (initialized_ > 0) {
 			return true;
 		}
 		try {
-			channelWrapperField_ = InitialHandler.class.getDeclaredField("ch");
+			initialHandler_ = Class.forName("net.md_5.bungee.connection.InitialHandler");
+			channelWrapperField_ = initialHandler_.getDeclaredField("ch");
 			channelWrapperField_.setAccessible(true);
-			channelField_ = ChannelWrapper.class.getDeclaredField("ch");
+
+			channelWrapper_ = Class.forName("net.md_5.bungee.netty.ChannelWrapper");
+			channelField_ = channelWrapper_.getDeclaredField("ch");
 			channelField_.setAccessible(true);
-			initialized_ = true;
+
+			initialized_ = 1;
+			BetterShardsBungee.getInstance().getLogger().info("BungeeNettyHook is initalized.");
 			return true;
-		} catch (NoSuchFieldException ex) {
+		} catch (ClassNotFoundException | NoSuchFieldException ex) {
+			initialized_ = -1;
+			BetterShardsBungee.getInstance().getLogger().severe("BungeeNettyHook is uninitalized.");
 			return false;
 		}
 	}
 
 	public static NettyInboundHandler setupHook(PendingConnection pc) {
-		if (!initialized_) {
+		if (initialized_ < 1) {
 			BetterShardsBungee.getInstance().getLogger().severe("BungeeNettyHook is uninitalized.");
 			return null;
 		}
-		if (!(pc instanceof InitialHandler)) {
+		if (!pc.getClass().equals(initialHandler_)) {
 			BetterShardsBungee.getInstance().getLogger().severe("PendingConnection is not an InitialHandler.");
 			return null;
 		}
-		ChannelWrapper cw;
+		Object init_handler = pc;
+		Object chan_wrapper;
 		Channel chan;
-		InitialHandler ih = (InitialHandler)pc;
 		try {
-			cw = (ChannelWrapper)channelWrapperField_.get(ih);
-			chan = (Channel)channelField_.get(cw);
+			chan_wrapper = channelWrapperField_.get(init_handler);
+			chan = (Channel)channelField_.get(chan_wrapper);
 		} catch (IllegalAccessException ex) {
-			BetterShardsBungee.getInstance().getLogger().severe("Illegal field access.");
+			BetterShardsBungee.getInstance().getLogger().severe("Illegal field access extracting Channel.");
 			return null;
 		}
 		NettyInboundHandler nih = new NettyInboundHandler(pc, chan);
