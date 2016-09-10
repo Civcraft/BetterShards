@@ -63,7 +63,7 @@ public class ConnectionManager {
 	 * @param server The server to teleport the player to.
 	 */
 	public boolean teleportPlayerToServer(Player p, String server, PlayerChangeServerReason reason) throws PlayerStillDeadException {
-		if (transitManager.isPlayerInExitTransit(p.getUniqueId())) { // Somehow this got triggered twice for one reason or another
+		if (transitManager.isPlayerInTransit(p.getUniqueId())) { // Somehow this got triggered twice for one reason or another
 				return false; // We dont wan't to continue twice because it could cause issues with the db.
 		}
 		PlayerChangeServerEvent event = new PlayerChangeServerEvent(reason, p.getUniqueId(), server);
