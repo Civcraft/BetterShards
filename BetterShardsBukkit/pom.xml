@@ -13,7 +13,7 @@
 	<packaging>jar</packaging>
 	<name>BetterShards</name>
 	<url>https://github.com/Civcraft/BetterShards</url>
-	<version>1.4.50</version>
+	<version>1.4.53</version>
 
 
     <build>

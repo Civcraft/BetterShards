@@ -48,6 +48,7 @@ import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.manager.PortalsManager;
 import vg.civcraft.mc.bettershards.manager.RandomSpawnManager;
+import vg.civcraft.mc.bettershards.manager.TransitManager;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.Grid;
@@ -163,8 +164,15 @@ public class BetterShardsListener implements Listener{
 		Player p = event.getPlayer();
 		UUID uuid = p.getUniqueId();
 		db.playerQuitServer(uuid);
-		if (!BetterShardsPlugin.getTransitManager().isPlayerInTransit(uuid)) {
-			st.save(p, st.getInvIdentifier(uuid), true);
+		TransitManager tm = BetterShardsPlugin.getTransitManager();
+		if (tm.isPlayerInArrivalTransit(uuid)) {
+			//quitting while in arrival transit. We dont allow the player to save his inventory in this state, but we need to keep his location
+			MercuryListener.stageTeleport(uuid, p.getLocation());
+		}
+		else {
+			if (!BetterShardsPlugin.getTransitManager().isPlayerInTransit(uuid)) {
+				st.save(p, st.getInvIdentifier(uuid), true);
+			}
 		}
 	}
 	

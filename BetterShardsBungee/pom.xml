@@ -12,7 +12,7 @@
 	<artifactId>BetterShardsBungee</artifactId>
 	<packaging>jar</packaging>
 	<name>BetterShards</name>
-	<version>1.4.52</version>
+	<version>1.4.53</version>
 
 	<build>
 		<resources>

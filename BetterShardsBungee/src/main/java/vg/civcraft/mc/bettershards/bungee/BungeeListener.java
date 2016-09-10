@@ -164,8 +164,9 @@ public class BungeeListener implements Listener, EventListener {
 
 	@Override
 	public void receiveMessage(String origin, String channel, String message) {
-		if (!channel.equals("BetterShards"))
+		if (!channel.equals("BetterShards")) {
 			return;
+		}
 		String[] content = message.split("\\|");
 		if (content[0].equals("count")) {
 			BetterShardsBungee.setServerCount(origin, Integer.parseInt(content[1]));
