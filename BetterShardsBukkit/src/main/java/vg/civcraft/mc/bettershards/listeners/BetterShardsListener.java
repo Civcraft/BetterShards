@@ -234,6 +234,10 @@ public class BetterShardsListener implements Listener{
         if (p == null || p.getPartnerPortal() == null) {
         	return;
         }
+        if (!MercuryAPI.getAllConnectedServers().contains(p.getPartnerPortal().getServerName())) {
+        	player.sendMessage(ChatColor.RED + "This server is currently offline. Please try again later");
+        	return;
+        }
         // We need this check incase the player just teleported inside the field.
         // We know he does not need to teleport back.
         if (pm.canTransferPlayer(player)) {
