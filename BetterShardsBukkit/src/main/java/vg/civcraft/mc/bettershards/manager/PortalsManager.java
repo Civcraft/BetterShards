@@ -173,6 +173,6 @@ public class PortalsManager {
 	    	    }
 	    	}
 	        }
-	    }, 20L, 20L);
+	    }, 4L, 4L);
 	}
 }

@@ -66,7 +66,12 @@ public class BetterShardsBungee extends Plugin {
 		String dbname = config.getString("mysql.dbname", "BetterShardsDB");
 		String username = config.getString("mysql.username");
 		String password = config.getString("mysql.password");
-		db = new BungeeDatabaseHandler(host, port, dbname, username, password);
+		int poolsize = config.getInt("mysql.poolsize", 3);
+		long connectionTimeout = config.getLong("mysql.connection_timeout", 10000l);
+		long idleTimeout = config.getLong("mysql.idle_timeout", 600000l);
+		long maxLifetime = config.getLong("mysql.max_lifetime", 7200000l);
+		db = new BungeeDatabaseHandler(host, port, dbname, username, password,
+				poolsize, connectionTimeout, idleTimeout, maxLifetime);
 	}
 	
 	public void loadConfiguration() {

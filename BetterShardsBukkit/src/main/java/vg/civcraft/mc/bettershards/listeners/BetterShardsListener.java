@@ -89,17 +89,18 @@ public class BetterShardsListener implements Listener{
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void playerPreLoginCacheInv(AsyncPlayerPreLoginEvent event) {
 		UUID uuid = event.getUniqueId();
-		if (uuid != null) {
+		/*if (uuid != null) {
 			plugin.getLogger().log(Level.FINER, "Preparing to pre-load player data: {0}", uuid);
 		} else { 
 			return;
-		}
+		}*/
 		if (st == null){ // Small race condition if someone logs on as soon as the server starts.
 			event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, "Please try to log in again in a moment, server is not ready to accept log-ins.");
 			plugin.getLogger().log(Level.INFO, "Player {0} logged on before async process was ready, skipping.", uuid);
 			return;
 		}
-		Future<ByteArrayInputStream> soondata = db.loadPlayerDataAsync(uuid, st.getInvIdentifier(uuid)); // wedon't use the data, but know that it caches behind the scenes.
+		// caching disabled due to fail
+		/*Future<ByteArrayInputStream> soondata = db.loadPlayerDataAsync(uuid, st.getInvIdentifier(uuid)); // wedon't use the data, but know that it caches behind the scenes.
 		
 		try {
 			ByteArrayInputStream after = soondata.get(); // I want to _INTENTIONALLY_ delay accepting the user's login until I know for sure I've got the data loaded asynchronously.
@@ -112,7 +113,7 @@ public class BetterShardsListener implements Listener{
 		} catch (InterruptedException | ExecutionException e) {
 			plugin.getLogger().log(Level.SEVERE, "Failed to pre-load player data: {0}", uuid);
 			e.printStackTrace();
-		}
+		}*/
 		
 		// We do this so it fetches the cache, then when called for real
 		// by our CustomWorldNBTStorage class it doesn't have to wait and server won't lock.
@@ -232,6 +233,10 @@ public class BetterShardsListener implements Listener{
         
         Portal p = pm.getPortal(to);
         if (p == null || p.getPartnerPortal() == null) {
+        	return;
+        }
+        if (!MercuryAPI.getAllConnectedServers().contains(p.getPartnerPortal().getServerName())) {
+        	player.sendMessage(ChatColor.RED + "This server is currently offline. Please try again later");
         	return;
         }
         // We need this check incase the player just teleported inside the field.

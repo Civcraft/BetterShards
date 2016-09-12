@@ -1,8 +1,10 @@
 package vg.civcraft.mc.bettershards.bungee;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -10,13 +12,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import vg.civcraft.mc.bettershards.database.Database;
 
+/**
+ * Updated to use HikariCP connection pool (9/12/2016 ProgrammerDan)
+ */
 public class BungeeDatabaseHandler {
+	private Logger logger; 
 	public class PriorityInfo {
 		private String server;
 		private int populationCap;
@@ -40,11 +46,16 @@ public class BungeeDatabaseHandler {
 	private Database db;
 	
 	public BungeeDatabaseHandler(String host, int port, String dbname, String username,
-			String password) {
-		db = new Database(host, port, dbname, username, password, 
-				BetterShardsBungee.getInstance().getLogger());
-		if (!db.connect()) {
-			BetterShardsBungee.getInstance().getLogger().log(Level.SEVERE, "Major error has "
+			String password, int poolSize, long connectionTimeout, long idleTimeout, 
+			long maxLifetime) {
+		logger = BetterShardsBungee.getInstance().getLogger();
+		db = new Database(logger,
+				username, password, host, port, dbname, poolSize,
+				connectionTimeout, idleTimeout, maxLifetime);
+		try {
+			db.getConnection().close();
+		} catch (Exception se) {
+			logger.log(Level.SEVERE, "Major error has "
 					+ "occured when trying to connect to global BetterShards Database.\n"
 					+ "Was the Bukkit/Spigot/Bukkit API utalizing server able to connect"
 					+ " to the global database?\n Shutting down as this plugin cannot "
@@ -52,27 +63,31 @@ public class BungeeDatabaseHandler {
 			BetterShardsBungee.getInstance().getProxy().stop();
 		}
 		
-		setStatements();
-		createTables();
+		if (!createTables()) {
+			BetterShardsBungee.getInstance().getProxy().stop();
+		}
 	}
+
+	private static final String setServer = "insert into BetterShardsBungeeConnection (uuid, server) values (?, ?) "
+			+ "on duplicate key update server = VALUES(server);";
+	private static final String getServer = "select server from BetterShardsBungeeConnection where uuid = ?;";
+	private static final String getAllPriority = "select name, cap from priorityServers;";
+	private static final String getAllExclude = "select * from excludedServers;";
 	
-	private String setServer, getServer;
-	private String getAllPriority;
-	private String getAllExclude;
-	
-	private void setStatements() {
-		setServer = "insert into BetterShardsBungeeConnection (uuid, server) values (?, ?) "
-				+ "on duplicate key update server = VALUES(server);";
-		getServer = "select server from BetterShardsBungeeConnection where uuid = ?;";
-		getAllPriority = "select name, cap from priorityServers;";
-		getAllExclude = "select * from excludedServers;";
-	}
-	
-	private void createTables() {
-		db.execute("create table if not exists BetterShardsBungeeConnection("
+	// TODO: We might want a CivModCore for Bungee. Getting tired of 
+	// copying in the boilerplate for Hikari...
+	private boolean createTables() {
+		try (Connection connection = db.getConnection();
+				Statement statement = connection.createStatement();) { 
+			statement.executeUpdate("create table if not exists BetterShardsBungeeConnection("
 				+ "uuid varchar(36) not null,"
 				+ "server varchar(36) not null,"
 				+ "primary key uuidKey (uuid));");
+			return true;
+		} catch (SQLException se) {
+			logger.log(Level.SEVERE, "Failed to create the BetterShardsBungee tables", se);
+			return false;
+		}
 	}
 	
 	public boolean hasPlayerBefore(UUID uuid) {
@@ -81,18 +96,15 @@ public class BungeeDatabaseHandler {
 	}
 	
 	public void setServer(UUID uuid, ServerInfo server) {
-		if (!db.isConnected())
-			db.connect();
-		PreparedStatement setServer = db.prepareStatement(this.setServer);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement setServer = connection.prepareStatement(BungeeDatabaseHandler.setServer);) {
 			setServer.setString(1, uuid.toString());
 			setServer.setString(2, server.getName());
 			setServer.execute();
 			playerServerCache.put(uuid, server);
 			BungeeMercuryManager.sendPlayerServerUpdate(uuid, server.getName());
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.WARNING, "Failed to set server for a player", e);
 		}
 	}
 	
@@ -112,10 +124,8 @@ public class BungeeDatabaseHandler {
 		if(playerServerCache.containsKey(uuid)){
 			return playerServerCache.get(uuid);
 		}
-		if (!db.isConnected())
-			db.connect();
-		PreparedStatement getServer = db.prepareStatement(this.getServer);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement getServer = connection.prepareStatement(BungeeDatabaseHandler.getServer);){
 			getServer.setString(1, uuid.toString());
 			ResultSet set = getServer.executeQuery();
 			if (!set.next())
@@ -124,8 +134,7 @@ public class BungeeDatabaseHandler {
 			playerServerCache.put(uuid, server);
 			return server;
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to get server for a user", e);
 		}
 		return null;
 	}
@@ -145,44 +154,30 @@ public class BungeeDatabaseHandler {
 	}
 
 	public Map<String, PriorityInfo> retrieveAllPriorityFromDb() {
-		if (!db.isConnected())
-			db.connect();
-		PreparedStatement getAllPriority = db.prepareStatement(this.getAllPriority);
 		Map<String, PriorityInfo> result = new HashMap<>();
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement getAllPriority = connection.prepareStatement(BungeeDatabaseHandler.getAllPriority);) {
 			ResultSet set = getAllPriority.executeQuery();
 			while (set.next()) {
 				String server = set.getString("name");
 				result.put(server, new PriorityInfo(server, set.getInt("cap")));
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			try {
-				getAllPriority.close();
-			} catch (Exception ex) {}
+			logger.log(Level.WARNING, "Failed to retrieve all priority from DB", e);
 		}
 		return result;
 	}
 	
 	public List <String> retrieveAllExcludeFromDb() {
-		if (!db.isConnected())
-			db.connect();
-		PreparedStatement getAllExclude = db.prepareStatement(this.getAllExclude);
 		List <String> result = new LinkedList <String> ();
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement getAllExclude = connection.prepareStatement(BungeeDatabaseHandler.getAllExclude);) {
 			ResultSet set = getAllExclude.executeQuery();
 			while (set.next()) {
 				result.add(set.getString("name"));
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			try {
-				getAllExclude.close();
-			} catch (Exception ex) {}
+			logger.log(Level.WARNING, "Failed to retrieve all exclude from DB", e);
 		}
 		return result;
 	}
