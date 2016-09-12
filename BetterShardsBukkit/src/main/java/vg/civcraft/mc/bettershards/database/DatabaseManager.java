@@ -2,14 +2,14 @@ package vg.civcraft.mc.bettershards.database;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
@@ -47,18 +47,227 @@ import vg.civcraft.mc.civmodcore.Config;
 import vg.civcraft.mc.civmodcore.annotations.CivConfig;
 import vg.civcraft.mc.civmodcore.annotations.CivConfigType;
 import vg.civcraft.mc.civmodcore.annotations.CivConfigs;
+import vg.civcraft.mc.civmodcore.dao.ManagedDatasource;
 import vg.civcraft.mc.mercury.MercuryAPI;
 
-public class DatabaseManager{
+public class DatabaseManager {
 
 	private BetterShardsPlugin plugin = BetterShardsPlugin.getInstance();
 	private Config config;
-	private Database db;
+	private ManagedDatasource db;
 	
 	private Map<UUID, Map<InventoryIdentifier, byte[]>> invCache = new HashMap<UUID, Map<InventoryIdentifier, byte[]>>();
 	private Map<UUID, Long> invCacheFreshness = new HashMap<UUID, Long>();
 	private long invCacheTimeout = 30000; // how long does a cached inventory stick around?
 	private ExecutorService executor = Executors.newSingleThreadExecutor();
+
+	private List<String> respawnExclusionCache = Collections.emptyList();
+	private List<String> respawnExclusionCacheImmutable = Collections.unmodifiableList(respawnExclusionCache);
+	private long respawnExclusionCacheExpires = 0;
+	private final long SPAWN_EXCLUSION_TIMEOUT = 5 * 60 * 1000;  // 5 minutes in ms
+
+	private Map<String, PriorityInfo> respawnPriorityCache = Collections.emptyMap();
+	private Map<String, PriorityInfo> respawnPriorityCacheImmutable = Collections.unmodifiableMap(respawnPriorityCache);
+	private long respawnPriorityCacheExpires = 0;
+	private final long SPAWN_PRIORITY_TIMEOUT = 5 * 60 * 1000;  // 5 minutes in ms
+
+	private static final String insertPlayerData = "INSERT INTO createPlayerData(uuid, server, entity, config_sect) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE entity = VALUES(entity), config_sect = VALUES(config_sect);";
+	private static final String getPlayerData = "select * from createPlayerData where uuid = ? and server = ?;";
+	private static final String removePlayerData = "delete from createPlayerData where uuid = ? and server = ?;";
+	
+	private static final String getLock = "INSERT INTO playerDataLock(uuid, inv_id) VALUES (?, ?);";
+	private static final String checkLock = "SELECT last_upd FROM playerDataLock WHERE uuid = ? AND inv_id = ?;";
+	private static final String releaseLock = "DELETE FROM playerDataLock WHERE uuid = ? AND inv_id = ?;";
+	
+	private static final String addPortalLoc = "insert into createPortalLocData(x1, y1, z1, x2, y2, z2, world, id) values (?,?,?,?,?,?,?,?);";
+	private static final String getPortalLocByWorld = "select * from createPortalLocData where world = ?;";
+	private static final String getPortalLoc = "select * from createPortalLocData where id = ?;";
+	private static final String removePortalLoc = "delete from createPortalDataTable where id = ?;";
+	
+	private static final String addPortalData = "insert into createPortalDataTable(id, server_name, portal_type, partner_id) values(?,?,?,?);";
+	private static final String getPortalData = "select * from createPortalDataTable where id = ?;";
+	private static final String removePortalData = "delete from createPortalLocData where id = ?;";
+	private static final String updatePortalData = "update createPortalDataTable set partner_id = ? where id = ?;";
+	
+	private static final String addExclude = "insert ignore into excludedServers(name) values(?);";
+	private static final String removeExclude = "delete from excludedServers where name = ?;";
+	private static final String getAllExclude = "select * from excludedServers;";
+	
+	private static final String addPriority = "insert into priorityServers(name, cap) values(?,?);";
+	private static final String removePriority = "delete from priorityServers where name = ?;";
+	private static final String getAllPriority = "select name, cap from priorityServers;";
+
+	private static final String addBedLocation = "insert into player_beds (uuid, server, world_name, x, y, z) values (?,?,?,?,?,?)";
+	private static final String getAllBedLocation = "select * from player_beds;";
+	private static final String removeBedLocation = "delete from player_beds where uuid = ?;";
+	
+	private String cleanupLocks;
+
+	private BukkitTask lockCleanup;
+	
+	private Logger logger;
+
+	/**
+	 * Does a few key things.
+	 * 
+	 * Builds a new {@link ManagedDatasource} from the <code>mysql</code> section in the Config. 
+	 * Then, sets up migrations into the new format. Note that first time you run while on the old migration path,
+	 * the server will shutdown. Restart, and it'll be good (this is the auto-migration to new migration system).
+	 * 
+	 * Next, optionally sets up cleanup if configured to do so.
+	 */
+	public DatabaseManager(){
+		config = plugin.GetConfig();
+		logger = plugin.getLogger();
+		setupDatabase();
+		try {
+			db.getConnection().close();
+		} catch (Exception se) {
+			logger.log(Level.WARNING, "Could not connect to Database, shutting down!");
+			Bukkit.shutdown();
+		}
+
+		prepareLocalStatements();
+		prepareMigrations();
+		
+		if (!db.updateDatabase()) {
+			logger.log(Level.WARNING, "Failed to migrate to latest Database, shutting down!");
+			Bukkit.shutdown();
+		}
+		
+		setupCleanup();
+	}
+	
+	@CivConfigs({
+		@CivConfig(name = "mysql.host", def = "localhost", type = CivConfigType.String),
+		@CivConfig(name = "mysql.port", def = "3306", type = CivConfigType.Int),
+		@CivConfig(name = "mysql.username", type = CivConfigType.String),
+		@CivConfig(name = "mysql.password", type = CivConfigType.String),
+		@CivConfig(name = "mysql.dbname", def = "BetterShardsDB", type = CivConfigType.String),
+		@CivConfig(name = "mysql.poolsize", def = "10", type = CivConfigType.Int),
+		@CivConfig(name = "mysql.connection_timeout", def = "10000", type = CivConfigType.Long),
+		@CivConfig(name = "mysql.idle_timeout", def = "600000", type = CivConfigType.Long),
+		@CivConfig(name = "mysql.max_lifetime", def = "7200000", type = CivConfigType.Long)
+	})
+	private void setupDatabase(){
+		String username = config.get("mysql.username").getString();
+		String host = config.get("mysql.host").getString();
+		int port = config.get("mysql.port").getInt();
+		String password = config.get("mysql.password").getString();
+		String dbname = config.get("mysql.dbname").getString();
+		int poolsize = config.get("mysql.poolsize").getInt();
+		long connectionTimeout = config.get("mysql.connection_timeout").getLong();
+		long idleTimeout = config.get("mysql.idle_timeout").getLong();
+		long maxLifetime = config.get("mysql.max_lifetime").getLong();
+		this.db = new ManagedDatasource(plugin, username, password, host, port, dbname, poolsize, connectionTimeout, idleTimeout, maxLifetime);
+	}
+	
+	private void prepareMigrations() {
+		// First migration is conversion from old system to new
+		db.registerMigration(-1, false,
+				new Callable<Boolean>() {
+					@Override
+					public Boolean call() {
+						return false; // Force a failure. Migrations doesn't check the current migration per step, only at beginning.
+						// So, we force a shutdown failure on first run. Then on second run, the Migration table will hold the correct values.
+					}
+				},
+				"INSERT INTO managed_plugin_data (plugin_name, current_migration_number, last_migration)"
+						+ " SELECT '" + plugin.getName() + "', max(db_version), timestamp(update_time) FROM bettershards_version LIMIT 1;");
+
+		this.db.registerMigration(0, false,
+				"create table if not exists createPlayerData("
+						+ "uuid varchar(36) not null,"
+						+ "entity blob,"
+						+ "server int not null,"
+						+ "primary key (uuid, server));",
+				"create table if not exists createPortalDataTable("
+						+ "id varchar(255) not null,"
+						+ "server_name varchar(255) not null,"
+						+ "portal_type int not null,"
+						+ "partner_id varchar(255),"
+						+ "primary key(id));",
+				"create table if not exists createPortalLocData("
+						+ "x1 int not null,"
+						+ "y1 int not null,"
+						+ "z1 int not null,"
+						+ "x2 int not null,"
+						+ "y2 int not null,"
+						+ "z2 int not null,"
+						+ "world varchar(255) not null,"
+						+ "id varchar(255) not null,"
+						+ "primary key loc_id (x1, y1, z1, x2, y2, z2, world, id));",
+				"create table if not exists excludedServers("
+						+ "name varchar(20) not null,"
+						+ "primary key name_id(name));",
+				"create table if not exists priorityServers("
+						+ "name varchar(20) not null,"
+						+ "cap int not null,"
+						+ "primary key name_id(name));",
+				"create table if not exists player_beds("
+						+ "uuid varchar(36) not null,"
+						+ "server varchar(36) not null,"
+						+ "world_name varchar(36) not null,"
+						+ "x int not null,"
+						+ "y int not null,"
+						+ "z int not null,"
+						+ "primary key bed_id(uuid));",
+				"create table if not exists bettershards_version("
+						+ "db_version int not null,"
+						+ "update_time varchar(24));");
+		this.db.registerMigration(1, false, "alter table createPlayerData add config_sect text;");
+		this.db.registerMigration(2, false, "CREATE TABLE IF NOT EXISTS playerDataLock("
+					+ "uuid VARCHAR(36) NOT NULL,"
+					+ "inv_id INT NOT NULL,"
+					+ "last_upd TIMESTAMP NOT NULL DEFAULT NOW(),"
+					+ "PRIMARY KEY (uuid, inv_id));");
+	}
+	
+	@CivConfigs({
+		@CivConfig(name = "locks.cleanup_minutes", def = "1", type = CivConfigType.Int),
+	})
+	private void prepareLocalStatements(){
+		cleanupLocks = "DELETE FROM playerDataLock WHERE last_upd <= TIMESTAMPADD(MINUTE, -" + config.get("locks.cleanup_minutes").getInt() + ", NOW());";
+	}
+
+	@CivConfigs({
+		@CivConfig(name = "locks.cleanup", def = "true", type = CivConfigType.Bool),
+		@CivConfig(name = "locks.interval", def = "1200", type = CivConfigType.Long),
+		@CivConfig(name = "cache.freshness_period", def = "30000", type = CivConfigType.Long)
+	})
+	private void setupCleanup() {
+		this.invCacheTimeout = config.get("cache.freshness_period").getLong();
+		if (config.get("locks.cleanup").getBool()) {  // no forever locks
+			this.lockCleanup = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, new Runnable() {
+
+				@Override
+				public void run() {
+					try (Connection connection = db.getConnection();
+							Statement statement = connection.createStatement();){
+						statement.execute(cleanupLocks);
+					} catch (SQLException se) {
+						logger.log(Level.WARNING, "Failed to clean up outstanding locks", se);
+					}
+				}
+				
+			}, 20l, config.get("locks.interval").getLong());
+		}
+	}
+
+	/**
+	 * Closes things up.
+	 */
+	public void cleanup() {
+		if (lockCleanup != null) {
+			lockCleanup.cancel();
+		}
+		try {
+			this.db.close();
+		} catch (SQLException se) {
+			
+		}
+	}
+
 
 	/**
 	 * Threadsafe accessor for the inventory cache. Respects the cache timeout; old caches are discarded, not returned.
@@ -122,234 +331,14 @@ public class DatabaseManager{
 			}
 		}
 	}
-
-	private List<String> respawnExclusionCache = Collections.emptyList();
-	private List<String> respawnExclusionCacheImmutable = Collections.unmodifiableList(respawnExclusionCache);
-	private long respawnExclusionCacheExpires = 0;
-	private final long SPAWN_EXCLUSION_TIMEOUT = 5 * 60 * 1000;  // 5 minutes in ms
-
-	public class PriorityInfo {
-		private String server;
-		private int populationCap;
-
-		public PriorityInfo(String server, int populationCap) {
-			this.server = server;
-			this.populationCap = populationCap;
-		}
-
-		public String getServer() { return this.server; }
-		public int getPopulationCap() { return this.populationCap; }
-	}
-
-	private Map<String, PriorityInfo> respawnPriorityCache = Collections.emptyMap();
-	private Map<String, PriorityInfo> respawnPriorityCacheImmutable = Collections.unmodifiableMap(respawnPriorityCache);
-	private long respawnPriorityCacheExpires = 0;
-	private final long SPAWN_PRIORITY_TIMEOUT = 5 * 60 * 1000;  // 5 minutes in ms
-
-	private String insertPlayerData, getPlayerData, removePlayerData;
-	private String getLock, checkLock, releaseLock, cleanupLocks;
-	private String addPortalLoc, getPortalLocByWorld, getPortalLoc, removePortalLoc;
-	private String addPortalData, getPortalData, removePortalData, updatePortalData;
-	private String addExclude, getAllExclude, removeExclude;
-	private String addPriority, getAllPriority, removePriority;
-	private String addBedLocation, getAllBedLocation, removeBedLocation;
-	private String version, updateVersion;
-	
-	private BukkitTask lockCleanup;
-	
-	private Logger logger;
-
-	public DatabaseManager(){
-		config = plugin.GetConfig();
-		logger = plugin.getLogger();
-		if (!isValidConnection())
-			return;
-		loadPreparedStatements();
-		executeDatabaseStatements();
-		setupCleanup();
-	}
-	
-	@CivConfigs({
-		@CivConfig(name = "locks.cleanup", def = "true", type = CivConfigType.Bool),
-		@CivConfig(name = "locks.interval", def = "1200", type = CivConfigType.Long),
-		@CivConfig(name = "cache.freshness_period", def = "30000", type = CivConfigType.Long)
-	})
-	private void setupCleanup() {
-		this.invCacheTimeout = config.get("cache.freshness_period").getLong();
-		if (config.get("locks.cleanup").getBool()){  // no forever locks
-			this.lockCleanup = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, new Runnable() {
-
-				@Override
-				public void run() {
-					db.execute(cleanupLocks);
-				}
-				
-			}, 20l, config.get("locks.interval").getLong());
-		}
-	}
-	
-	public void cleanup() {
-		if (lockCleanup != null) {
-			lockCleanup.cancel();
-		}
-	}
-	
-	@CivConfigs({
-		@CivConfig(name = "mysql.host", def = "localhost", type = CivConfigType.String),
-		@CivConfig(name = "mysql.port", def = "3306", type = CivConfigType.Int),
-		@CivConfig(name = "mysql.username", type = CivConfigType.String),
-		@CivConfig(name = "mysql.password", type = CivConfigType.String),
-		@CivConfig(name = "mysql.dbname", def = "BetterShardsDB", type = CivConfigType.String)
-	})
-	public boolean isValidConnection(){
-		String username = config.get("mysql.username").getString();
-		String host = config.get("mysql.host").getString();
-		int port = config.get("mysql.port").getInt();
-		String password = config.get("mysql.password").getString();
-		String dbname = config.get("mysql.dbname").getString();
-		db = new Database(host, port, dbname, username, password, plugin.getLogger());
-		return db.connect();
-	}
-	
-	private void executeDatabaseStatements() {
-		db.execute("create table if not exists createPlayerData("
-				+ "uuid varchar(36) not null,"
-				+ "entity blob,"
-				+ "server int not null,"
-				+ "primary key (uuid, server));");
-		db.execute("create table if not exists createPortalDataTable("
-				+ "id varchar(255) not null,"
-				+ "server_name varchar(255) not null,"
-				+ "portal_type int not null,"
-				+ "partner_id varchar(255),"
-				+ "primary key(id));");
-		db.execute("create table if not exists createPortalLocData("
-				+ "x1 int not null,"
-				+ "y1 int not null,"
-				+ "z1 int not null,"
-				+ "x2 int not null,"
-				+ "y2 int not null,"
-				+ "z2 int not null,"
-				+ "world varchar(255) not null,"
-				+ "id varchar(255) not null,"
-				+ "primary key loc_id (x1, y1, z1, x2, y2, z2, world, id));");
-		db.execute("create table if not exists excludedServers("
-				+ "name varchar(20) not null,"
-				+ "primary key name_id(name));");
-		db.execute("create table if not exists priorityServers("
-				+ "name varchar(20) not null,"
-				+ "cap int not null,"
-				+ "primary key name_id(name));");
-		db.execute("create table if not exists player_beds("
-				+ "uuid varchar(36) not null,"
-				+ "server varchar(36) not null,"
-				+ "world_name varchar(36) not null,"
-				+ "x int not null,"
-				+ "y int not null,"
-				+ "z int not null,"
-				+ "primary key bed_id(uuid));");
-		db.execute("create table if not exists bettershards_version("
-				+ "db_version int not null,"
-				+ "update_time varchar(24));");
-		int ver = checkVersion();
-		if (ver == 0) {
-			BetterShardsPlugin.getInstance().getLogger().info("Update to version 1 of the BetterShards.");
-			db.execute("alter table createPlayerData add config_sect text;");
-			ver = updateVersion(ver);
-		}
-		if (ver == 1) {
-			BetterShardsPlugin.getInstance().getLogger().info("Update to version 2 of the BetterShards db.");
-			db.execute("CREATE TABLE IF NOT EXISTS playerDataLock("
-					+ "uuid VARCHAR(36) NOT NULL,"
-					+ "inv_id INT NOT NULL,"
-					+ "last_upd TIMESTAMP NOT NULL DEFAULT NOW(),"
-					+ "PRIMARY KEY (uuid, inv_id));");
-			ver = updateVersion(ver);
-		}
-	}
-	
-	private int checkVersion() {
-		PreparedStatement version = db.prepareStatement(this.version);
-		try {
-			ResultSet set = version.executeQuery();
-			if (!set.next())
-				return 0;
-			return set.getInt("db_version");
-		} catch (SQLException e) {
-			logger.log(Level.SEVERE, "Check Version DB failure: ", e);
-		}
-		return 0;
-	}
-	
-	private int updateVersion(int version) {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		PreparedStatement updateVersion = db.prepareStatement(this.updateVersion);
-		try {
-			updateVersion.setInt(1, version+ 1);
-			updateVersion.setString(2, sdf.format(new Date()));
-			updateVersion.execute();
-		} catch (SQLException e) {
-			logger.log(Level.SEVERE, "Update Version DB failure: ", e);
-		}
-		return ++version;
-	}
-	
-	public boolean isConnected() {
-		if (!db.isConnected())
-			db.connect();
-		return db.isConnected();
-	}
-	
-	@CivConfigs({
-		@CivConfig(name = "locks.cleanup_minutes", def = "1", type = CivConfigType.Int),
-	})
-	private void loadPreparedStatements(){
-		insertPlayerData = "INSERT INTO createPlayerData(uuid, server, entity, config_sect) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE entity = VALUES(entity), config_sect = VALUES(config_sect);";
-		getPlayerData = "select * from createPlayerData where uuid = ? and server = ?;";
-		removePlayerData = "delete from createPlayerData where uuid = ? and server = ?;";
-		
-		getLock = "INSERT INTO playerDataLock(uuid, inv_id) VALUES (?, ?);";
-		checkLock = "SELECT last_upd FROM playerDataLock WHERE uuid = ? AND inv_id = ?;";
-		releaseLock = "DELETE FROM playerDataLock WHERE uuid = ? AND inv_id = ?;";
-		cleanupLocks = "DELETE FROM playerDataLock WHERE last_upd <= TIMESTAMPADD(MINUTE, -" + config.get("locks.cleanup_minutes").getInt() + ", NOW());";
-		
-		addPortalLoc = "insert into createPortalLocData(x1, y1, z1, x2, y2, z2, world, id)"
-				+ "values (?,?,?,?,?,?,?,?);";
-		getPortalLocByWorld = "select * from createPortalLocData where world = ?;";
-		getPortalLoc = "select * from createPortalLocData where id = ?;";
-		removePortalLoc = "delete from createPortalDataTable where id = ?;";
-		
-		addPortalData = "insert into createPortalDataTable(id, server_name, portal_type, partner_id)"
-				+ "values(?,?,?,?);";
-		getPortalData = "select * from createPortalDataTable where id = ?;";
-		removePortalData = "delete from createPortalLocData where id = ?;";
-		updatePortalData = "update createPortalDataTable set partner_id = ? where id = ?;";
-		
-		addExclude = "insert ignore into excludedServers(name) values(?);";
-		removeExclude = "delete from excludedServers where name = ?;";
-		getAllExclude = "select * from excludedServers;";
-		
-		addPriority = "insert into priorityServers(name, cap) values(?,?);";
-		removePriority = "delete from priorityServers where name = ?;";
-		getAllPriority = "select name, cap from priorityServers;";
-
-		addBedLocation = "insert into player_beds (uuid, server, world_name, "
-				+ "x, y, z) values (?,?,?,?,?,?)";
-		getAllBedLocation = "select * from player_beds;";
-		removeBedLocation = "delete from player_beds where uuid = ?;";
-		
-		version = "select max(db_version) as db_version from bettershards_version;";
-		updateVersion = "insert into bettershards_version (db_version, update_time) values (?,?);";
-	}
 	
 	/**
 	 * Adds a portal instance to the database. Should be called only when
 	 * initially creating a Portal Object.
 	 */
 	public void addPortal(Portal portal){
-		isConnected();
-		PreparedStatement addPortalLoc = db.prepareStatement(this.addPortalLoc);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement addPortalLoc = connection.prepareStatement(DatabaseManager.addPortalLoc)){
 			if (portal instanceof CuboidPortal){
 				CuboidPortal p = (CuboidPortal) portal;
 				Location first = p.getFirst();
@@ -394,10 +383,6 @@ public class DatabaseManager{
 			addPortalLoc.execute();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Add Portal DB failure: ", e);
-		} finally {
-			try {
-				addPortalLoc.close();
-			} catch (Exception ex) {}
 		}
 	}
 	
@@ -413,9 +398,8 @@ public class DatabaseManager{
 	
 	private String serverName = MercuryAPI.serverName();
 	public void addPortalData(Portal portal, Portal connection){
-		isConnected();
-		PreparedStatement addPortalData = db.prepareStatement(this.addPortalData);
-		try {
+		try (Connection connect = db.getConnection();
+				PreparedStatement addPortalData = connect.prepareStatement(DatabaseManager.addPortalData);) {
 			addPortalData.setString(1, portal.getName());
 			addPortalData.setString(2, serverName);
 			addPortalData.setInt(3, portal.specialId);
@@ -426,10 +410,6 @@ public class DatabaseManager{
 			addPortalData.execute();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Add Portal Data DB failure: ", e);
-		} finally {
-			try {
-				addPortalData.close();
-			} catch (Exception ex) {}
 		}
 	}
 	
@@ -437,8 +417,8 @@ public class DatabaseManager{
 		@CivConfig(name="locks.show_culprit", def="false", type = CivConfigType.Bool)
 	})
 	public boolean getPlayerLock(UUID uuid, InventoryIdentifier id) {
-		try {
-			PreparedStatement getLock = db.prepareStatement(this.getLock);
+		try (Connection connection = db.getConnection();
+				PreparedStatement getLock = connection.prepareStatement(DatabaseManager.getLock);) {
 			getLock.setString(1, uuid.toString());
 			getLock.setInt(2, id.ordinal());
 			getLock.executeUpdate();
@@ -454,8 +434,8 @@ public class DatabaseManager{
 	}
 	
 	public boolean releasePlayerLock(UUID uuid, InventoryIdentifier id) {
-		try {
-			PreparedStatement releaseLock = db.prepareStatement(this.releaseLock);
+		try (Connection connection = db.getConnection();
+				PreparedStatement releaseLock = connection.prepareStatement(DatabaseManager.releaseLock);) {
 			releaseLock.setString(1, uuid.toString());
 			releaseLock.setInt(2, id.ordinal());
 			return releaseLock.executeUpdate() > 0;
@@ -467,7 +447,8 @@ public class DatabaseManager{
 	}
 	
 	public boolean isPlayerLocked(UUID uuid, InventoryIdentifier id){
-		try (PreparedStatement checkLock = db.prepareStatement(this.checkLock)) {
+		try (Connection connection = db.getConnection();
+				PreparedStatement checkLock = connection.prepareStatement(DatabaseManager.checkLock)) {
 			checkLock.setString(1, uuid.toString());
 			checkLock.setInt(2, id.ordinal());
 			ResultSet rs = checkLock.executeQuery();
@@ -491,7 +472,6 @@ public class DatabaseManager{
 	public void savePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
 			ConfigurationSection section) {
 		logger.log(Level.FINER, "savePlayer Sync player data {0}", uuid);
-		isConnected();
 		
 		/*
 		 * Some notes. 
@@ -526,13 +506,8 @@ public class DatabaseManager{
 	private void doSavePlayerData(UUID uuid, ByteArrayOutputStream output, InventoryIdentifier id, 
 			ConfigurationSection section) {
 		plugin.getLogger().log(Level.FINER, "doSave player data {0}", uuid);
-		PreparedStatement insertPlayerDataPS = null;
-		try {
-			insertPlayerDataPS = db.prepareStatement(insertPlayerData);
-			if (insertPlayerDataPS == null) {
-				plugin.getLogger().log(Level.SEVERE,"Database is gone, unable to prepare data save statement for {0}", uuid);
-				return;
-			}
+		try (Connection connection = db.getConnection();
+				PreparedStatement insertPlayerDataPS = connection.prepareStatement(DatabaseManager.insertPlayerData);) {
 			insertPlayerDataPS.setString(1, uuid.toString());
 			insertPlayerDataPS.setInt(2, id.ordinal());
 
@@ -559,10 +534,6 @@ public class DatabaseManager{
 			logger.log(Level.SEVERE, "Failed to doSavePlayerData for {0}", uuid);
 			logger.log(Level.SEVERE, "Failed to doSavePlayerData exception:", ididntthinkofthis);
 		} finally {
-			try {
-				insertPlayerDataPS.close();
-			} catch (Exception ex) {}
-			
 			if (!releasePlayerLock(uuid, id)) { // Both calling methods require release always, so we'll just do it here.
 				plugin.getLogger().log(Level.WARNING, "Unable to release lock for {0}, lock is already released", uuid);
 			} else {
@@ -584,7 +555,6 @@ public class DatabaseManager{
 	public void savePlayerDataAsync(final UUID uuid, final ByteArrayOutputStream output, 
 			final InventoryIdentifier id, final ConfigurationSection section) {
 		plugin.getLogger().log(Level.FINER, "savePlayer Async player data {0}", uuid);
-		isConnected();
 		
 		if (!getPlayerLock(uuid, id)) { // someone beat us to it?
 			plugin.getLogger().log(Level.WARNING, "Unable to grab rowlock for save of {0}, some other server or process is saving at the same time as me.", uuid);
@@ -607,7 +577,7 @@ public class DatabaseManager{
 
 	/**
 	 * This loadPlayerData ignores any data locks. PLEASE USE WITH CARE. Calls to this method might return old data!
-	 * 
+	 * <br><br>
 	 * This method _reads_ from the cache and _updates_ the cache if nothing previously cached
 	 * 
 	 * @param uuid
@@ -637,18 +607,19 @@ public class DatabaseManager{
 	 * @return
 	 */
 	private byte[] doLoadPlayerData(UUID uuid, InventoryIdentifier id){
-		isConnected();
-		PreparedStatement getPlayerData = db.prepareStatement(this.getPlayerData);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement getPlayerData = connection.prepareStatement(DatabaseManager.getPlayerData);) {
 			getPlayerData.setString(1, uuid.toString());
 			getPlayerData.setInt(2, id.ordinal());
 			ResultSet set = getPlayerData.executeQuery();
-			if (!set.next())
+			if (!set.next()) {
 				return new byte[0];
+			}
 			YamlConfiguration sect = new YamlConfiguration();
 			String sectString = set.getString("config_sect");
-			if (sectString != null)
+			if (sectString != null) {
 				sect.loadFromString(sectString);
+			}
 			CustomWorldNBTStorage.getWorldNBTStorage().loadConfigurationSectionForPlayer(uuid, sect);
 			return set.getBytes("entity");			
 		} catch (SQLException e) {
@@ -657,24 +628,20 @@ public class DatabaseManager{
 		} catch (InvalidConfigurationException e) {
 			plugin.getLogger().log(Level.WARNING, "Configuration is invalid for {0}", uuid);
 			plugin.getLogger().log(Level.WARNING, "Configuration is invalid exception:", e);
-		} finally {
-			try {
-				getPlayerData.close();
-			} catch (Exception ex) {}
 		}
 		return new byte[0];
 	}
 	
 	/**
 	 * Asynchronously gets the player data. Gets a little exotic but the basis is simply. Returns a Future object that holds the eventual result of the command.
-	 * 
+	 * <br><br>
 	 * Use .get on the Future to wait for it to load and return the result. 
-	 * 
+	 * <br><br>
 	 * EXTERNAL PLUGINS SHOULD USE THIS EXCLUSIVELY
-	 *
+	 * <br><br>
 	 * This method both consumes and contributes to the cache. If data is on cache when triggered, it consumes it.
 	 * If data is not on cache, it puts it on cache.
-	 *
+	 * <br><br>
 	 * So, if you want to preload your data but not _use_ it, call loadPlayerDataAsync in an async method, then
 	 * call loadPlayerData in a sync method. If you're lucky and there aren't any race conditions in play to get that
 	 * data (multiple consumers) then the sync call will pull from the cache.
@@ -713,29 +680,28 @@ public class DatabaseManager{
 		}
 		
 		return executor.submit( new Callable<ByteArrayInputStream>(){
-
-					@Override
-					public ByteArrayInputStream call() throws Exception {
-						plugin.getLogger().log(Level.FINER, "Getting player data async for {0}", uuid);
-						long sleepSoFar = (long) (Math.random() * 10.0);
-						// basic spinlock.
-						while (isPlayerLocked(uuid, id)) {
-							Thread.sleep( sleepSoFar );
-							if (sleepSoFar > 1000l) { // let's not get crazy!
-								sleepSoFar = 1000l;
-							}
-							sleepSoFar += (long) (Math.random() * 10.0); // but let's keep the random, to prevent synchronization of multiple spinlocks.
-						} 
-						/* This leaves an opening for race conditions, but with a very small interval size (< 10ms) which is
-						 * far superior to previous.
-						 */ 
-						byte[] bais = doLoadPlayerData(uuid, id);
-						updateCache(uuid, id, bais);
-						plugin.getLogger().log(Level.FINER, "Done getting player data async for {0}", uuid);
-						return new ByteArrayInputStream(bais);
-					}
+				@Override
+				public ByteArrayInputStream call() throws Exception {
+					plugin.getLogger().log(Level.FINER, "Getting player data async for {0}", uuid);
+					long sleepSoFar = (long) (Math.random() * 10.0);
+					// basic spinlock.
+					while (isPlayerLocked(uuid, id)) {
+						Thread.sleep( sleepSoFar );
+						if (sleepSoFar > 1000l) { // let's not get crazy!
+							sleepSoFar = 1000l;
+						}
+						sleepSoFar += (long) (Math.random() * 10.0); // but let's keep the random, to prevent synchronization of multiple spinlocks.
+					} 
+					/* This leaves an opening for race conditions, but with a very small interval size (< 10ms) which is
+					 * far superior to previous.
+					 */ 
+					byte[] bais = doLoadPlayerData(uuid, id);
+					updateCache(uuid, id, bais);
+					plugin.getLogger().log(Level.FINER, "Done getting player data async for {0}", uuid);
+					return new ByteArrayInputStream(bais);
 				}
-			);
+			}
+		);
 	}
 
 	
@@ -743,14 +709,16 @@ public class DatabaseManager{
 	 * Can only be from worlds that are valid on this server.
 	 * This is to prevent possible NullPointExceptions from trying to 
 	 * get portals from Worlds that are not present on this server.
+	 * 
+	 * @param worlds
+	 * @return
 	 */
 	public List<Portal> getAllPortalsByWorld(World[] worlds){
-		isConnected();
 		List<Portal> portals = new ArrayList<Portal>();
 		for (World w: worlds){
 			String world = w.getName();
-			PreparedStatement getPortalLocation = db.prepareStatement(getPortalLocByWorld);
-			try {
+			try (Connection connection = db.getConnection();
+					PreparedStatement getPortalLocation = connection.prepareStatement(DatabaseManager.getPortalLocByWorld);) {
 				getPortalLocation.setString(1, world);
 				ResultSet set = getPortalLocation.executeQuery();
 				while (set.next()) {
@@ -769,21 +737,14 @@ public class DatabaseManager{
 				}
 			} catch (SQLException e) {
 				logger.log(Level.SEVERE, "Failed to getAllPortalsByWorld, exception:", e);
-			} finally {
-				try {
-					if (getPortalLocation != null) {
-						getPortalLocation.close();
-					}
-				} catch (Exception ex) {}
 			}
 		}
 		return portals;
 	}
 
 	public Portal getPortal(String name) {
-		isConnected();
-		PreparedStatement getPortalData = db.prepareStatement(this.getPortalLoc);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement getPortalData = connection.prepareStatement(DatabaseManager.getPortalLoc);) {
 			getPortalData.setString(1, name);
 			ResultSet set = getPortalData.executeQuery();
 			if (!set.next())
@@ -812,18 +773,13 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to getPortal for {0}", name);
 			logger.log(Level.SEVERE, "Failed to getPortal, exception:", e);
-		} finally {
-			try {
-				getPortalData.close();
-			} catch (Exception ex) {}
 		}
 		return null;
 	}
 	
 	private Portal getPortalData(String name, LocationWrapper first, LocationWrapper second) {
-		isConnected();
-		PreparedStatement getPortalData = db.prepareStatement(this.getPortalData);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement getPortalData = connection.prepareStatement(DatabaseManager.getPortalData);) {
 			getPortalData.setString(1, name);
 			ResultSet set = getPortalData.executeQuery();
 			if (!set.next())
@@ -851,66 +807,46 @@ public class DatabaseManager{
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to getPortalData for {0}", name);
 			logger.log(Level.SEVERE, "Failed to getPortalData, exception:", e);
-		} finally {
-			try {
-				getPortalData.close();
-			} catch (Exception ex) {}
 		}
 		return null;
 	}
 
 	public void removePlayerData(UUID uuid, InventoryIdentifier id) {
-		isConnected();
 		clearCache(uuid, id);
-		PreparedStatement removePlayerData = db.prepareStatement(this.removePlayerData);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement removePlayerData = connection.prepareStatement(DatabaseManager.removePlayerData);) {
 			removePlayerData.setString(1, uuid.toString());
 			removePlayerData.setInt(2, id.ordinal());
 			removePlayerData.execute();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to removePlayerData, uuid: {0} id: {1}", new Object[]{uuid, id});
 			logger.log(Level.SEVERE, "Failed to removePlayerData, exception:", e);
-		} finally {
-			try {
-				removePlayerData.close();
-			} catch (Exception ex) {}
 		}
 	}
 
 	public void removePortalLoc(Portal p) {
-		isConnected();
-		PreparedStatement removePortalLoc = db.prepareStatement(this.removePortalLoc);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement removePortalLoc = connection.prepareStatement(DatabaseManager.removePortalLoc);) {
 			removePortalLoc.setString(1, p.getName());
 			removePortalLoc.execute();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to removePortalLoc, exception:", e);
-		} finally {
-			try {
-				removePortalLoc.close();
-			} catch (Exception ex) {}
 		}
 	}
 
 	public void removePortalData(Portal p) {
-		isConnected();
-		PreparedStatement removePortalData = db.prepareStatement(this.removePortalData);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement removePortalData = connection.prepareStatement(DatabaseManager.removePortalData);) {
 			removePortalData.setString(1, p.getName());
 			removePortalData.execute();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to removePortalData, exception:", e);
-		} finally {
-			try {
-				removePortalData.close();
-			} catch (Exception ex) {}
 		}
 	}
 
 	public void updatePortalData(Portal p) {
-		isConnected();
-		PreparedStatement updatePortalData = db.prepareStatement(this.updatePortalData);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement updatePortalData = connection.prepareStatement(DatabaseManager.updatePortalData);) {
 			String partner = null;
 			if (p.getPartnerPortal() != null)
 				partner = p.getPartnerPortal().getName();
@@ -919,10 +855,6 @@ public class DatabaseManager{
 			updatePortalData.execute();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to updatePortalData, exception:", e);
-		} finally {
-			try {
-				updatePortalData.close();
-			} catch (Exception ex) {}
 		}
 	}
 
@@ -931,18 +863,13 @@ public class DatabaseManager{
 			return;
 		}
 		respawnExclusionCache.add(server);
-		isConnected();
-		PreparedStatement addExclude = db.prepareStatement(this.addExclude);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement addExclude = connection.prepareStatement(DatabaseManager.addExclude);) {
 			addExclude.setString(1, server);
 			addExclude.execute();
 		} catch (SQLException e) {
 	 		logger.log(Level.SEVERE, "Failed to addExclude for {0}", server);
 	 		logger.log(Level.SEVERE, "Failed to addExclude, exception:", e);
-		} finally {
-			try {
-				addExclude.close();
-			} catch (Exception ex) {}
 		}
 	}
 
@@ -961,20 +888,15 @@ public class DatabaseManager{
 	}
 
 	public List <String> retrieveAllExcludeFromDb() {
-		isConnected();
-		PreparedStatement getAllExclude = db.prepareStatement(this.getAllExclude);
-		List <String> result = new LinkedList <String> ();
-		try {
+		List <String> result = new LinkedList<String>();
+		try (Connection connection = db.getConnection();
+				PreparedStatement getAllExclude = connection.prepareStatement(DatabaseManager.getAllExclude);) {
 			ResultSet set = getAllExclude.executeQuery();
 			while (set.next()) {
 				result.add(set.getString("name"));
 			}
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to retrieveAllExcludeFromDb, exception:", e);
-		} finally {
-			try {
-				getAllExclude.close();
-			} catch (Exception ex) {}
 		}
 		return result;
 	}
@@ -983,18 +905,13 @@ public class DatabaseManager{
 		if (!respawnExclusionCache.remove(server)) {
 			return;
 		}
-		isConnected();
-		PreparedStatement removeExclude = db.prepareStatement(this.removeExclude);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement removeExclude = connection.prepareStatement(DatabaseManager.removeExclude);) {
 			removeExclude.setString(1, server);
 			removeExclude.execute();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to removeExclude for {0}", server);
 			logger.log(Level.SEVERE, "Failed to removeExclude, exception:", e);
-		} finally {
-			try {
-				removeExclude.close();
-			} catch (Exception ex) {}
 		}
 	}
 
@@ -1003,19 +920,14 @@ public class DatabaseManager{
 			return;
 		}
 		respawnPriorityCache.put(server, new PriorityInfo(server, populationCap));
-		isConnected();
-		PreparedStatement addPriority = db.prepareStatement(this.addPriority);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement addPriority = connection.prepareStatement(DatabaseManager.addPriority);) {
 			addPriority.setString(1, server);
 			addPriority.setInt(2, populationCap);
 			addPriority.execute();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to addPriorityServer {0}", server);
 			logger.log(Level.SEVERE, "Failed to addPriorityServer, exception:", e);
-		} finally {
-			try {
-				addPriority.close();
-			} catch (Exception ex) {}
 		}
 	}
 
@@ -1034,10 +946,9 @@ public class DatabaseManager{
 	}
 
 	public Map<String, PriorityInfo> retrieveAllPriorityFromDb() {
-		isConnected();
-		PreparedStatement getAllPriority = db.prepareStatement(this.getAllPriority);
 		Map<String, PriorityInfo> result = new HashMap<>();
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement getAllPriority = connection.prepareStatement(DatabaseManager.getAllPriority);) {
 			ResultSet set = getAllPriority.executeQuery();
 			while (set.next()) {
 				String server = set.getString("name");
@@ -1045,10 +956,6 @@ public class DatabaseManager{
 			}
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to retrieveAllPriorityFromDb, exception:", e);
-		} finally {
-			try {
-				getAllPriority.close();
-			} catch (Exception ex) {}
 		}
 		return result;
 	}
@@ -1057,26 +964,20 @@ public class DatabaseManager{
 		if (respawnPriorityCache.remove(server) == null) {
 			return;
 		}
-		isConnected();
-		PreparedStatement removePriority = db.prepareStatement(this.removePriority);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement removePriority = connection.prepareStatement(DatabaseManager.removePriority);) {
 			removePriority.setString(1, server);
 			removePriority.execute();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to removePriorityServer {0}", server);
 			logger.log(Level.SEVERE, "Failed to removePriorityServer, exception:", e);
-		} finally {
-			try {
-				removePriority.close();
-			} catch (Exception ex) {}
 		}
 	}
 
 	public void addBedLocation(BedLocation bed) {
-		isConnected();
-		PreparedStatement addBedLocation = db.prepareStatement(this.addBedLocation);
 		TeleportInfo info = bed.getTeleportInfo();
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement addBedLocation = connection.prepareStatement(DatabaseManager.addBedLocation);) {
 			addBedLocation.setString(1, bed.getUUID().toString());
 			addBedLocation.setString(2, bed.getServer());
 			addBedLocation.setString(3, info.getWorld());
@@ -1086,18 +987,13 @@ public class DatabaseManager{
 			addBedLocation.execute();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to addBedLocation, exception:", e);
-		} finally {
-			try {
-				addBedLocation.close();
-			} catch (Exception ex) {}
 		}
 	}
 
 	public List<BedLocation> getAllBedLocations() {
-		isConnected();
 		List<BedLocation> beds = new ArrayList<BedLocation>();
-		PreparedStatement getAllBedLocation = db.prepareStatement(this.getAllBedLocation);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement getAllBedLocation = connection.prepareStatement(DatabaseManager.getAllBedLocation);) {
 			ResultSet set = getAllBedLocation.executeQuery();
 			while (set.next()) {
 				UUID uuid = UUID.fromString(set.getString("uuid"));
@@ -1112,27 +1008,18 @@ public class DatabaseManager{
 			}
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to getAllBedLocations, exception:", e);
-		} finally {
-			try {
-				getAllBedLocation.close();
-			} catch (Exception ex) {}
 		}
 		return beds;
 	}
 
 	public void removeBed(UUID uuid) {
-		isConnected();
-		PreparedStatement removeBedLocation = db.prepareStatement(this.removeBedLocation);
-		try {
+		try (Connection connection = db.getConnection();
+				PreparedStatement removeBedLocation = connection.prepareStatement(DatabaseManager.removeBedLocation);) {
 			removeBedLocation.setString(1, uuid.toString());
 			removeBedLocation.execute();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to removeBed for {0}", uuid);
 			logger.log(Level.SEVERE, "Failed to removeBed, exception:", e);
-		} finally {
-			try {
-				removeBedLocation.close();
-			} catch (Exception ex) {}
 		}
 	}
 
@@ -1149,4 +1036,17 @@ public class DatabaseManager{
 		logger.log(Level.INFO, "Short Traceback: \n {0}", sb);
 	}
 
+
+	public class PriorityInfo {
+		private String server;
+		private int populationCap;
+
+		public PriorityInfo(String server, int populationCap) {
+			this.server = server;
+			this.populationCap = populationCap;
+		}
+
+		public String getServer() { return this.server; }
+		public int getPopulationCap() { return this.populationCap; }
+	}
 }

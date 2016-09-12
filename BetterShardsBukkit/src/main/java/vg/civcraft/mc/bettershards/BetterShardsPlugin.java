@@ -38,8 +38,6 @@ public class BetterShardsPlugin extends ACivMod{
 		servName = MercuryConfigManager.getServerName();
 		MercuryManager.initializeChannelsAndPing();
 		db = new DatabaseManager();
-		if (!db.isConnected())
-			Bukkit.getPluginManager().disablePlugin(this);
 		pm = new PortalsManager();
 		pm.loadPortalsManager();
 		CustomWorldNBTStorage.setWorldNBTStorage();
