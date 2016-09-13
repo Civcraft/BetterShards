@@ -271,13 +271,30 @@ public class DatabaseManager {
 
 	/**
 	 * Threadsafe accessor for the inventory cache. Respects the cache timeout; old caches are discarded, not returned.
+	 * Cache for that player / inventory is discarded on retrieval. This is a freshness bounded pre-load cache, only.
 	 *
 	 * @param uuid The player to lookup
 	 * @param id The inventory to retrieve
 	 * @returns a byte array for the raw inventory data or null if none found or cache expired.
 	 */
 	private byte[] queryCache(UUID uuid, InventoryIdentifier id) {
-		return null;
+		synchronized(invCache) {
+			Map<InventoryIdentifier, byte[]> playerInvCache = invCache.get(uuid);
+			if (playerInvCache != null) {
+
+				// Check for freshness.
+				Long freshness = invCacheFreshness.get(uuid);
+				if (freshness != null && (System.currentTimeMillis() - freshness) > invCacheTimeout) {
+					// Not Fresh. Clear the cache and return null.
+					playerInvCache.clear();
+					invCacheFreshness.remove(uuid);
+					return null;
+				}
+				// Fresh or doesn't exist, either way carry on.
+				return playerInvCache.remove(id);
+			}
+			return null;
+		}
 	}
 
 	/**
@@ -526,7 +543,6 @@ public class DatabaseManager {
 				insertPlayerDataPS.setString(4, ymlStr);
 			}
 			insertPlayerDataPS.execute();
-			updateCache(uuid, id, outputBytes);
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to doSavePlayerData for {0}", uuid);
 			logger.log(Level.SEVERE, "Failed to doSavePlayerData exception:", e);
@@ -578,7 +594,7 @@ public class DatabaseManager {
 	/**
 	 * This loadPlayerData ignores any data locks. PLEASE USE WITH CARE. Calls to this method might return old data!
 	 * <br><br>
-	 * This method _reads_ from the cache and _updates_ the cache if nothing previously cached
+	 * This method _reads_ from the cache if something is there (was pre-fetched).
 	 * 
 	 * @param uuid
 	 * @param id
@@ -594,7 +610,6 @@ public class DatabaseManager {
 			
 		plugin.getLogger().log(Level.FINER, "IGNORING LOCKS: Getting player data sync for {0}", uuid);
 		bais = doLoadPlayerData(uuid, id);
-		updateCache(uuid, id, bais);
 		plugin.getLogger().log(Level.FINER, "IGNORING LOCKS: Done getting player data sync for {0}", uuid);
 		return new ByteArrayInputStream(bais);
 	}
@@ -631,6 +646,14 @@ public class DatabaseManager {
 		}
 		return new byte[0];
 	}
+
+	/**
+	 * @see #loadPlayerDataAsync(UUID, InventoryIdentifier, boolean)
+	 * Calls it with prefetch = false
+	 */
+	public Future<ByteArrayInputStream> loadPlayerDataAsync(final UUID uuid, final InventoryIdentifier id) {
+		return loadPlayerDataAsync(uuid, id, false);
+	}
 	
 	/**
 	 * Asynchronously gets the player data. Gets a little exotic but the basis is simply. Returns a Future object that holds the eventual result of the command.
@@ -639,46 +662,18 @@ public class DatabaseManager {
 	 * <br><br>
 	 * EXTERNAL PLUGINS SHOULD USE THIS EXCLUSIVELY
 	 * <br><br>
-	 * This method both consumes and contributes to the cache. If data is on cache when triggered, it consumes it.
-	 * If data is not on cache, it puts it on cache.
+	 * This method can behave as a pre-fetch, putting data on the pre-fetch queue. It never consumes from the cache.
 	 * <br><br>
-	 * So, if you want to preload your data but not _use_ it, call loadPlayerDataAsync in an async method, then
+	 * So, if you want to preload your data but not _use_ it, call loadPlayerDataAsync with the flag set in an async method, then
 	 * call loadPlayerData in a sync method. If you're lucky and there aren't any race conditions in play to get that
 	 * data (multiple consumers) then the sync call will pull from the cache.
 	 * 
 	 * @param uuid
 	 * @param id
+	 * @param prefetch set to true to save to cache.
 	 * @return
 	 */
-	public Future<ByteArrayInputStream> loadPlayerDataAsync(final UUID uuid, final InventoryIdentifier id) {
-		byte[] bais = queryCache(uuid, id);
-		if (bais != null) {
-			plugin.getLogger().log(Level.FINER, "Getting player data async from cache for {0}", uuid);
-			final byte[] baisPIT = bais;
-			return new Future<ByteArrayInputStream>() {
-				byte[] bais = baisPIT;
-
-				@Override
-				public boolean cancel(boolean arg0) {return false;}
-
-				@Override
-				public ByteArrayInputStream get() throws InterruptedException, ExecutionException {
-					return new ByteArrayInputStream(bais);
-				}
-
-				@Override
-				public ByteArrayInputStream get(long arg0, TimeUnit arg1) throws InterruptedException,ExecutionException, TimeoutException {
-					return new ByteArrayInputStream(bais);
-				}
-
-				@Override
-				public boolean isCancelled() {return false;}
-
-				@Override
-				public boolean isDone() {return true;}
-			};
-		}
-		
+	public Future<ByteArrayInputStream> loadPlayerDataAsync(final UUID uuid, final InventoryIdentifier id, final boolean prefetch) {
 		return executor.submit( new Callable<ByteArrayInputStream>(){
 				@Override
 				public ByteArrayInputStream call() throws Exception {
@@ -696,7 +691,9 @@ public class DatabaseManager {
 					 * far superior to previous.
 					 */ 
 					byte[] bais = doLoadPlayerData(uuid, id);
-					updateCache(uuid, id, bais);
+					if (prefetch) {
+						updateCache(uuid, id, bais);
+					}
 					plugin.getLogger().log(Level.FINER, "Done getting player data async for {0}", uuid);
 					return new ByteArrayInputStream(bais);
 				}
