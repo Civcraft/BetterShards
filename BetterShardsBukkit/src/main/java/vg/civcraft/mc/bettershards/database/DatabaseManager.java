@@ -34,6 +34,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitTask;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
+import vg.civcraft.mc.bettershards.events.PortalLoadEvent;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
@@ -100,6 +101,11 @@ public class DatabaseManager {
 	private static final String addBedLocation = "insert into player_beds (uuid, server, world_name, x, y, z) values (?,?,?,?,?,?)";
 	private static final String getAllBedLocation = "select * from player_beds;";
 	private static final String removeBedLocation = "delete from player_beds where uuid = ?;";
+	
+	private static final String addPortalType = "insert ignore into portalVersion ("
+			+ "plugin_name, portal_plugin_id) values (?, ?);";
+	private static final String getPortalType = "select portal_id from portalVersion "
+			+ "where plugin_name = ? and portal_plugin_id = ?;";
 	
 	private String cleanupLocks;
 
@@ -221,6 +227,11 @@ public class DatabaseManager {
 					+ "inv_id INT NOT NULL,"
 					+ "last_upd TIMESTAMP NOT NULL DEFAULT NOW(),"
 					+ "PRIMARY KEY (uuid, inv_id));");
+		this.db.registerMigration(3, false, "CREATE TABLE IF NOT EXISTS portalVersion("
+				+ "portal_id INT NOT NULL AUTO_INCREMENT,"
+				+ "plugin_name VARCHAR(36) NOT NULL,"
+				+ "portal_plugin_id, INT NOT NULL,"
+				+ "PRIMARY KEY (plugin_name, portal_plugin_id));");
 	}
 	
 	@CivConfigs({
@@ -784,23 +795,12 @@ public class DatabaseManager {
 			int specialId = set.getInt("portal_type"); // determine the type of portal.
 			String serverName = set.getString("server_name");
 			String partner = set.getString("partner_id");
-			boolean currentServer = serverName.equals(MercuryAPI.serverName());
-			switch (specialId) {
-			case 0:
-				CuboidPortal p = new CuboidPortal(name, first.getFakeLocation(), second.getFakeLocation(), partner, currentServer);
-				p.setServerName(serverName);
-				return p;
-			case 1:
-				WorldBorderPortal wb = new WorldBorderPortal(name, partner, currentServer, first, second);
-				wb.setServerName(serverName);
-				return wb;
-			case 2:
-				CircularPortal cp = new CircularPortal(name, partner, currentServer, first.getFakeLocation(), second.getFakeLocation());
-				cp.setServerName(serverName);
-				return cp;
-			default:
+			PortalLoadEvent event = new PortalLoadEvent(name, specialId, serverName, partner,
+					first, second);
+			Bukkit.getPluginManager().callEvent(event);
+			if (event.getPortal() == null) // No Portal was set.
 				return null;
-			}
+			return event.getPortal();
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to getPortalData for {0}", name);
 			logger.log(Level.SEVERE, "Failed to getPortalData, exception:", e);
@@ -1018,6 +1018,64 @@ public class DatabaseManager {
 			logger.log(Level.SEVERE, "Failed to removeBed for {0}", uuid);
 			logger.log(Level.SEVERE, "Failed to removeBed, exception:", e);
 		}
+	}
+	
+	/**
+	 * This method is used to register with BetterShards what portal_id should
+	 * be associated with each portal so when saving occurs each portal specific id
+	 * is respected.
+	 * This method should be called for each portal type that exists.
+	 * So what should happen is in each plugin you give your custom portal it's own
+	 * specific id that is internally recognized and tracked. From there you will pass
+	 * that id and your plugin name to this method and it will create an id that can be 
+	 * used to pass in your constructor for your portal objects.
+	 * After calling this method refer to the 
+	 * {@link #getPortalID(String, int)} method for getting what id to pass to 
+	 * your custom portal constructors.
+	 * This method can be called at every start and if an id is already present it will
+	 * fail silently.
+	 * @param id The id that will be used internally in your plugin to reference each 
+	 * portal type.
+	 * @param plugin Your plugin's name.
+	 */
+	public void addPortalType(int id, String plugin) {
+		try (Connection connection = db.getConnection();
+				PreparedStatement addPortalLoc = connection.prepareStatement(DatabaseManager.addPortalType)){
+			addPortalLoc.setString(1, plugin);
+			addPortalLoc.setInt(2, id);
+			addPortalLoc.execute();
+		}
+		catch (SQLException e) {
+			logger.log(Level.SEVERE, "Add PortalType DB failure: ", e);
+		}
+	}
+	
+	/**
+	 * This method is used to get an id that will be used in each portal's constructor.
+	 * This id is important because it is used to map what kind of portal is being saved
+	 * in the database.
+	 * To use this method you must first call {@link #addPortalType(int, String)} in
+	 * order to generate an id that can be used.
+	 * @param plugin The plugin that is generating an id.
+	 * @param id The plugin specific id that is used to reference what id 
+	 * should be returned based on what kind of portal it is.
+	 * @return Should return an id that should be passed in your portal subclass constructor.
+	 */
+	public int getPortalID(String plugin, int id) {
+		int type_id = -1;
+		try (Connection connection = db.getConnection();
+				PreparedStatement addPortalLoc = connection.prepareStatement(DatabaseManager.getPortalType)){
+			addPortalLoc.setString(1, plugin);
+			addPortalLoc.setInt(2, id);
+			ResultSet set = addPortalLoc.executeQuery();
+			if (!set.next())
+				return -1;
+			type_id = set.getInt(1);
+		}
+		catch (SQLException e) {
+			logger.log(Level.SEVERE, "Get PortalType DB failure: ", e);
+		}
+		return type_id;
 	}
 
 	private void shortTrace() {

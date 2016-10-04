@@ -33,6 +33,7 @@ public class PortalsManager {
 	}
 	
 	public void loadPortalsManager() {
+		generatePortalIds();
 		loadPortalsFromServer();
 		removeTeleportedPlayers();
 		autoSaveTimer();
@@ -174,5 +175,14 @@ public class PortalsManager {
 	    	}
 	        }
 	    }, 4L, 4L);
+	}
+	
+	/**
+	 * This method is used in order to generate ids for our portals.
+	 */
+	private void generatePortalIds() {
+		db.addPortalType(0, BetterShardsPlugin.getInstance().getName());
+		db.addPortalType(1, BetterShardsPlugin.getInstance().getName());
+		db.addPortalType(2, BetterShardsPlugin.getInstance().getName());
 	}
 }
