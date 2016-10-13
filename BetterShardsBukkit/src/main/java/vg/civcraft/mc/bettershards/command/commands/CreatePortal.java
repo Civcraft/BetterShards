@@ -16,6 +16,7 @@ import vg.civcraft.mc.bettershards.portal.portals.CircularPortal;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
 import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
 import vg.civcraft.mc.civmodcore.command.PlayerCommand;
+import vg.civcraft.mc.mercury.MercuryAPI;
 
 public class CreatePortal extends PlayerCommand {
 
@@ -45,19 +46,29 @@ public class CreatePortal extends PlayerCommand {
 		else if (g.getMissingSelection() == GridLocation.LEFTSELECTION)
 			return sendPlayerMessage(p, ChatColor.RED + "Your primary selection has not been chosen.", true);
 		Portal portal = null;
-		if (args.length == 1 || args[1].equalsIgnoreCase("cuboid")) {
-			portal = new CuboidPortal(args[0], g.getLeftClickLocation(), g.getRightClickLocation(), null, true);
+		if (args.length < 1) {
+			String[] names = BetterShardsPlugin.getPortalManager().getPortalFactory().getAllPortalNames();
+			StringBuilder portals = new StringBuilder();
+			for (String x : names) {
+				portals.append(x);
+				portals.append(" ");
+			}
+			return sendPlayerMessage(p, ChatColor.RED + "You must specify a portaltype, portal types are: " + portals.toString(), true);
 		}
-		else if (args [1].equalsIgnoreCase("worldborder") || args [1].equalsIgnoreCase("wb")) {
-			LocationWrapper firstLoc = new LocationWrapper(g.getLeftClickLocation());
-			LocationWrapper secondLoc = new LocationWrapper(g.getRightClickLocation());
-			portal = new WorldBorderPortal(args[0],null, true, firstLoc, secondLoc);
-		}
-		else if (args [1].equalsIgnoreCase("circle") || args[1].equalsIgnoreCase("circular")) {
-			portal = new CircularPortal(args [0], null, true, g.getLeftClickLocation(), g.getRightClickLocation());
-		}
+		
 		if (pm.getPortal(args[0]) != null) 
 			return sendPlayerMessage(p, ChatColor.RED + "That portal name already exists.", true);
+		
+
+		Class<? extends Portal> clazz = BetterShardsPlugin.getPortalManager().getPortalFactory().getPortal(args[1]);
+		portal = BetterShardsPlugin.getPortalManager().getPortalFactory().buildPortal(clazz);
+		portal.setName(args[0]);
+		portal.setIsOnCurrentServer(true);
+		portal.setServerName(MercuryAPI.serverName());
+		portal.setFirstLocation(new LocationWrapper(g.getLeftClickLocation()));
+		portal.setSecondLocation(new LocationWrapper(g.getRightClickLocation()));
+		portal.valuesPopulated();
+		
 		pm.createPortal(portal);
 		String m = ChatColor.GREEN + "You have successfully created the portal " + args[0] + ".\n"
 				+ "To add a connection use the command /bsj <main portal> <connection>";

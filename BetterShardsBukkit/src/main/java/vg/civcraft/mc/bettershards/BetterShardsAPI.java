@@ -138,4 +138,23 @@ public class BetterShardsAPI {
 	public static ConfigurationSection getConfigurationSection(JavaPlugin plugin, UUID uuid) {
 		return CustomWorldNBTStorage.getWorldNBTStorage().getConfigurationSection(uuid, plugin);
 	}
+	
+	/**
+	 * Registers a portal with BetterShards.
+	 * This should be called for every custom portal you have.
+	 * @param plugin_id The plugin specific id that your portal uses.
+	 * @param plugin The plugin that is registering this portal.
+	 * @param portal The portal Class.
+	 * @param name The name of the portalType that will show up to players.
+	 */
+	public static <E extends Portal> void registerPortal(int plugin_id, String plugin, Class<E> portal, String name) {
+		BetterShardsPlugin.getDatabaseManager().addPortalType(plugin_id, plugin);
+		// Now we get the generated id from bettershards.
+		int real_id = BetterShardsPlugin.getDatabaseManager().getPortalID(plugin, plugin_id);
+		BetterShardsPlugin.getPortalManager().getPortalFactory().registerPortal(real_id, portal, name);
+	}
+	
+	public static int getPortalID(int pluginId, String plugin) {
+		return BetterShardsPlugin.getDatabaseManager().getPortalID(plugin, pluginId);
+	}
 }

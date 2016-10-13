@@ -45,7 +45,6 @@ import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
-import vg.civcraft.mc.bettershards.events.PortalLoadEvent;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.manager.PortalsManager;
 import vg.civcraft.mc.bettershards.manager.RandomSpawnManager;
@@ -491,33 +490,6 @@ public class BetterShardsListener implements Listener{
 		Player p = event.getPlayer();
 		if (BetterShardsPlugin.getTransitManager().isPlayerInTransit(p.getUniqueId())) {
 			event.setCancelled(true);
-		}
-	}
-	
-	@EventHandler(priority = EventPriority.LOWEST)
-	public void portalLoadEvent(PortalLoadEvent event) {
-		int specialId = event.getId();
-		boolean currentServer = event.getServerName().equals(MercuryAPI.serverName());
-		
-		if (db.getPortalID(BetterShardsPlugin.getInstance().getName(), 0) == specialId) {
-			CuboidPortal p = new CuboidPortal(event.getPortalName(), 
-					event.getFirst().getFakeLocation(), event.getSecond().getFakeLocation(), 
-					event.getPartnerName(), currentServer);
-			p.setServerName(event.getServerName());
-			event.setPortal(p);
-		}
-		else if (db.getPortalID(BetterShardsPlugin.getInstance().getName(), 1) == specialId) {
-			WorldBorderPortal wb = new WorldBorderPortal(event.getPartnerName(), 
-					event.getPartnerName(), currentServer, event.getFirst(), event.getSecond());
-			wb.setServerName(event.getServerName());
-			event.setPortal(wb);
-		}
-		else if (db.getPortalID(BetterShardsPlugin.getInstance().getName(), 2) == specialId) {
-			CircularPortal cp = new CircularPortal(event.getPortalName(), 
-					event.getPartnerName(), currentServer, event.getFirst().getFakeLocation(), 
-					event.getSecond().getFakeLocation());
-			cp.setServerName(event.getServerName());
-			event.setPortal(cp);
 		}
 	}
 }

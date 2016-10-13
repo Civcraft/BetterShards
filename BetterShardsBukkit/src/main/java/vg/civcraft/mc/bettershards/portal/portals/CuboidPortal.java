@@ -6,6 +6,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.bettershards.portal.Portal;
@@ -14,11 +15,11 @@ public class CuboidPortal extends Portal {
 
 	protected Location first; // This should be the location of the first block
 	protected Location second;
+	
+	private static int id = -1;
 
-	public CuboidPortal(String name, Location first, Location second, String connection, boolean isOnCurrentServer) {
-		super(name, connection, isOnCurrentServer, 0);
-		this.first = first;
-		this.second = second;
+	public CuboidPortal() {
+		
 	}
 	
 	public Location getFirst() {
@@ -78,12 +79,13 @@ public class CuboidPortal extends Portal {
 	public void teleport(Player p) {
 		if (connection == null)
 			return;
-		if (connection.getServerName().equals(BetterShardsAPI.getServerName())) {
-			p.teleport(connection.findSpawnLocation());
+		Portal portal = BetterShardsPlugin.getPortalManager().getPortal(connection);
+		if (portal.getServerName().equals(BetterShardsAPI.getServerName())) {
+			p.teleport(portal.findSpawnLocation());
 			return;
 		}
 		try {
-			BetterShardsAPI.connectPlayer(p, connection,
+			BetterShardsAPI.connectPlayer(p, portal,
 					PlayerChangeServerReason.PORTAL);
 		} catch (PlayerStillDeadException e) {
 			e.printStackTrace();
@@ -93,5 +95,23 @@ public class CuboidPortal extends Portal {
 	@Override
 	public void showParticles(Player p) {
 	    //TODO
+	}
+
+	@Override
+	public String getTypeName() {
+		return "Cuboid";
+	}
+
+	@Override
+	public void valuesPopulated() {
+		// Not needed.
+	}
+
+	@Override
+	public int getPortalID() {
+		if (id == -1) {
+			id = BetterShardsPlugin.getDatabaseManager().getPortalID(BetterShardsPlugin.getInstance().getName(), 0);
+		}
+		return id;
 	}
 }

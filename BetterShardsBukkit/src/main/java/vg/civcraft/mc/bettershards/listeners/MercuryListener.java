@@ -148,7 +148,7 @@ public class MercuryListener implements Listener{
 				Portal p2 = portalManager.getPortal(content[3]);
 				if (p1 == null || p2 == null)
 					return;
-				p1.setPartnerPortal(p2);
+				p1.setPartnerPortal(p2.getName());
 			}
 			else if (content[1].equals("remove")) {
 				Portal p1 = portalManager.getPortal(content[2]);

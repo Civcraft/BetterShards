@@ -29,49 +29,16 @@ public class WorldBorderPortal extends Portal {
 	private double arcLength;
 	private double particleIncrement;
 	private static List <Material> ignoreMaterials;
+	
+	private static int id = -1;
 
 	/**
 	 * So without complication everything needlessly, note that all border begin/ends
 	 * should be listed in clockwise order. If you fail to adhere to this, the border
 	 * will instead be everything you meant to be outside the border.
 	 */
-	public WorldBorderPortal(String name, String connection,
-			boolean isOnCurrentServer,
-			LocationWrapper first, LocationWrapper second) {
-		super(name, connection, isOnCurrentServer, 1);
-		this.mapCenter = new Location(first.getFakeLocation().getWorld(), 0, 0, 0);
-		this.first = first;
-		this.second = second;
-
-		double fRadius = getXZDistance(first.getFakeLocation());
-		double sRadius = getXZDistance(second.getFakeLocation());
-		this.wbRange = Math.min(fRadius, sRadius);
-
-		this.fAngle = getAdjustedAngle(first.getFakeLocation());
-		this.sAngle = getAdjustedAngle(second.getFakeLocation());
-
-		this.arcLength = (fAngle == sAngle) ? 2 * Math.PI : 
-				(fAngle > sAngle) ? 2 * Math.PI - fAngle + sAngle :
-				sAngle - fAngle;
-		//(circumference  in blocks) * (percentage of circumference the portal takes up)
-		//= (wbRange * 2 * PI) * (arcLength / (PI * 2))
-		//= wbRange * arcLength
-		double blocksInPortal = arcLength * wbRange;
-		this.particleIncrement = 1.0 / blocksInPortal;
-		List <String> ignoreMats = BetterShardsPlugin.getInstance().GetConfig().get("randomspawn.ignoreMaterials").getStringList();
-		if (ignoreMaterials == null) {
-			ignoreMaterials = new ArrayList<Material>();
-			for(String ign : ignoreMats) {
-			    try {
-					Material m = Material.valueOf(ign);
-					BetterShardsPlugin.getInstance().info("Ignoring " + m.toString() + " for portal spawning");
-					ignoreMaterials.add(m);
-			    }
-			    catch (IllegalArgumentException e) {
-			    	BetterShardsPlugin.getInstance().warning("The portal spawn ignore material specified as " + ign + " is not valid. It was ignored");
-			    }
-			}
-		}
+	public WorldBorderPortal() {
+		
 	}
 	
 	public LocationWrapper getFirst() {
@@ -182,13 +149,14 @@ public class WorldBorderPortal extends Portal {
 	public void teleport(Player p) {
 		if (connection == null)
 			return;
+		Portal portal = BetterShardsPlugin.getPortalManager().getPortal(connection);
 		Double relativeArcPosition = getArcPosition(p.getLocation());
-		if (connection.getServerName().equals(BetterShardsAPI.getServerName())) {
-			p.teleport(((WorldBorderPortal)connection).calculateSpawnLocation(relativeArcPosition));
+		if (portal.getServerName().equals(BetterShardsAPI.getServerName())) {
+			p.teleport(((WorldBorderPortal)portal).calculateSpawnLocation(relativeArcPosition));
 			return;
 		}
 		try {
-			BetterShardsAPI.connectPlayer(p, connection,
+			BetterShardsAPI.connectPlayer(p, portal,
 					PlayerChangeServerReason.PORTAL, relativeArcPosition);
 		} catch (PlayerStillDeadException e) {
 			// TODO Auto-generated catch block
@@ -220,5 +188,53 @@ public class WorldBorderPortal extends Portal {
 		}
 	    }
 	    
+	}
+
+	@Override
+	public String getTypeName() {
+		return "WorldBorder";
+	}
+
+	@Override
+	public void valuesPopulated() {
+		this.mapCenter = new Location(first.getFakeLocation().getWorld(), 0, 0, 0);
+
+		double fRadius = getXZDistance(first.getFakeLocation());
+		double sRadius = getXZDistance(second.getFakeLocation());
+		this.wbRange = Math.min(fRadius, sRadius);
+
+		this.fAngle = getAdjustedAngle(first.getFakeLocation());
+		this.sAngle = getAdjustedAngle(second.getFakeLocation());
+
+		this.arcLength = (fAngle == sAngle) ? 2 * Math.PI : 
+				(fAngle > sAngle) ? 2 * Math.PI - fAngle + sAngle :
+				sAngle - fAngle;
+		//(circumference  in blocks) * (percentage of circumference the portal takes up)
+		//= (wbRange * 2 * PI) * (arcLength / (PI * 2))
+		//= wbRange * arcLength
+		double blocksInPortal = arcLength * wbRange;
+		this.particleIncrement = 1.0 / blocksInPortal;
+		List <String> ignoreMats = BetterShardsPlugin.getInstance().GetConfig().get("randomspawn.ignoreMaterials").getStringList();
+		if (ignoreMaterials == null) {
+			ignoreMaterials = new ArrayList<Material>();
+			for(String ign : ignoreMats) {
+			    try {
+					Material m = Material.valueOf(ign);
+					BetterShardsPlugin.getInstance().info("Ignoring " + m.toString() + " for portal spawning");
+					ignoreMaterials.add(m);
+			    }
+			    catch (IllegalArgumentException e) {
+			    	BetterShardsPlugin.getInstance().warning("The portal spawn ignore material specified as " + ign + " is not valid. It was ignored");
+			    }
+			}
+		}
+	}
+
+	@Override
+	public int getPortalID() {
+		if (id == -1) {
+			id = BetterShardsPlugin.getDatabaseManager().getPortalID(BetterShardsPlugin.getInstance().getName(), 1);
+		}
+		return id;
 	}
 }

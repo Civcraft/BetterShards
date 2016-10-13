@@ -14,10 +14,15 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import vg.civcraft.mc.bettershards.BetterShardsAPI;
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.database.DatabaseManager;
 import vg.civcraft.mc.bettershards.external.MercuryManager;
 import vg.civcraft.mc.bettershards.portal.Portal;
+import vg.civcraft.mc.bettershards.portal.PortalFactory;
+import vg.civcraft.mc.bettershards.portal.portals.CircularPortal;
+import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
+import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
 
 public class PortalsManager {
 
@@ -25,16 +30,17 @@ public class PortalsManager {
 	private Map<String, Portal> portals;
 	private Map<UUID, Long> arrivedPlayers = new ConcurrentHashMap<UUID,Long>();
 	private final long portalCoolDown = 10000L;  //10 seconds
+	private PortalFactory factory;
 	
 	public PortalsManager() {
 		super();
 		portals = new HashMap<String, Portal>();
+		factory = new PortalFactory();
 		registerParticleRunnable();
 	}
 	
 	public void loadPortalsManager() {
 		generatePortalIds();
-		loadPortalsFromServer();
 		removeTeleportedPlayers();
 		autoSaveTimer();
 	}
@@ -181,8 +187,12 @@ public class PortalsManager {
 	 * This method is used in order to generate ids for our portals.
 	 */
 	private void generatePortalIds() {
-		db.addPortalType(0, BetterShardsPlugin.getInstance().getName());
-		db.addPortalType(1, BetterShardsPlugin.getInstance().getName());
-		db.addPortalType(2, BetterShardsPlugin.getInstance().getName());
+		BetterShardsAPI.registerPortal(0, BetterShardsPlugin.getInstance().getName(), CuboidPortal.class, "Cuboid");
+		BetterShardsAPI.registerPortal(1, BetterShardsPlugin.getInstance().getName(), WorldBorderPortal.class, "WorldBorder");
+		BetterShardsAPI.registerPortal(2, BetterShardsPlugin.getInstance().getName(), CircularPortal.class, "Circle");
+	}
+	
+	public PortalFactory getPortalFactory() {
+		return factory;
 	}
 }

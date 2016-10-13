@@ -1,45 +1,40 @@
 package vg.civcraft.mc.bettershards.portal.portals;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.BetterShardsAPI;
+import vg.civcraft.mc.bettershards.BetterShardsPlugin;
 import vg.civcraft.mc.bettershards.events.PlayerChangeServerReason;
 import vg.civcraft.mc.bettershards.misc.PlayerStillDeadException;
 import vg.civcraft.mc.bettershards.portal.Portal;
 
 public class CircularPortal extends Portal {
-	private Location first, second, center;
+	private Location center;
 	private double range;
+	
+	private Location actualFirst, actualSecond;
+	
+	private static int id = -1;
 
-	public CircularPortal(String name, final String con,
-			boolean isOnCurrentServer, Location first,
-			Location second) {
-		super(name, con, isOnCurrentServer, 2);
-		this.first = first;
-		this.second = second;
-		if (isOnCurrentServer) {
-			center = new Location(first.getWorld(),
-					(first.getX() + second.getX()) / 2,
-					(first.getY() + second.getY()) / 2,
-					(first.getZ() + second.getZ()) / 2);
-			range = getXZDistance(first);
-		}
+	protected CircularPortal() {
+		
 	}
 
 	public boolean inPortal(Location loc) {
-		double y1 = first.getY();
-		double y2 = second.getY();
+		double y1 = actualFirst.getY();
+		double y2 = actualSecond.getY();
 		return getXZDistance(loc) < range && ((loc.getY() >= y1 && loc.getY() <= y2) || (loc.getY() <= y1 && loc.getY() >= y2));
 	}
 	
 	public Location getFirst() {
-		return first;
+		return actualFirst;
 	}
 	
 	public Location getSecond() {
-		return second;
+		return actualSecond;
 	}
 
 	private double getXZDistance(Location loc) {
@@ -51,7 +46,7 @@ public class CircularPortal extends Portal {
 	public Location findSpawnLocation() {
 		double xScale = Math.random();
 		double zScale = Math.random();
-		Location loc = new Location(first.getWorld(), xScale * range + center.getX(), center.getY(), zScale * range + center.getZ());
+		Location loc = new Location(Bukkit.getWorld(first.getActualWorld()), xScale * range + center.getX(), center.getY(), zScale * range + center.getZ());
 		if (!inPortal(loc)) {
 			//could be in the edges outside the circle
 			return findSpawnLocation();
@@ -70,7 +65,8 @@ public class CircularPortal extends Portal {
 		Double xScale = (loc.getX() - center.getX()) / range;
 		Double zScale = (loc.getZ() - center.getZ()) / range;
 		try {
-			BetterShardsAPI.connectPlayer(p, connection,
+			BetterShardsAPI.connectPlayer(p, 
+					BetterShardsPlugin.getPortalManager().getPortal(connection),
 					PlayerChangeServerReason.PORTAL, xScale, zScale);
 		} catch (PlayerStillDeadException e) {
 			e.printStackTrace();
@@ -83,8 +79,8 @@ public class CircularPortal extends Portal {
 	    //- 16 so players see particles even if they are slightly out of range
 	    if (getXZDistance(loc) - PARTICLE_SIGHT_RANGE < range) {
 		//ensure player is in y range
-		int upperBound = Math.max(first.getBlockY(), second.getBlockY());
-		int lowerBound = Math.min(first.getBlockY(), second.getBlockY());
+		int upperBound = Math.max(first.getFakeLocation().getBlockY(), second.getFakeLocation().getBlockY());
+		int lowerBound = Math.min(first.getFakeLocation().getBlockY(), second.getFakeLocation().getBlockY());
 		if (upperBound + PARTICLE_SIGHT_RANGE  >= loc.getBlockY() && lowerBound - PARTICLE_SIGHT_RANGE <= loc.getBlockY()) {
 		    int y;
 		    if (loc.getY() >= upperBound) {
@@ -109,5 +105,33 @@ public class CircularPortal extends Portal {
 		    }
 		}
 	    }
+	}
+
+	@Override
+	public String getTypeName() {
+		return "Circle";
+	}
+
+	@Override
+	public void valuesPopulated() {
+		if (isOnCurrentServer) {
+			center = new Location(Bukkit.getWorld(first.getActualWorld()),
+					(first.getFakeLocation().getX() + second.getFakeLocation().getX()) / 2,
+					(first.getFakeLocation().getY() + second.getFakeLocation().getY()) / 2,
+					(first.getFakeLocation().getZ() + second.getFakeLocation().getZ()) / 2);
+			range = getXZDistance(first.getFakeLocation());
+			actualFirst = new Location(Bukkit.getWorld(first.getActualWorld()), first.getFakeLocation().getBlockX(),
+					first.getFakeLocation().getBlockY(), first.getFakeLocation().getBlockZ());
+			actualSecond = new Location(Bukkit.getWorld(second.getActualWorld()), second.getFakeLocation().getBlockX(),
+					second.getFakeLocation().getBlockY(), second.getFakeLocation().getBlockZ());
+		}
+	}
+
+	@Override
+	public int getPortalID() {
+		if (id == -1) {
+			id = BetterShardsPlugin.getDatabaseManager().getPortalID(BetterShardsPlugin.getInstance().getName(), 2);
+		}
+		return id;
 	}
 }

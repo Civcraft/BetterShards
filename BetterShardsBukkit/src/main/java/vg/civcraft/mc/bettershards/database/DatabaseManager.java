@@ -34,13 +34,13 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.scheduler.BukkitTask;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
-import vg.civcraft.mc.bettershards.events.PortalLoadEvent;
 import vg.civcraft.mc.bettershards.misc.BedLocation;
 import vg.civcraft.mc.bettershards.misc.CustomWorldNBTStorage;
 import vg.civcraft.mc.bettershards.misc.InventoryIdentifier;
 import vg.civcraft.mc.bettershards.misc.LocationWrapper;
 import vg.civcraft.mc.bettershards.misc.TeleportInfo;
 import vg.civcraft.mc.bettershards.portal.Portal;
+import vg.civcraft.mc.bettershards.portal.PortalFactory;
 import vg.civcraft.mc.bettershards.portal.portals.CircularPortal;
 import vg.civcraft.mc.bettershards.portal.portals.CuboidPortal;
 import vg.civcraft.mc.bettershards.portal.portals.WorldBorderPortal;
@@ -230,7 +230,7 @@ public class DatabaseManager {
 		this.db.registerMigration(3, false, "CREATE TABLE IF NOT EXISTS portalVersion("
 				+ "portal_id INT NOT NULL AUTO_INCREMENT,"
 				+ "plugin_name VARCHAR(36) NOT NULL,"
-				+ "portal_plugin_id, INT NOT NULL,"
+				+ "portal_plugin_id INT NOT NULL,"
 				+ "PRIMARY KEY (plugin_name, portal_plugin_id));");
 	}
 	
@@ -430,7 +430,7 @@ public class DatabaseManager {
 				PreparedStatement addPortalData = connect.prepareStatement(DatabaseManager.addPortalData);) {
 			addPortalData.setString(1, portal.getName());
 			addPortalData.setString(2, serverName);
-			addPortalData.setInt(3, portal.specialId);
+			addPortalData.setInt(3, portal.getPortalID());
 			String name = null;
 			if (connection != null)
 				name = connection.getName();
@@ -795,12 +795,21 @@ public class DatabaseManager {
 			int specialId = set.getInt("portal_type"); // determine the type of portal.
 			String serverName = set.getString("server_name");
 			String partner = set.getString("partner_id");
-			PortalLoadEvent event = new PortalLoadEvent(name, specialId, serverName, partner,
-					first, second);
-			Bukkit.getPluginManager().callEvent(event);
-			if (event.getPortal() == null) // No Portal was set.
-				return null;
-			return event.getPortal();
+			boolean currentServer = serverName.equals(MercuryAPI.serverName());
+			
+			PortalFactory factory = BetterShardsPlugin.getPortalManager().getPortalFactory();
+			Class<? extends Portal> clazz = factory.getPortal(specialId);
+			
+			Portal p = factory.buildPortal(clazz);
+			p.setName(name);
+			p.setIsOnCurrentServer(true);
+			p.setServerName(MercuryAPI.serverName());
+			p.setFirstLocation(first);
+			p.setSecondLocation(second);
+			p.setPartnerPortal(partner);
+			p.valuesPopulated();
+			
+			return p;
 		} catch (SQLException e) {
 			logger.log(Level.SEVERE, "Failed to getPortalData for {0}", name);
 			logger.log(Level.SEVERE, "Failed to getPortalData, exception:", e);

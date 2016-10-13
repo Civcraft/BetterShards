@@ -40,6 +40,15 @@ public class BetterShardsPlugin extends ACivMod{
 		db = new DatabaseManager();
 		pm = new PortalsManager();
 		pm.loadPortalsManager();
+		Bukkit.getScheduler().runTask(this, new Runnable() {
+
+			@Override
+			public void run() {
+				// Delay load so that other plugins can register with this plugin.
+				pm.loadPortalsFromServer();
+			}
+			
+		});
 		CustomWorldNBTStorage.setWorldNBTStorage();
 		combatManager = new CombatTagManager(getServer());
 		randomSpawn = new RandomSpawnManager();

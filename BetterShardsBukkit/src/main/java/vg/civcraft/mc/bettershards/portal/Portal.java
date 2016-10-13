@@ -1,76 +1,82 @@
 package vg.civcraft.mc.bettershards.portal;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import vg.civcraft.mc.bettershards.BetterShardsPlugin;
-import vg.civcraft.mc.bettershards.database.DatabaseManager;
+import vg.civcraft.mc.bettershards.misc.LocationWrapper;
 
 public abstract class Portal {
 
-	protected Portal connection;
+	protected LocationWrapper first, second;
+	protected String connection;
 	protected String serverName;
 	protected String name;
-	private boolean isOnCurrentServer; // Set to false if not on current server
-	protected DatabaseManager db;
+	protected boolean isOnCurrentServer; // Set to false if not on current server
 	private boolean isDirty = false;
-	public final int specialId;
 	protected static final int PARTICLE_RANGE = 4;
 	protected static final int PARTICLE_SIGHT_RANGE = 16;
 
-	public Portal(String name, final String con, boolean isOnCurrentServer, int specialId) {
-		Bukkit.getScheduler().scheduleSyncDelayedTask(BetterShardsPlugin.getInstance(), new Runnable() {
-
-			@Override
-			public void run() {
-				connection = BetterShardsPlugin.getPortalManager().getPortal(con);
-			}
-			
-		});
-		this.name = name;
-		this.isOnCurrentServer = isOnCurrentServer;
-		db = BetterShardsPlugin.getDatabaseManager();
-		this.specialId = specialId;
+	public Portal() {
+		
 	}
 
 	public Portal getPartnerPortal() {
-		return connection;
+		return BetterShardsPlugin.getPortalManager().getPortal(connection);
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public Portal setName(String name) {
 		this.name = name;
 		setDirty(true);
+		return this;
 	}
 
-	public void setPartnerPortal(Portal connection) {
+	public Portal setPartnerPortal(String connection) {
 		this.connection = connection;
 		setDirty(true);
+		return this;
 	}
 
 	public String getServerName() {
 		return serverName;
 	}
 
-	public void setServerName(String serverName) {
+	public Portal setServerName(String serverName) {
 		this.serverName = serverName;
 		setDirty(true);
+		return this;
 	}
 
 	public boolean isOnCurrentServer() {
 		return isOnCurrentServer;
+	}
+	
+	public Portal setIsOnCurrentServer(boolean value) {
+		isOnCurrentServer = value;
+		return this;
 	}
 
 	public boolean isDirty() {
 		return isDirty;
 	}
 
-	public void setDirty(boolean dirty) {
+	public Portal setDirty(boolean dirty) {
 		isDirty = dirty;
+		return this;
+	}
+	
+	public Portal setFirstLocation(LocationWrapper loc) {
+		first = loc;
+		return this;
+	}
+	
+	public Portal setSecondLocation(LocationWrapper loc) {
+		second = loc;
+		return this;
 	}
 
 	/**
@@ -86,5 +92,18 @@ public abstract class Portal {
 	public abstract void teleport(Player p);
 	
 	public abstract void showParticles(Player p);
+	
+	public abstract String getTypeName();
+	
+	/**
+	 * This method should be called after a portal is populated with its necessary values.
+	 */
+	public abstract void valuesPopulated();
+	
+	/**
+	 * Get the id of the portal.
+	 * @return
+	 */
+	public abstract int getPortalID();
 
 }
